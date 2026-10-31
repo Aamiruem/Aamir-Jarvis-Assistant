@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 from app.config import settings
 from app.db import sql
 from app.rag.store import get_store
-from app.system_control import ACTIONS, APPS, FOLDERS, run_action, system_status
+from app.system_control import ACTIONS, FOLDERS, app_names, run_action, system_status
 from app.timeutil import parse_when
 
 HTTP_HEADERS = {"User-Agent": "JarvisLearningProject/1.0 (educational assistant)"}
@@ -92,7 +92,7 @@ class SystemControl(BaseModel):
     action: str = Field(description=f"One of: {', '.join(ACTIONS)}.")
     target: str | None = Field(
         None,
-        description=f"open_app: one of {', '.join(sorted(APPS))}. open_folder: one of {', '.join(FOLDERS)}. "
+        description=f"open_app / close_app: one of {', '.join(app_names())}. open_folder: one of {', '.join(FOLDERS)}. "
         "open_url: a full https URL. Leave empty for the other actions.",
     )
 
@@ -290,10 +290,13 @@ TOOLS: dict[str, tuple[str, type[BaseModel], callable]] = {
         OpenWebsite, open_website,
     ),
     "system_control": (
-        "Do something on the user's Windows PC: open an app or folder, open a link in the default browser, "
-        "change volume (5 steps of 2%), mute, play/pause/next/previous media, lock the PC, or take a screenshot. "
-        "Prefer this over open_website for links when the user is on their own PC. Only the listed actions exist; "
-        "you cannot run commands, shut down, or delete anything.",
+        "Do something on the user's computer (Windows, Linux or macOS): open or close an app, open a folder, "
+        "open a link in the default browser, change volume, mute, play/pause/next/previous media, lock, "
+        "take a screenshot, sleep, shut down, restart, or cancel a pending shutdown/restart. "
+        "Shutdown and restart happen after a 60-second delay; ONLY use them after the user has clearly confirmed "
+        "(ask 'Shall I shut down the computer?' first unless they already said yes), and tell them they can say "
+        "'cancel shutdown'. Prefer this over open_website for links when the user is on their own computer. "
+        "Only the listed actions exist; you cannot run arbitrary commands or delete anything.",
         SystemControl, system_control,
     ),
     "compose_email": (

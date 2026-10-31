@@ -1,4 +1,4 @@
-"""Windows control, health and Claude key handling. Nothing here touches the real PC or the
+"""Computer control (Windows, Linux, macOS), health and Claude key handling. Nothing here touches the real PC or the
 Claude API: os.startfile, PowerShell and the API client are replaced with fakes."""
 import json
 import os
@@ -60,7 +60,8 @@ def test_media_keys_and_lock(pc):
 
 
 @pytest.mark.parametrize("action,target", [
-    ("shutdown", None),                       # not in the allow-list
+    ("run_command", "del /s C:\\"),           # not in the allow-list
+    ("close_app", "explorer"),                # closing the Windows shell is never allowed
     ("open_url", "file:///C:/Windows/System32/cmd.exe"),  # only web links
     ("open_url", "javascript:alert(1)"),
     ("open_app", "format c:"),                # never run as a command
@@ -70,6 +71,104 @@ def test_refuses_anything_off_the_list(pc, action, target):
     with pytest.raises(sc.SystemControlError):
         sc.run_action(action, target)
     assert pc == []
+
+
+def test_closes_only_listed_apps(pc):
+    sc.run_action("close_app", "Notepad")
+    assert pc == [("run", "Notepad.exe")]  # taskkill /IM Notepad.exe, without /F
+
+
+class FakeTimer:
+    """Stands in for threading.Timer so tests never wait or really power anything off."""
+    made = []
+
+    def __init__(self, delay, fn):
+        self.delay, self.fn, self.cancelled = delay, fn, False
+        FakeTimer.made.append(self)
+
+    def start(self):
+        pass
+
+    def cancel(self):
+        self.cancelled = True
+
+
+def test_shutdown_waits_and_can_be_cancelled(pc, monkeypatch):
+    FakeTimer.made.clear()
+    monkeypatch.setattr(sc.threading, "Timer", FakeTimer)
+    monkeypatch.setattr(sc, "_pending_power", None)
+
+    result = sc.run_action("shutdown")
+    assert "60 seconds" in result["message"] and "cancel" in result["message"]
+    assert pc == []  # nothing happens yet
+    timer = FakeTimer.made[0]
+    assert timer.delay == sc.POWER_DELAY_SECONDS
+
+    assert "Cancelled" in sc.run_action("cancel_shutdown")["message"]
+    assert timer.cancelled and sc._pending_power is None
+    assert "Nothing was scheduled" in sc.run_action("cancel_shutdown")["message"]
+
+
+def test_shutdown_fires_the_os_command_after_the_delay(pc, monkeypatch):
+    FakeTimer.made.clear()
+    monkeypatch.setattr(sc.threading, "Timer", FakeTimer)
+    monkeypatch.setattr(sc, "_pending_power", None)
+    sc.run_action("restart")
+    FakeTimer.made[0].fn()  # the delay is over
+    assert pc == [("run", "0")]  # shutdown /r /t 0
+
+
+@pytest.fixture
+def linux(monkeypatch):
+    """A fake Linux desktop with GNOME apps installed; records every command."""
+    ran = []
+    monkeypatch.setattr(sc.sys, "platform", "linux")
+    monkeypatch.setattr(settings, "system_control", True)
+    installed = {"gnome-text-editor", "pactl", "playerctl", "gnome-screenshot", "loginctl", "xdg-open"}
+    monkeypatch.setattr(sc.shutil, "which", lambda name: f"/usr/bin/{name}" if name in installed else None)
+
+    class Done:
+        returncode, stdout, stderr = 0, "", ""
+
+    monkeypatch.setattr(sc.subprocess, "run", lambda args, **kw: ran.append(args) or Done())
+    monkeypatch.setattr(sc.subprocess, "Popen", lambda args, **kw: ran.append(["launch", *args]))
+    return ran
+
+
+def test_linux_actions(tmp_path, linux, monkeypatch):  # tmp_path first: it needs the real OS
+    monkeypatch.setattr(sc.Path, "home", lambda: tmp_path)
+    sc.run_action("open_app", "notepad")
+    sc.run_action("volume_up")
+    sc.run_action("play_pause")
+    sc.run_action("lock")
+    sc.run_action("screenshot")
+    assert linux[0] == ["launch", "gnome-text-editor"]
+    assert linux[1] == ["pactl", "set-sink-volume", "@DEFAULT_SINK@", "+10%"]
+    assert linux[2] == ["playerctl", "play-pause"]
+    assert linux[3] == ["loginctl", "lock-session"]
+    assert linux[4][:2] == ["gnome-screenshot", "-f"]
+
+
+def test_linux_explains_a_missing_app(linux):
+    with pytest.raises(sc.SystemControlError, match="installed"):
+        sc.run_action("open_app", "spotify")
+
+
+def test_mac_actions(monkeypatch):
+    ran = []
+    monkeypatch.setattr(sc.sys, "platform", "darwin")
+    monkeypatch.setattr(settings, "system_control", True)
+
+    class Done:
+        returncode, stdout, stderr = 0, "", ""
+
+    monkeypatch.setattr(sc.subprocess, "run", lambda args, **kw: ran.append(args) or Done())
+    sc.run_action("open_app", "calculator")
+    sc.run_action("close_app", "calculator")
+    sc.run_action("mute")
+    assert ran[0] == ["open", "-a", "Calculator"]
+    assert ran[1] == ["osascript", "-e", 'quit app "Calculator"']
+    assert "output muted" in ran[2][2]
 
 
 def test_missing_app_is_a_friendly_error(pc, monkeypatch):
@@ -91,7 +190,7 @@ def test_system_routes(client, pc, monkeypatch):
     assert client.post("/system/action", json={"action": "open_app", "target": "calculator"}).status_code == 401
     r = client.post("/system/action", json={"action": "open_app", "target": "calculator"}, headers=headers())
     assert r.status_code == 200 and pc == [("start", "calc.exe")]
-    r = client.post("/system/action", json={"action": "shutdown"}, headers=headers())
+    r = client.post("/system/action", json={"action": "format_disk"}, headers=headers())
     assert r.status_code == 400 and "Unknown action" in r.json()["detail"]
 
     monkeypatch.setattr(sc, "_status_cache", None)

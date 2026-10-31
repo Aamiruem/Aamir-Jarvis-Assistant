@@ -35,6 +35,7 @@ frontend/ (React)                backend/
 | [jarvis.py](jarvis.py) | Python stdlib | Terminal client |
 
 **Learning path:** see [docs/LEARNING_ROADMAP.md](docs/LEARNING_ROADMAP.md).
+**Voice commands, "Hey Jarvis", Room Watch and Windows/Linux/macOS control:** see [docs/VOICE_AND_PC_CONTROL.md](docs/VOICE_AND_PC_CONTROL.md).
 **Every endpoint:** see [docs/API.md](docs/API.md).
 
 ### Backend features

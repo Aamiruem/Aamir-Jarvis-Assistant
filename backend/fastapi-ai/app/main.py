@@ -24,6 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.db.sql import init_db
 from app.llm.claude import key_status
+from app.system_control import current_os
 from app.nlp.intent import get_classifier
 from app.rag.store import get_store
 from app.routers import chat, misc, rag, system
@@ -85,7 +86,8 @@ async def health():
         "model": settings.claude_model,
         "api_key_in_env": bool(settings.anthropic_api_key),
         "claude": key_status(),
-        "system_control": settings.system_control and sys.platform == "win32",
+        "system_control": settings.system_control,
+        "os": current_os(),
         "database": settings.sqlalchemy_url.split(":")[0],
         "storage": "s3" if settings.s3_bucket else "local",
         "rag_embedder": settings.rag_embedder,

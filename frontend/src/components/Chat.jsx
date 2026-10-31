@@ -5,6 +5,7 @@ import { Icon } from '../icons.jsx';
 import { openUrl, quickCommand } from '../quickCommands.js';
 import { toast } from '../ui.jsx';
 import { useSpeech } from '../useSpeech.js';
+import { afterWakeWord } from '../wakeWord.js';
 
 const SUGGESTIONS = [
   { icon: 'weather', hue: 205, text: "What's the weather in Mumbai?" },
@@ -35,6 +36,7 @@ const TOOL_LABELS = {
 };
 const STOP_WORDS = /^(stop|stop listening|that's all|that is all|goodbye|bye|bye jarvis|exit|go to sleep)[.!]?$/i;
 const MAX_SILENT_ROUNDS = 4; // hands-free pauses after this many listens with no speech
+const FOLLOW_UP_MS = 8000; // after Jarvis answers, a follow-up within this time needs no "Jarvis"
 
 export default function Chat({ conversationId, onConversation, prompt, onPromptUsed }) {
   const [messages, setMessages] = useState([]);
@@ -48,10 +50,27 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
   const handsFreeRef = useRef(false);
   const silentRounds = useRef(0);
   const [voiceNote, setVoiceNote] = useState('');
+  // Wake-word mode: always listening, but only acts on speech addressed to "Jarvis".
+  const [wake, setWake] = useState(false);
+  const wakeRef = useRef(false);
+  const followUntil = useRef(0);
 
   const speech = useSpeech({
-    onFinal: (text) => {
+    onFinal: (heard) => {
       silentRounds.current = 0;
+      let text = heard;
+      if (handsFreeRef.current && wakeRef.current && Date.now() > followUntil.current) {
+        const request = afterWakeWord(heard);
+        if (request === null) return listenSoon(); // not talking to Jarvis
+        if (!request) {
+          speech.speak('Yes?', () => {
+            followUntil.current = Date.now() + FOLLOW_UP_MS;
+            listenSoon();
+          });
+          return;
+        }
+        text = request;
+      }
       if (handsFreeRef.current && STOP_WORDS.test(text)) {
         endHandsFree();
         speech.speak('Okay. Voice mode off.');
@@ -61,6 +80,7 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
     },
     onSilence: () => {
       if (!handsFreeRef.current) return;
+      if (wakeRef.current) return listenSoon(); // always listening: silence is normal
       silentRounds.current += 1;
       if (silentRounds.current >= MAX_SILENT_ROUNDS) {
         endHandsFree();
@@ -75,16 +95,27 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
       if (handsFreeRef.current && mountedRef.current) speech.start();
     }, 350);
   }
-  function startHandsFree() {
+  /** wake: wait for "Jarvis" before acting. greeting: say this first, then listen. */
+  function startHandsFree({ wake: useWake = false, greeting = '' } = {}) {
     handsFreeRef.current = true;
+    wakeRef.current = useWake;
     silentRounds.current = 0;
     setVoiceNote('');
     setHandsFree(true);
-    speech.start();
+    setWake(useWake);
+    if (greeting) {
+      speech.cancel();
+      speech.speak(greeting, () => {
+        followUntil.current = Date.now() + FOLLOW_UP_MS; // they can answer the greeting directly
+        listenSoon();
+      });
+    } else speech.start();
   }
   function endHandsFree() {
     handsFreeRef.current = false;
+    wakeRef.current = false;
     setHandsFree(false);
+    setWake(false);
     speech.cancel();
     speech.stopSpeaking();
   }
@@ -120,7 +151,7 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
   useEffect(() => {
     if (!prompt || usedPrompt.current === prompt.id) return; // StrictMode runs effects twice in dev
     usedPrompt.current = prompt.id;
-    if (prompt.handsFree) startHandsFree();
+    if (prompt.handsFree) startHandsFree({ wake: prompt.wake, greeting: prompt.greeting });
     else if (prompt.send) send(prompt.text);
     else setInput(prompt.text);
     onPromptUsed?.();
@@ -229,6 +260,7 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
   function finishTurn(spoken) {
     if (handsFreeRef.current || voiceReplies) {
       speech.speak(spoken, () => {
+        followUntil.current = Date.now() + FOLLOW_UP_MS;
         if (handsFreeRef.current) listenSoon();
       });
     }
@@ -306,7 +338,10 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
           <span className="voice-wave" aria-hidden="true"><i /><i /><i /><i /><i /></span>
           <span className="voice-status" aria-live="polite">
             {speech.listening
-              ? speech.interim || 'Listening… say several things at once, or “stop” to finish'
+              ? speech.interim ||
+                (wake && Date.now() > followUntil.current
+                  ? 'Always listening… start with “Jarvis”, e.g. “Jarvis, open Notepad”'
+                  : 'Listening… say several things at once, or “stop” to finish')
               : busy
                 ? 'Working on it…'
                 : speech.speaking
@@ -335,10 +370,20 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
           <button
             type="button"
             className={`btn voice-mode ${handsFree ? 'on' : ''}`}
-            onClick={handsFree ? endHandsFree : startHandsFree}
+            onClick={handsFree ? endHandsFree : () => startHandsFree()}
             title="Hands-free: Jarvis keeps listening and answers out loud"
           >
-            <Icon name="mic" size="1em" /> {handsFree ? 'Voice on' : 'Voice mode'}
+            <Icon name="mic" size="1em" /> {handsFree ? (wake ? 'Listening for “Jarvis”' : 'Voice on') : 'Voice mode'}
+          </button>
+        )}
+        {speech.supported && !handsFree && (
+          <button
+            type="button"
+            className="btn voice-mode"
+            onClick={() => startHandsFree({ wake: true })}
+            title="Always listening: Jarvis only answers when you say “Jarvis” first"
+          >
+            Hey Jarvis
           </button>
         )}
         <input

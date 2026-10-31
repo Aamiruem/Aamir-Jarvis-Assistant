@@ -142,6 +142,7 @@ kbd { font: 11px/1 Inter, sans-serif; padding: 3px 6px; border-radius: 6px; bord
   color: var(--muted); font-size: 18px; padding: 6px; border-radius: 9px; transition: color 0.15s, background 0.15s;
 }
 .icon-btn:hover:not(:disabled) { color: var(--text); background: var(--panel-2); }
+.icon-btn.room-watch.on { color: var(--accent); background: rgba(56, 225, 255, 0.12); box-shadow: 0 0 12px rgba(56, 225, 255, 0.35); }
 input:not([type='checkbox']):not([type='radio']), textarea, select {
   padding: 10px 13px; border-radius: 11px; min-width: 0;
   background: var(--field); border: 1px solid var(--border); outline: none;

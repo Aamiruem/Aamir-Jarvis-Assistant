@@ -133,10 +133,12 @@ export const api = {
   deleteDocument: (id) => request(`/ai/rag/documents/${id}`, { method: 'DELETE' }),
   searchDocuments: (query) => request('/ai/rag/search', { method: 'POST', body: { query, k: 4 } }),
 
-  analyzeImage: (blob, question) => {
+  /** useLlm: false = local face detection only (fast, free, nothing sent to Claude). */
+  analyzeImage: (blob, question, { useLlm = true } = {}) => {
     const form = new FormData();
     form.append('file', blob, 'capture.jpg');
     form.append('question', question || '');
+    form.append('use_llm', String(useLlm));
     return request('/ai/vision/analyze', { method: 'POST', form });
   },
 

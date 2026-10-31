@@ -35,12 +35,14 @@ const SEARCH = {
   maps: ['Google Maps', (q) => `https://www.google.com/maps/search/${encodeURIComponent(q)}`],
 };
 
-// Windows apps and folders the AI service can open (same names as backend/fastapi-ai/app/system_control.py).
+// Apps and folders the AI service can open on Windows, Linux or macOS (same names as
+// backend/fastapi-ai/app/system_control.py; a name the computer's OS lacks gets a friendly error).
 const APPS = [
   'notepad', 'calculator', 'paint', 'file explorer', 'explorer', 'task manager', 'command prompt', 'terminal',
   'powershell', 'control panel', 'settings', 'wifi settings', 'bluetooth settings', 'display settings',
   'sound settings', 'camera', 'clock', 'alarms', 'photos', 'microsoft store', 'snipping tool', 'edge', 'chrome',
   'vs code', 'visual studio code', 'word', 'excel', 'powerpoint', 'spotify',
+  'firefox', 'safari', 'finder', 'files', 'text editor', 'notes', 'activity monitor', 'system monitor',
 ];
 const FOLDERS = ['downloads', 'documents', 'desktop', 'pictures', 'music', 'videos'];
 const SYSTEM_PHRASES = [
@@ -52,6 +54,10 @@ const SYSTEM_PHRASES = [
   [/^(?:previous|previous (?:song|track|video)|go back a (?:song|track))$/i, 'previous_track', 'Previous track.'],
   [/^lock (?:the |my )?(?:computer|pc|laptop|screen|system)$/i, 'lock', 'Locking the PC.'],
   [/^(?:take (?:a )?)?screenshot$|^(?:take|capture) (?:a )?(?:screen ?shot|screen capture)(?: of (?:the |my )?screen)?$/i, 'screenshot', 'Screenshot taken.'],
+  // Must work instantly, even when the AI is slow: the safety net for a scheduled shutdown/restart.
+  [/^(?:cancel|stop|abort|don't|do not) (?:the )?(?:shut ?down|restart|reboot)$/i, 'cancel_shutdown', 'Cancelled. The computer stays on.'],
+  [/^(?:sleep|put) (?:the |my )?(?:computer|pc|laptop|system)(?: to sleep)?$/i, 'sleep', 'Going to sleep.'],
+  // Shutdown and restart are left to the AI on purpose: it asks for confirmation first.
 ];
 const titleCase = (s) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 
@@ -100,7 +106,13 @@ export function quickCommand(text) {
     const folder = name.replace(/\s+folder$/, '');
     if (FOLDERS.includes(folder)) return { system: { action: 'open_folder', target: folder }, say: `Opening your ${folder} folder.` };
   }
-  // volume, media keys, lock, screenshot
+  // "close notepad", "quit the calculator app"
+  m = t.match(/^(?:close|quit|exit|kill)\s+(?:the\s+|my\s+)?(.+?)(?:\s+app)?$/i);
+  if (m && APPS.includes(m[1].toLowerCase())) {
+    const name = m[1].toLowerCase();
+    return { system: { action: 'close_app', target: name }, say: `Closing ${titleCase(name)}.` };
+  }
+  // volume, media keys, lock, screenshot, sleep, cancel shutdown
   for (const [re, action, say] of SYSTEM_PHRASES) {
     if (re.test(t)) return { system: { action }, say };
   }

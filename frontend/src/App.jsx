@@ -8,6 +8,7 @@ import ThemeMenu from './components/ThemeMenu.jsx';
 import { Icon } from './icons.jsx';
 import { useTheme } from './theme.js';
 import { toast, Toaster } from './ui.jsx';
+import { useRoomWatch } from './useRoomWatch.js';
 
 // Code splitting: Home and sign-in load first; every other tab is its own small file,
 // downloaded the first time it's opened (Chat is fetched early while the browser is idle).
@@ -43,6 +44,32 @@ const readCollapsed = () => {
 };
 const isPhone = () => window.matchMedia('(max-width: 760px)').matches;
 
+const readRoomWatch = () => {
+  try {
+    return localStorage.getItem('jarvis-room-watch') === 'on';
+  } catch {
+    return false;
+  }
+};
+
+/** What Jarvis says when someone walks in: a greeting plus today's open reminders. */
+async function arrivalGreeting(name) {
+  const hour = new Date().getHours();
+  const hello = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const first = (name || '').split(' ')[0];
+  let today = [];
+  try {
+    const endOfDay = new Date().setHours(23, 59, 59, 999);
+    today = (await api.tasks(false)).filter((t) => t.remind_at && new Date(t.remind_at).getTime() <= endOfDay);
+  } catch {}
+  const time = (iso) => new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const list = today.slice(0, 3).map((t) => `${t.title} at ${time(t.remind_at)}`).join(', ');
+  const tasks = today.length
+    ? ` You have ${today.length} reminder${today.length > 1 ? 's' : ''} today: ${list}.`
+    : '';
+  return `${hello}${first ? `, ${first}` : ''}. Welcome back.${tasks} What can I do for you?`;
+}
+
 // Sidebar groups by last activity.
 function groupConversations(list) {
   const day = 86_400_000;
@@ -68,7 +95,27 @@ export default function App() {
   const [convQuery, setConvQuery] = useState('');
   const [contactQuery, setContactQuery] = useState('');
   const [collapsed, setCollapsed] = useState(readCollapsed);
+  const [roomWatchOn, setRoomWatchOn] = useState(readRoomWatch);
   const theme = useTheme();
+
+  // Room Watch: when someone walks in, greet them and start always-listening voice mode.
+  const roomWatch = useRoomWatch({
+    enabled: Boolean(user) && roomWatchOn,
+    onArrival: async () => {
+      const greeting = await arrivalGreeting(user?.name);
+      setActiveId(null);
+      setPrompt({ id: Date.now(), handsFree: true, wake: true, greeting });
+      setTab('chat');
+    },
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('jarvis-room-watch', roomWatchOn ? 'on' : 'off');
+    } catch {}
+  }, [roomWatchOn]);
+  useEffect(() => {
+    if (roomWatch.error) toast(roomWatch.error, 'error');
+  }, [roomWatch.error]);
 
   useEffect(() => {
     try {
@@ -234,6 +281,19 @@ export default function App() {
             <Icon name="search" size="1em" />
             <span className="grow">Search chats, contacts, tasks…</span>
             <kbd>Ctrl K</kbd>
+          </button>
+          <button
+            className={`icon-btn room-watch ${roomWatchOn ? 'on' : ''}`}
+            onClick={() => setRoomWatchOn((on) => !on)}
+            aria-pressed={roomWatchOn}
+            aria-label="Room Watch"
+            title={
+              roomWatchOn
+                ? `Room Watch is on (${roomWatch.status}): Jarvis greets you when you walk in. Click to turn off.`
+                : 'Room Watch: Jarvis notices when you walk into the room, greets you and starts listening'
+            }
+          >
+            <Icon name="eye" />
           </button>
           <ThemeMenu theme={theme} />
           <NotificationBell />
