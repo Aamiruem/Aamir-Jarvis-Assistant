@@ -1,0 +1,26 @@
+# Secrets: never commit. Copy .env.example to .env instead.
+.env
+.env.*
+!.env.example
+
+# Dependencies and build output
+node_modules/
+dist/
+.next/
+out/
+*.tsbuildinfo
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Personal data: users, sessions, OTPs, chats, uploaded documents (rebuilt on first run)
+backend/express-api/data/
+backend/express-api/logs/
+backend/fastapi-ai/data/
+*.log
+
+# Test reports
+test-results/
+playwright-report/
+coverage/

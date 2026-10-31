@@ -1,0 +1,66 @@
+# One command runs the whole stack:   docker compose up --build
+#   React UI         http://localhost:3000
+#   Next.js dashboard http://localhost:3001
+#   Express API      http://localhost:4000/api/health
+#   FastAPI docs     http://localhost:8000/docs
+#   Streamlit admin  http://localhost:8501
+# OTP codes are printed in the express-api logs:  docker compose logs -f express-api
+services:
+  mongo:
+    image: mongo:7
+    volumes: [mongo_data:/data/db]
+    ports: ["27017:27017"]
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: jarvis
+      POSTGRES_PASSWORD: jarvis
+      POSTGRES_DB: jarvis
+    volumes: [pg_data:/var/lib/postgresql/data]
+    ports: ["5432:5432"]
+
+  fastapi-ai:
+    build: ./backend/fastapi-ai
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+psycopg://jarvis:jarvis@postgres:5432/jarvis
+      DATA_DIR: /app/data
+      SYSTEM_CONTROL: "false" # a container can't (and shouldn't) control the host PC
+    volumes: [ai_data:/app/data]
+    ports: ["8000:8000"]
+    depends_on: [postgres]
+
+  express-api:
+    build: ./backend/express-api
+    env_file: .env
+    environment:
+      MONGO_URI: mongodb://mongo:27017/jarvis
+      AI_SERVICE_URL: http://fastapi-ai:8000
+    ports: ["4000:4000"]
+    depends_on: [mongo, fastapi-ai]
+
+  streamlit-admin:
+    build: ./backend/streamlit-admin
+    env_file: .env
+    environment:
+      AI_SERVICE_URL: http://fastapi-ai:8000
+    ports: ["8501:8501"]
+    depends_on: [fastapi-ai]
+
+  frontend:
+    build: ./frontend
+    ports: ["3000:80"]
+    depends_on: [express-api]
+
+  dashboard:
+    build:
+      context: ./dashboard
+      args: { BACKEND_URL: "http://express-api:4000" }
+    ports: ["3001:3001"]
+    depends_on: [express-api]
+
+volumes:
+  mongo_data:
+  pg_data:
+  ai_data:

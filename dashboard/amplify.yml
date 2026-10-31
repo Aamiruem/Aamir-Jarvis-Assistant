@@ -1,0 +1,22 @@
+# AWS Amplify Hosting (the managed alternative to the Docker image).
+# In the Amplify console: set the app root to "dashboard" and add BACKEND_URL as an env variable.
+version: 1
+applications:
+  - appRoot: dashboard
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - nvm use 22
+            - npm ci
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - "**/*"
+      cache:
+        paths:
+          - node_modules/**/*
+          - .next/cache/**/*

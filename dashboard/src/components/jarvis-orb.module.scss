@@ -1,0 +1,49 @@
+// The Jarvis orb, written in Sass to show modules, variables, mixins, nesting and loops.
+// GSAP (jarvis-orb.tsx) animates the rings; this file only draws them.
+
+@use "sass:color";
+
+$cyan: #38e1ff;
+$violet: #7c3aed;
+$ring-count: 3;
+
+@mixin centered($size) {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: $size;
+  height: $size;
+  margin: calc($size / -2) 0 0 calc($size / -2);
+  border-radius: 50%;
+}
+
+.orb {
+  position: relative;
+  width: var(--orb-size, 16rem);
+  aspect-ratio: 1;
+
+  .core {
+    @include centered(46%);
+    background: radial-gradient(circle at 38% 34%, #e0fbff 0%, $cyan 38%, $violet 100%);
+    box-shadow:
+      0 0 40px color.change($cyan, $alpha: 0.55),
+      0 0 120px color.change($violet, $alpha: 0.35);
+  }
+
+  .ring {
+    @include centered(70%);
+    border: 2px solid color.change($cyan, $alpha: 0.55);
+    border-top-color: transparent;
+    border-bottom-color: color.change($violet, $alpha: 0.6);
+
+    @for $i from 2 through $ring-count {
+      &:nth-of-type(#{$i + 1}) {
+        width: 70% + ($i - 1) * 14%;
+        height: 70% + ($i - 1) * 14%;
+        margin: calc((70% + ($i - 1) * 14%) / -2) 0 0 calc((70% + ($i - 1) * 14%) / -2);
+        border-width: 1px;
+        opacity: 1 - $i * 0.22;
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+# One shared environment for every lesson folder.
+#   python -m venv .venv && .venv\Scripts\activate && pip install -r requirements.txt
+
+# 01-python
+httpx>=0.27
+# 02-sql / 03-postgresql
+sqlalchemy>=2.0
+psycopg[binary]>=3.2
+py-pglite>=0.5          # real PostgreSQL (PGlite) started on demand; needs Node.js
+# 04-fastapi / 05-backend-architecture
+fastapi>=0.115
+uvicorn[standard]>=0.32
+pydantic-settings>=2.6
+# 06-numpy / 07-pandas / 08-statistics
+numpy>=2.1
+pandas>=2.2
+scipy>=1.14
+# 09-machine-learning
+scikit-learn>=1.6
+joblib>=1.4
+# 10-deep-learning
+torch>=2.5
+# 11-llms / 12-rag / 13-ai-agents
+anthropic>=1.0
+# 14-mlops
+mlflow>=3.0
+# 16-aws (moto fakes AWS locally, no account needed)
+boto3>=1.35
+moto[s3,sqs,secretsmanager]>=5.0
+# tests
+pytest>=8.3

@@ -1,0 +1,43 @@
+{
+  "greeting": [
+    "hello jarvis", "hi there", "hey", "good morning", "good evening jarvis",
+    "hello", "yo jarvis", "hey buddy how are you", "namaste", "what's up"
+  ],
+  "task": [
+    "remind me to call mom tomorrow", "add a task to buy groceries", "create a todo for the report",
+    "what are my tasks", "show my todo list", "mark task 3 as done", "i need to finish the slides by friday",
+    "set a reminder for the meeting at 5pm", "add pay electricity bill to my list", "list pending tasks"
+  ],
+  "knowledge": [
+    "what does my document say about pricing", "search my notes for the api key rotation policy",
+    "according to the pdf what is the deadline", "summarize the uploaded report",
+    "find in my files the section on refunds", "what did the contract say about termination",
+    "look up my notes on machine learning", "what is in my knowledge base about aws",
+    "check the handbook for leave policy", "from my documents explain the architecture"
+  ],
+  "weather": [
+    "what's the weather in delhi", "will it rain today", "temperature in mumbai",
+    "is it cold outside in london", "weather forecast for bangalore", "how hot is it in dubai",
+    "do i need an umbrella", "current weather", "wind speed in chennai", "is it sunny in pune"
+  ],
+  "math": [
+    "what is 25 times 48", "calculate 15 percent of 2400", "square root of 144",
+    "solve 2 to the power 10", "what's 1234 divided by 7", "add 45 and 89",
+    "compute sin of 30 degrees", "how much is 18 percent gst on 5000", "multiply 12 by 13", "convert 100 f to c"
+  ],
+  "time": [
+    "what time is it", "what's the date today", "current time in new york", "what day is it",
+    "time in tokyo", "tell me the time", "is it monday today", "what is today's date",
+    "what time is it in london", "how many days until sunday"
+  ],
+  "vision": [
+    "what do you see", "look at this picture", "describe this image", "how many faces are in the photo",
+    "what is in front of the camera", "read the text in this image", "identify this object",
+    "analyze my webcam", "what color is this", "who is in this photo"
+  ],
+  "chitchat": [
+    "tell me a joke", "who are you", "what can you do", "you are awesome", "i'm bored",
+    "what is the meaning of life", "do you like music", "thank you jarvis", "how old are you",
+    "explain quantum computing simply"
+  ]
+}

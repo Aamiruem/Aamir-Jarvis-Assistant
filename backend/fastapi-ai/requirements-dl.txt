@@ -1,0 +1,6 @@
+# Optional, heavy deep-learning extras. Install after requirements.txt:
+#   pip install -r requirements-dl.txt
+#   python -m spacy download en_core_web_sm
+torch>=2.5                     # ml/train_intent_dl.py (PyTorch neural network)
+sentence-transformers>=3.3     # RAG_EMBEDDER=sentence-transformers (dense embeddings)
+spacy>=3.8                     # better named-entity recognition in app/nlp/analyzer.py

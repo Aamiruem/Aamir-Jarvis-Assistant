@@ -1,0 +1,1571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Python AI Backend Track</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a two-pane "field manual" — the 7-stage route on the left, one technology lesson on the right, code at the centre of each lesson. */
+:root {
+  --bg: #F2F4F8;
+  --panel: #FFFFFF;
+  --ink: #131929;
+  --muted: #586179;
+  --line: #DCE1EB;
+  --accent: #0B7566;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #DDF3EE;
+  --done: #1C7F55;
+  --done-soft: #DDF2E8;
+  --code-bg: #0E1325;
+  --code-fg: #D6DCEF;
+  --code-line: #1F2740;
+  --k: #9DA9FF; --s: #8EDBB0; --n: #F5B97A; --c: #6C7593; --t: #F08DB8; --f: #7FD3F0;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B0F18; --panel: #121827; --ink: #E5E9F3; --muted: #97A0B6; --line: #242C3F;
+    --accent: #4FD1B5; --accent-ink: #0B0F18; --accent-soft: #10302B;
+    --done: #5FD39E; --done-soft: #12301F;
+    --code-bg: #070A13; --code-line: #1A2136;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B0F18; --panel: #121827; --ink: #E5E9F3; --muted: #97A0B6; --line: #242C3F;
+  --accent: #4FD1B5; --accent-ink: #0B0F18; --accent-soft: #10302B;
+  --done: #5FD39E; --done-soft: #12301F;
+  --code-bg: #070A13; --code-line: #1A2136;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.6; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+
+header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px 32px; padding-bottom: 22px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
+.eyebrow { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 800 clamp(30px, 5vw, 48px)/1.02 var(--display); letter-spacing: -.02em; margin: 8px 0 6px; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 60ch; margin: 0; }
+.progress { min-width: 220px; flex: 0 1 300px; }
+.progress .row { display: flex; justify-content: space-between; font: 500 13px var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+.bar { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 8px; }
+.bar i { display: block; height: 100%; width: 0; background: var(--done); transition: width .4s ease; }
+
+.layout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 32px; align-items: start; }
+nav.route { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); max-height: calc(100vh - 32px); overflow-y: auto; padding-right: 4px; }
+.stage { margin-bottom: 18px; }
+.stage-h { display: flex; gap: 10px; align-items: baseline; margin-bottom: 6px; }
+.stage-n { font: 700 12px var(--mono); color: var(--accent-ink); background: var(--accent); border-radius: 4px; padding: 2px 6px; }
+.stage-t { font: 700 15px var(--display); }
+.stage ul { list-style: none; margin: 0; padding: 0 0 0 4px; border-left: 2px solid var(--line); }
+.stage li button { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 8px; width: 100%; padding: 5px 10px; margin-left: -2px; border-left: 2px solid transparent; font-size: 14px; color: var(--muted); }
+.stage li button:hover { color: var(--ink); }
+.stage li button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.stage li button[aria-current="true"] { color: var(--ink); font-weight: 600; border-left-color: var(--accent); background: var(--accent-soft); }
+.dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--line); flex: none; }
+.done .dot { background: var(--done); border-color: var(--done); }
+.mobile-pick { display: none; }
+
+main.lesson { min-width: 0; }
+.cat { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.lesson h2 { font: 800 clamp(28px, 4vw, 40px)/1.05 var(--display); letter-spacing: -.02em; margin: 6px 0 12px; text-wrap: balance; }
+.what { font-size: 17px; max-width: 65ch; margin: 0 0 20px; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; margin-bottom: 22px; }
+.box { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+.box h3 { font: 700 13px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin: 0 0 10px; }
+.box ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.box p { margin: 0; }
+code.i { font-family: var(--mono); font-size: .88em; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+
+.code { background: var(--code-bg); color: var(--code-fg); border-radius: 12px; overflow: hidden; margin-bottom: 22px; }
+.code-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--code-line); font: 500 12px var(--mono); color: var(--c); }
+.code-bar .file { color: var(--code-fg); }
+.copy { all: unset; cursor: pointer; font: 500 12px var(--mono); color: var(--code-fg); border: 1px solid var(--code-line); border-radius: 6px; padding: 4px 10px; }
+.copy:hover { border-color: var(--k); }
+.copy:focus-visible { outline: 2px solid var(--k); }
+pre { margin: 0; padding: 16px 18px; overflow-x: auto; font: 400 13.5px/1.65 var(--mono); tab-size: 2; }
+pre code { font: inherit; background: none; }
+.hljs-keyword, .hljs-built_in, .hljs-selector-tag, .hljs-meta .hljs-keyword { color: var(--k); }
+.hljs-string, .hljs-attr + .hljs-string, .hljs-regexp, .hljs-template-variable { color: var(--s); }
+.hljs-number, .hljs-literal, .hljs-symbol { color: var(--n); }
+.hljs-comment, .hljs-quote { color: var(--c); font-style: italic; }
+.hljs-title, .hljs-title.function_, .hljs-section { color: var(--f); }
+.hljs-name, .hljs-tag, .hljs-type, .hljs-title.class_, .hljs-selector-class, .hljs-selector-id { color: var(--t); }
+.hljs-attr, .hljs-attribute, .hljs-property, .hljs-variable, .hljs-params { color: #C9B6FF; }
+.hljs-subst { color: var(--code-fg); }
+
+.tip { display: flex; gap: 14px; align-items: flex-start; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin-bottom: 22px; }
+.tip b { font: 700 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--done); white-space: nowrap; padding-top: 2px; }
+.tip p { margin: 0; }
+.tip.jarvis { border-color: var(--accent); background: var(--accent-soft); }
+.tip.jarvis b { color: var(--accent); }
+
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 18px; }
+.btn { all: unset; cursor: pointer; font: 600 14px var(--body); padding: 9px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+.btn:hover { border-color: var(--accent); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.is-done { background: var(--done-soft); color: var(--done); border-color: var(--done); }
+.btn[disabled] { opacity: .4; cursor: default; }
+.nav-pair { display: flex; gap: 10px; }
+
+@media (max-width: 860px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  nav.route { display: none; }
+  .mobile-pick { display: block; margin-bottom: 18px; }
+  .mobile-pick select { width: 100%; font: 500 15px var(--body); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+</style>
+<style>body{margin:0;font-size:15px}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Backend · Python + AI · 6 stages · <span id="count"></span> lessons</div>
+      <h1>Python AI Backend Track</h1>
+      <p class="lede">From Python basics to deployed AI agents, in the order you should learn it. Each lesson explains the idea, gives you working code, and points to where the same idea lives in your Jarvis fastapi-ai service.</p>
+    </div>
+    <div class="progress" aria-live="polite">
+      <div class="row"><span>Your progress</span><span id="pct">0 / 0</span></div>
+      <div class="bar"><i id="barfill"></i></div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="route" id="route" aria-label="Learning route"></nav>
+    <main class="lesson">
+      <div class="mobile-pick"><label class="cat" for="picker">Jump to lesson</label><select id="picker"></select></div>
+      <div id="lesson"></div>
+    </main>
+  </div>
+</div>
+
+<script type="text/plain" data-code="python">
+# ── Types, f-strings, truthiness
+name: str = "Jarvis"
+version: float = 2.0
+print(f"{name} v{version:.1f}")          # Jarvis v2.0
+items = []
+if not items:                             # empty list/str/dict/0/None are falsy
+    print("nothing yet")
+
+# ── Collections + comprehensions
+tasks = [
+    {"id": 1, "title": "Buy milk", "done": False, "priority": 2},
+    {"id": 2, "title": "Learn FastAPI", "done": True, "priority": 1},
+]
+open_titles = [t["title"] for t in tasks if not t["done"]]      # list comprehension
+by_id = {t["id"]: t for t in tasks}                              # dict comprehension
+priorities = {t["priority"] for t in tasks}                      # set
+first, *rest = [10, 20, 30]                                      # unpacking
+
+# ── Functions: defaults, *args, **kwargs, keyword-only args
+def notify(message: str, *channels: str, urgent: bool = False, **meta) -> str:
+    prefix = "🚨 " if urgent else ""
+    return f"{prefix}{message} via {', '.join(channels) or 'console'} {meta}"
+
+notify("Server up", "email", "sms", urgent=True, user_id=42)
+
+# ── Lambdas, sorting, built-ins
+ranked = sorted(tasks, key=lambda t: (t["done"], t["priority"]))
+total = sum(t["priority"] for t in tasks)           # generator expression, no list built
+for i, t in enumerate(tasks, start=1): ...
+for title, prio in zip(["a", "b"], [1, 2]): ...
+
+# ── Classes, dataclasses, properties, dunder methods
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+
+@dataclass
+class Task:
+    title: str
+    priority: int = 3
+    tags: list[str] = field(default_factory=list)   # never use a mutable default directly
+    created: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+    @property
+    def is_urgent(self) -> bool:
+        return self.priority == 1
+
+    def __str__(self) -> str:
+        return f"[P{self.priority}] {self.title}"
+
+# ── Inheritance + abstract base classes
+from abc import ABC, abstractmethod
+
+class Notifier(ABC):
+    @abstractmethod
+    def send(self, to: str, text: str) -> None: ...
+
+class ConsoleNotifier(Notifier):
+    def send(self, to, text):
+        print(f"→ {to}: {text}")
+
+# ── Exceptions
+class TaskNotFound(Exception):
+    pass
+
+def get_task(task_id: int) -> dict:
+    try:
+        return by_id[task_id]
+    except KeyError as exc:
+        raise TaskNotFound(f"No task {task_id}") from exc
+    finally:
+        pass  # runs either way (close files, release locks)
+
+# ── Context managers and files
+from pathlib import Path
+import json
+
+path = Path("data") / "tasks.json"
+path.parent.mkdir(exist_ok=True)
+with path.open("w", encoding="utf-8") as f:   # file closes automatically
+    json.dump(tasks, f, indent=2)
+
+# ── Generators: lazy sequences, constant memory
+def read_lines(p: Path):
+    with p.open(encoding="utf-8") as f:
+        for line in f:
+            yield line.rstrip()
+
+# ── Decorators: wrap a function with extra behaviour
+import functools, time
+
+def timed(fn):
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        try:
+            return fn(*args, **kwargs)
+        finally:
+            print(f"{fn.__name__} took {(time.perf_counter() - start) * 1000:.1f}ms")
+    return wrapper
+
+# ── async / await: thousands of I/O waits on one thread (FastAPI is built on this)
+import asyncio, httpx
+
+async def fetch_all(urls: list[str]) -> list[int]:
+    async with httpx.AsyncClient(timeout=10) as client:
+        responses = await asyncio.gather(*(client.get(u) for u in urls))
+    return [r.status_code for r in responses]
+
+if __name__ == "__main__":
+    print(asyncio.run(fetch_all(["https://example.com"] * 3)))
+
+# Environment:  python -m venv .venv  →  .venv\Scripts\activate  →  pip install -r requirements.txt
+</script>
+
+<script type="text/plain" data-code="sql">
+-- ── Create tables with constraints
+CREATE TABLE users (
+  id          SERIAL PRIMARY KEY,
+  email       VARCHAR(255) UNIQUE NOT NULL,
+  name        TEXT NOT NULL,
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE tasks (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,   -- foreign key
+  title       TEXT NOT NULL,
+  priority    INTEGER NOT NULL DEFAULT 3 CHECK (priority BETWEEN 1 AND 5),
+  done        BOOLEAN NOT NULL DEFAULT FALSE,
+  due_at      TIMESTAMP
+);
+
+-- ── CRUD
+INSERT INTO users (email, name) VALUES ('aamir@example.com', 'Aamir'), ('manish@example.com', 'Manish');
+INSERT INTO tasks (user_id, title, priority, due_at)
+VALUES (1, 'Learn SQL', 1, '2026-11-01 10:00'), (1, 'Buy milk', 4, NULL), (2, 'Deploy API', 2, NULL);
+
+SELECT id, title FROM tasks WHERE user_id = 1 AND done = FALSE ORDER BY priority, due_at NULLS LAST LIMIT 10;
+UPDATE tasks SET done = TRUE WHERE id = 2;
+DELETE FROM tasks WHERE done = TRUE AND due_at < CURRENT_DATE - INTERVAL '30 days';
+
+-- ── Filtering
+SELECT * FROM tasks WHERE title LIKE '%SQL%';            -- pattern
+SELECT * FROM tasks WHERE priority IN (1, 2);
+SELECT * FROM tasks WHERE due_at IS NULL;               -- never "= NULL"
+
+-- ── JOINs: combine tables
+SELECT u.name, t.title
+FROM tasks t
+JOIN users u ON u.id = t.user_id;                        -- INNER: only matching rows
+
+SELECT u.name, COUNT(t.id) AS task_count                 -- LEFT: keep users with zero tasks
+FROM users u
+LEFT JOIN tasks t ON t.user_id = u.id
+GROUP BY u.name;
+
+-- ── Aggregation: GROUP BY + HAVING (filter AFTER grouping)
+SELECT user_id,
+       COUNT(*)                                   AS total,
+       SUM(CASE WHEN done THEN 1 ELSE 0 END)      AS completed,
+       ROUND(AVG(priority), 2)                    AS avg_priority
+FROM tasks
+GROUP BY user_id
+HAVING COUNT(*) >= 2;
+
+-- ── Subquery: users who have an urgent open task
+SELECT name FROM users
+WHERE id IN (SELECT user_id FROM tasks WHERE priority = 1 AND NOT done);
+
+-- ── CTE (WITH): readable multi-step queries
+WITH stats AS (
+  SELECT user_id, COUNT(*) FILTER (WHERE done) * 100.0 / COUNT(*) AS pct_done
+  FROM tasks GROUP BY user_id
+)
+SELECT u.name, s.pct_done FROM stats s JOIN users u ON u.id = s.user_id ORDER BY s.pct_done DESC;
+
+-- ── Window functions: calculate across rows WITHOUT collapsing them
+SELECT user_id, title, priority,
+       RANK()       OVER (PARTITION BY user_id ORDER BY priority) AS rank_in_user,
+       COUNT(*)     OVER (PARTITION BY user_id)                   AS user_total
+FROM tasks;
+
+-- ── Transactions: all or nothing
+BEGIN;
+  UPDATE accounts SET balance = balance - 500 WHERE id = 1;
+  UPDATE accounts SET balance = balance + 500 WHERE id = 2;
+COMMIT;      -- or ROLLBACK; if anything failed
+
+-- ── Indexes: make WHERE / JOIN / ORDER BY fast
+CREATE INDEX idx_tasks_user_done ON tasks (user_id, done);
+</script>
+
+<script type="text/plain" data-code="postgresql">
+-- PostgreSQL-specific power on top of standard SQL.
+-- Run one locally:  docker run -d --name pg -e POSTGRES_PASSWORD=dev -p 5432:5432 postgres:16
+-- Connect:          psql -h localhost -U postgres
+
+-- ── Better types
+CREATE TABLE events (
+  id         BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id    UUID NOT NULL,
+  kind       TEXT NOT NULL,
+  payload    JSONB NOT NULL DEFAULT '{}',          -- binary JSON, indexable
+  tags       TEXT[] NOT NULL DEFAULT '{}',          -- arrays
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()     -- always store time WITH time zone
+);
+
+-- ── JSONB queries
+INSERT INTO events (user_id, kind, payload, tags)
+VALUES (gen_random_uuid(), 'chat', '{"model": "claude", "tokens": 812, "tool": "weather"}', '{voice,mobile}');
+
+SELECT payload->>'model' AS model, (payload->>'tokens')::int AS tokens
+FROM events
+WHERE payload @> '{"tool": "weather"}'               -- "contains"
+  AND 'voice' = ANY(tags);
+
+CREATE INDEX idx_events_payload ON events USING GIN (payload);   -- fast @> lookups
+
+-- ── Upsert: insert or update in one statement
+INSERT INTO user_settings (user_id, voice) VALUES ($1, 'female')
+ON CONFLICT (user_id) DO UPDATE SET voice = EXCLUDED.voice;
+
+-- ── RETURNING: get the row back without a second query
+UPDATE tasks SET done = true WHERE id = 7 RETURNING id, title, done;
+
+-- ── Full-text search
+SELECT title FROM documents
+WHERE to_tsvector('english', body) @@ websearch_to_tsquery('english', 'refund policy -draft');
+
+-- ── Partial index: index only the rows you query
+CREATE INDEX idx_open_tasks ON tasks (user_id, due_at) WHERE NOT done;
+
+-- ── EXPLAIN ANALYZE: see what the planner actually did
+EXPLAIN ANALYZE SELECT * FROM tasks WHERE user_id = 1 AND NOT done;
+--  "Seq Scan" on a big table = missing index.  "Index Scan" = good.
+
+-- ── pgvector: embeddings for RAG inside Postgres
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE TABLE chunks (
+  id        BIGSERIAL PRIMARY KEY,
+  user_id   UUID NOT NULL,
+  content   TEXT NOT NULL,
+  embedding vector(384)
+);
+CREATE INDEX ON chunks USING hnsw (embedding vector_cosine_ops);
+SELECT content, 1 - (embedding <=> $1) AS similarity      -- <=> = cosine distance
+FROM chunks WHERE user_id = $2 ORDER BY embedding <=> $1 LIMIT 5;
+
+-- ── From Python (SQLAlchemy 2.0 + psycopg 3)
+-- engine = create_engine("postgresql+psycopg://jarvis:jarvis@localhost:5432/jarvis", pool_size=10)
+-- with Session(engine) as s:
+--     rows = s.execute(select(Task).where(Task.user_id == uid, Task.done.is_(False))).scalars().all()
+--
+-- Schema changes → Alembic migrations:
+--   alembic revision --autogenerate -m "add due_at"   →   alembic upgrade head
+</script>
+
+<script type="text/plain" data-code="fastapi">
+# app/main.py — run:  uvicorn app.main:app --reload    docs: http://localhost:8000/docs
+from datetime import datetime
+from typing import Annotated
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, Header, Query, status, BackgroundTasks
+from pydantic import BaseModel, Field, ConfigDict
+
+# ── Pydantic models: validation + serialization + OpenAPI docs, from type hints
+class TaskCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    priority: int = Field(default=3, ge=1, le=5)
+    remind_at: datetime | None = None
+
+class TaskOut(TaskCreate):
+    model_config = ConfigDict(from_attributes=True)   # build from ORM objects
+    id: int
+    done: bool
+
+# ── Dependencies: reusable, injectable, testable
+FAKE_DB: dict[int, dict] = {}
+
+def get_db():
+    db = FAKE_DB            # real app: yield a SQLAlchemy Session, close it after
+    try:
+        yield db
+    finally:
+        pass
+
+def current_user(x_user_id: Annotated[str | None, Header()] = None) -> str:
+    if not x_user_id:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing X-User-Id")
+    return x_user_id
+
+DB = Annotated[dict, Depends(get_db)]
+User = Annotated[str, Depends(current_user)]
+
+# ── Routers group endpoints
+router = APIRouter(prefix="/tasks", tags=["tasks"])
+
+@router.get("", response_model=list[TaskOut])
+def list_tasks(db: DB, user: User,
+               done: bool | None = None,
+               limit: Annotated[int, Query(ge=1, le=100)] = 20):
+    rows = [t for t in db.values() if t["user_id"] == user and (done is None or t["done"] == done)]
+    return rows[:limit]
+
+@router.post("", response_model=TaskOut, status_code=status.HTTP_201_CREATED)
+def create_task(body: TaskCreate, db: DB, user: User, background: BackgroundTasks):
+    task_id = len(db) + 1
+    db[task_id] = {"id": task_id, "user_id": user, "done": False, **body.model_dump()}
+    background.add_task(print, f"audit: {user} created task {task_id}")   # runs after response
+    return db[task_id]
+
+@router.patch("/{task_id}", response_model=TaskOut)
+def complete_task(task_id: int, db: DB, user: User):
+    task = db.get(task_id)
+    if not task or task["user_id"] != user:
+        raise HTTPException(404, "Task not found")        # same error: don't leak existence
+    task["done"] = True
+    return task
+
+# ── async endpoints for I/O (LLM calls, HTTP, async DB drivers)
+@router.get("/{task_id}/suggest")
+async def suggest(task_id: int, user: User):
+    import asyncio
+    await asyncio.sleep(0.1)                               # pretend: await claude call
+    return {"suggestion": "Break it into 3 smaller steps."}
+
+app = FastAPI(title="Jarvis AI Service")
+app.include_router(router)
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+# ── Streaming (Server-Sent Events) for LLM tokens
+from fastapi.responses import StreamingResponse
+
+@app.get("/stream")
+async def stream():
+    async def gen():
+        for word in "Hello from Jarvis".split():
+            yield f"data: {word}\n\n"
+    return StreamingResponse(gen(), media_type="text/event-stream")
+
+# ── Testing with TestClient (pytest)
+# from fastapi.testclient import TestClient
+# client = TestClient(app)
+# def test_create():
+#     r = client.post("/tasks", json={"title": "x"}, headers={"X-User-Id": "u1"})
+#     assert r.status_code == 201 and r.json()["done"] is False
+</script>
+
+<script type="text/plain" data-code="backend-architecture">
+# A layered FastAPI service. Each layer only talks to the one below it.
+#
+#   app/
+#   ├─ main.py             app factory, middleware, lifespan (startup/shutdown)
+#   ├─ config.py           settings from environment (pydantic-settings)
+#   ├─ routers/            HTTP layer: parse request → call service → shape response
+#   ├─ services/           business rules (no FastAPI imports here!)
+#   ├─ repositories/       data access (SQL, Mongo, S3) behind an interface
+#   ├─ models/ schemas/    ORM tables / Pydantic DTOs
+#   └─ tests/
+#
+#   Request → Router → Service → Repository → DB
+#                 ↑ dependencies injected via Depends()
+
+# ── config.py: 12-factor config, validated at startup
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    database_url: str = "sqlite:///data/jarvis.db"
+    anthropic_api_key: str = ""
+    internal_key: str                       # required → app refuses to start without it
+    log_level: str = "INFO"
+
+settings = Settings()
+
+# ── repositories/tasks.py: one place that knows about SQL
+from typing import Protocol
+
+class TaskRepo(Protocol):
+    def add(self, user_id: str, title: str) -> dict: ...
+    def list_open(self, user_id: str) -> list[dict]: ...
+
+class InMemoryTaskRepo:                    # used in tests — no database needed
+    def __init__(self): self.rows: list[dict] = []
+    def add(self, user_id, title):
+        row = {"id": len(self.rows) + 1, "user_id": user_id, "title": title, "done": False}
+        self.rows.append(row); return row
+    def list_open(self, user_id):
+        return [r for r in self.rows if r["user_id"] == user_id and not r["done"]]
+
+# ── services/tasks.py: rules live here, framework-free and easy to unit test
+class TooManyTasks(Exception): ...
+
+class TaskService:
+    MAX_OPEN = 50
+    def __init__(self, repo: TaskRepo):
+        self.repo = repo
+    def create(self, user_id: str, title: str) -> dict:
+        if len(self.repo.list_open(user_id)) >= self.MAX_OPEN:
+            raise TooManyTasks("Finish some tasks first")
+        return self.repo.add(user_id, title.strip())
+
+# ── routers/tasks.py: thin HTTP adapter
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+
+_repo = InMemoryTaskRepo()
+def get_service() -> TaskService:
+    return TaskService(_repo)
+
+router = APIRouter()
+
+@router.post("/tasks", status_code=201)
+def create(title: str, svc: TaskService = Depends(get_service)):
+    return svc.create("u1", title)
+
+# ── main.py: map domain errors to HTTP in ONE place
+app = FastAPI()
+app.include_router(router)
+
+@app.exception_handler(TooManyTasks)
+async def too_many(_: Request, exc: TooManyTasks):
+    return JSONResponse(status_code=409, content={"error": str(exc)})
+
+# In tests:  app.dependency_overrides[get_service] = lambda: TaskService(InMemoryTaskRepo())
+#
+# Cross-cutting concerns to design for:
+#   structured logging + request IDs · health/readiness endpoints · timeouts & retries on
+#   outbound calls · idempotency keys on POST · pagination · background jobs (Celery/ARQ)
+#   · caching (Redis) · rate limiting · migrations (Alembic) · secrets outside code
+</script>
+
+<script type="text/plain" data-code="numpy">
+import numpy as np
+
+# ── Arrays: one type, contiguous memory, vectorized math (100× faster than Python loops)
+a = np.array([1, 2, 3, 4])
+m = np.arange(12).reshape(3, 4)            # 3 rows × 4 cols
+print(m.shape, m.dtype, m.ndim)            # (3, 4) int64 2
+
+z = np.zeros((2, 3)); o = np.ones(5); r = np.random.default_rng(0).normal(0, 1, size=(1000,))
+lin = np.linspace(0, 1, 5)                 # [0. .25 .5 .75 1.]
+
+# ── Indexing & slicing
+m[0, 1]          # row 0, col 1
+m[:, 0]          # first column
+m[1:, ::2]       # rows 1.., every 2nd column
+m[m > 5]         # boolean mask → [6 7 8 9 10 11]
+m[[0, 2]]        # fancy indexing: rows 0 and 2
+
+# ── Vectorized operations (no loops)
+prices = np.array([100.0, 250.0, 80.0])
+qty = np.array([2, 1, 5])
+total = (prices * qty).sum()               # element-wise multiply, then sum → 850.0
+with_tax = prices * 1.18
+
+# ── Broadcasting: shapes stretch to match
+X = np.random.default_rng(1).normal(size=(100, 3))   # 100 samples, 3 features
+X_std = (X - X.mean(axis=0)) / X.std(axis=0)          # (100,3) - (3,) → per-column standardization
+
+# ── Aggregations along axes
+m.sum(axis=0)    # per column
+m.mean(axis=1)   # per row
+np.argmax(m, axis=1)
+
+# ── Linear algebra: the language of ML
+W = np.random.default_rng(2).normal(size=(3, 2))
+H = X @ W                                  # matrix multiply (100,3)@(3,2) → (100,2)
+
+# ── Cosine similarity: the core of semantic search / RAG
+def cosine_sim(query: np.ndarray, docs: np.ndarray) -> np.ndarray:
+    q = query / np.linalg.norm(query)
+    d = docs / np.linalg.norm(docs, axis=1, keepdims=True)
+    return d @ q                                         # one score per document
+
+docs = np.random.default_rng(3).normal(size=(5, 384))  # 5 embeddings
+query = docs[2] + 0.1                                  # close to doc 2
+scores = cosine_sim(query, docs)
+top_k = np.argsort(scores)[::-1][:3]                   # best 3 indices
+print(top_k, scores[top_k].round(3))
+
+# ── A tiny neural layer, by hand
+def relu(x): return np.maximum(0, x)
+def softmax(x):
+    e = np.exp(x - x.max(axis=1, keepdims=True))       # subtract max for numerical stability
+    return e / e.sum(axis=1, keepdims=True)
+probs = softmax(relu(X @ W))                           # (100, 2), rows sum to 1
+</script>
+
+<script type="text/plain" data-code="pandas">
+import pandas as pd
+import numpy as np
+
+# ── Load
+df = pd.read_csv("chat_logs.csv", parse_dates=["created_at"])
+# also: pd.read_json, pd.read_parquet, pd.read_sql("SELECT ...", engine), pd.read_excel
+
+# Sample data so this runs without a file
+rng = np.random.default_rng(0)
+df = pd.DataFrame({
+    "user_id": rng.choice(["u1", "u2", "u3"], 500),
+    "intent": rng.choice(["weather", "reminder", "chat", "math"], 500),
+    "latency_ms": rng.gamma(2, 400, 500).round(),
+    "tokens": rng.integers(50, 2000, 500),
+    "created_at": pd.date_range("2026-10-01", periods=500, freq="90min"),
+})
+
+# ── Inspect
+df.head(); df.info(); df.describe()
+df["intent"].value_counts(normalize=True)
+
+# ── Select & filter
+df[["user_id", "latency_ms"]]
+slow = df[(df["latency_ms"] > 1500) & (df["intent"] != "chat")]
+df.loc[df["tokens"] > 1500, "tokens"]           # label-based
+df.query("intent == 'weather' and latency_ms < 500")
+
+# ── Clean
+df = df.drop_duplicates()
+df["latency_ms"] = df["latency_ms"].fillna(df["latency_ms"].median())
+df["intent"] = df["intent"].str.strip().str.lower().astype("category")
+
+# ── New columns (vectorized)
+df["cost_usd"] = df["tokens"] / 1_000_000 * 15
+df["hour"] = df["created_at"].dt.hour
+df["is_slow"] = np.where(df["latency_ms"] > 1000, "slow", "ok")
+
+# ── Group & aggregate: the most-used pandas skill
+summary = (
+    df.groupby("intent", observed=True)
+      .agg(requests=("user_id", "size"),
+           users=("user_id", "nunique"),
+           p50_ms=("latency_ms", "median"),
+           p95_ms=("latency_ms", lambda s: s.quantile(0.95)),
+           cost=("cost_usd", "sum"))
+      .sort_values("requests", ascending=False)
+)
+
+# ── Time series
+daily = df.set_index("created_at").resample("D")["tokens"].sum()
+rolling = daily.rolling(7).mean()                # 7-day moving average
+
+# ── Reshape
+pivot = df.pivot_table(index="hour", columns="intent", values="latency_ms", aggfunc="median")
+
+# ── Join two tables (like SQL JOIN)
+users = pd.DataFrame({"user_id": ["u1", "u2", "u3"], "plan": ["free", "pro", "free"]})
+joined = df.merge(users, on="user_id", how="left")
+joined.groupby("plan")["cost_usd"].sum()
+
+# ── Save
+summary.to_csv("intent_summary.csv")
+df.to_parquet("chat_logs.parquet")               # fast, typed, compressed
+</script>
+
+<script type="text/plain" data-code="statistics">
+import numpy as np
+from scipy import stats
+
+rng = np.random.default_rng(42)
+latency = rng.gamma(shape=2, scale=300, size=1000)       # skewed, like real response times
+
+# ── Descriptive statistics
+mean, median = latency.mean(), np.median(latency)
+std = latency.std(ddof=1)                                 # sample std (ddof=1)
+p95 = np.percentile(latency, 95)
+iqr = np.subtract(*np.percentile(latency, [75, 25]))
+print(f"mean={mean:.0f} median={median:.0f} std={std:.0f} p95={p95:.0f}")
+# Skewed data → mean > median. Report median and p95 for latency, not just the mean.
+
+# ── Outliers with z-scores and IQR
+z = (latency - mean) / std
+outliers_z = latency[np.abs(z) > 3]
+q1, q3 = np.percentile(latency, [25, 75])
+outliers_iqr = latency[(latency < q1 - 1.5 * iqr) | (latency > q3 + 1.5 * iqr)]
+
+# ── Probability distributions
+stats.norm(0, 1).cdf(1.96)        # 0.975 → 95% of a normal lies within ±1.96σ
+stats.binom(n=20, p=0.1).pmf(3)   # P(exactly 3 errors in 20 requests)
+
+# ── Central limit theorem: means of samples are ~normal, whatever the data
+sample_means = [rng.choice(latency, 50).mean() for _ in range(2000)]
+
+# ── Confidence interval for the mean
+ci = stats.t.interval(0.95, df=len(latency) - 1, loc=mean, scale=stats.sem(latency))
+print("95% CI:", np.round(ci, 1))
+
+# ── Bootstrap CI: works for any statistic (median, p95…)
+boot = [np.median(rng.choice(latency, len(latency))) for _ in range(5000)]
+print("median 95% CI:", np.percentile(boot, [2.5, 97.5]).round(1))
+
+# ── Hypothesis test: is the new prompt faster? (A/B test)
+a = rng.gamma(2, 300, 400)        # old
+b = rng.gamma(2, 270, 400)        # new
+t, p = stats.ttest_ind(a, b, equal_var=False)     # Welch's t-test
+u, p_mw = stats.mannwhitneyu(a, b)                # non-parametric (skewed data)
+print(f"p={p:.4f}  → {'significant' if p < 0.05 else 'not significant'} at α=0.05")
+# p-value = chance of seeing a difference this big IF there were no real difference.
+
+# ── Conversion rates: chi-square test
+#            thumbs_up  thumbs_down
+table = np.array([[420, 80],      # prompt A
+                  [465, 35]])     # prompt B
+chi2, p, *_ = stats.chi2_contingency(table)
+
+# ── Correlation (≠ causation)
+tokens = rng.integers(50, 2000, 1000)
+lat = 200 + tokens * 0.4 + rng.normal(0, 100, 1000)
+r, p = stats.pearsonr(tokens, lat)            # linear
+rho, p = stats.spearmanr(tokens, lat)         # rank-based, robust
+
+# ── Simple linear regression
+res = stats.linregress(tokens, lat)
+print(f"latency ≈ {res.intercept:.0f} + {res.slope:.2f}·tokens  (R²={res.rvalue**2:.2f})")
+
+# ── Bayes' rule, by hand: P(spam | flagged)
+p_spam, p_flag_given_spam, p_flag_given_ham = 0.02, 0.95, 0.05
+p_flag = p_flag_given_spam * p_spam + p_flag_given_ham * (1 - p_spam)
+print("P(spam|flagged) =", round(p_flag_given_spam * p_spam / p_flag, 3))   # only ~0.28!
+</script>
+
+<script type="text/plain" data-code="machine-learning">
+# Intent classification with scikit-learn: text → label (weather, reminder, math, chat…)
+import json
+import joblib
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, StratifiedKFold
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import classification_report, confusion_matrix
+
+# ── 1. Data
+data = json.load(open("ml/data/intents.json", encoding="utf-8"))
+texts  = [ex for intent in data for ex in intent["examples"]]
+labels = [intent["name"] for intent in data for _ in intent["examples"]]
+
+# ── 2. Split: never evaluate on data the model trained on
+X_train, X_test, y_train, y_test = train_test_split(
+    texts, labels, test_size=0.2, stratify=labels, random_state=42
+)
+
+# ── 3. Pipeline: preprocessing + model as ONE object (no train/test leakage)
+pipe = Pipeline([
+    ("tfidf", TfidfVectorizer(ngram_range=(1, 2), sublinear_tf=True, min_df=1)),
+    ("clf", LogisticRegression(max_iter=1000, class_weight="balanced")),
+])
+
+# ── 4. Cross-validation: a more honest estimate than one split
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+scores = cross_val_score(pipe, X_train, y_train, cv=cv, scoring="f1_macro")
+print(f"CV F1: {scores.mean():.3f} ± {scores.std():.3f}")
+
+# ── 5. Hyperparameter tuning
+grid = GridSearchCV(pipe, {"clf__C": [0.1, 1, 10], "tfidf__ngram_range": [(1, 1), (1, 2)]},
+                    cv=cv, scoring="f1_macro", n_jobs=-1)
+grid.fit(X_train, y_train)
+model = grid.best_estimator_
+print("best params:", grid.best_params_)
+
+# ── 6. Evaluate on the untouched test set
+pred = model.predict(X_test)
+print(classification_report(y_test, pred))      # precision, recall, F1 per class
+print(confusion_matrix(y_test, pred))           # which intents get confused
+
+# ── 7. Predict with confidence → fall back to the LLM when unsure
+def classify(text: str, threshold: float = 0.6) -> str:
+    probs = model.predict_proba([text])[0]
+    best = int(np.argmax(probs))
+    return model.classes_[best] if probs[best] >= threshold else "fallback_llm"
+
+print(classify("what's the weather in Pune tomorrow"))
+
+# ── 8. Save / load
+joblib.dump(model, "data/intent_model.joblib")
+# model = joblib.load("data/intent_model.joblib")
+
+# Algorithms to know:
+#  Regression: LinearRegression, Ridge, RandomForestRegressor, GradientBoosting (XGBoost/LightGBM)
+#  Classification: LogisticRegression, SVM, RandomForest, GradientBoosting, NaiveBayes
+#  Unsupervised: KMeans, DBSCAN, PCA
+#  Metrics: accuracy (balanced data only), precision, recall, F1, ROC-AUC, RMSE, MAE
+#  Problems: overfitting (great train, bad test) → regularize, more data, simpler model
+</script>
+
+<script type="text/plain" data-code="deep-learning">
+# PyTorch: tensors + autograd + nn.Module + the training loop
+import torch
+from torch import nn
+from torch.utils.data import DataLoader, TensorDataset, random_split
+
+torch.manual_seed(0)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+# ── Tensors & autograd
+x = torch.tensor([2.0, 3.0], requires_grad=True)
+y = (x ** 2).sum()             # y = x0² + x1²
+y.backward()                   # compute dy/dx automatically
+print(x.grad)                  # tensor([4., 6.])
+
+# ── Data: bag-of-words vectors → intent labels (toy version)
+N, VOCAB, CLASSES = 2000, 300, 5
+X = torch.rand(N, VOCAB)
+true_w = torch.randn(VOCAB, CLASSES)
+y = (X @ true_w).argmax(dim=1)
+train_ds, val_ds = random_split(TensorDataset(X, y), [1600, 400])
+train_dl = DataLoader(train_ds, batch_size=64, shuffle=True)
+val_dl = DataLoader(val_ds, batch_size=256)
+
+# ── Model
+class IntentMLP(nn.Module):
+    def __init__(self, vocab: int, hidden: int, classes: int):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(vocab, hidden),
+            nn.ReLU(),
+            nn.Dropout(0.3),             # regularization: randomly zero neurons in training
+            nn.Linear(hidden, classes),  # raw scores (logits); CrossEntropyLoss applies softmax
+        )
+    def forward(self, x):
+        return self.net(x)
+
+model = IntentMLP(VOCAB, 128, CLASSES).to(device)
+loss_fn = nn.CrossEntropyLoss()
+opt = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
+
+# ── Training loop: forward → loss → backward → step
+best_acc, patience = 0.0, 0
+for epoch in range(50):
+    model.train()
+    for xb, yb in train_dl:
+        xb, yb = xb.to(device), yb.to(device)
+        opt.zero_grad()                 # 1. clear old gradients
+        loss = loss_fn(model(xb), yb)   # 2. forward + loss
+        loss.backward()                 # 3. backprop
+        opt.step()                      # 4. update weights
+
+    model.eval()
+    with torch.no_grad():               # no gradients needed for evaluation
+        correct = sum((model(xb.to(device)).argmax(1) == yb.to(device)).sum().item() for xb, yb in val_dl)
+    acc = correct / len(val_ds)
+    print(f"epoch {epoch:2d} loss {loss.item():.3f} val_acc {acc:.3f}")
+
+    if acc > best_acc:                  # early stopping + checkpoint
+        best_acc, patience = acc, 0
+        torch.save(model.state_dict(), "best.pt")
+    else:
+        patience += 1
+        if patience >= 5:
+            break
+
+# ── Inference
+model.load_state_dict(torch.load("best.pt"))
+model.eval()
+with torch.no_grad():
+    probs = torch.softmax(model(X[:1].to(device)), dim=1)
+
+# Architectures to learn next:
+#  CNN (images): nn.Conv2d → pooling → linear
+#  RNN/LSTM (sequences): nn.Embedding → nn.LSTM
+#  Transformer (text, everything now): attention(Q,K,V) = softmax(QKᵀ/√d)·V
+#  Transfer learning: Hugging Face  AutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased")
+</script>
+
+<script type="text/plain" data-code="llms">
+# Calling an LLM from Python with the Anthropic SDK:  pip install anthropic
+import asyncio
+import json
+import anthropic
+
+client = anthropic.AsyncAnthropic()        # reads ANTHROPIC_API_KEY from the environment
+MODEL = "claude-opus-5-5"
+
+# ── 1. Basic message: system prompt + conversation turns
+async def ask(question: str) -> str:
+    response = await client.messages.create(
+        model=MODEL,
+        max_tokens=1024,
+        system="You are JARVIS, a concise assistant. Answer in 2 sentences.",
+        messages=[{"role": "user", "content": question}],
+    )
+    print(response.usage.input_tokens, response.usage.output_tokens)   # you pay per token
+    return "".join(b.text for b in response.content if b.type == "text")
+
+# ── 2. Multi-turn: the API is stateless — send the history every time
+history = [
+    {"role": "user", "content": "My name is Aamir."},
+    {"role": "assistant", "content": "Nice to meet you, Aamir!"},
+    {"role": "user", "content": "What's my name?"},
+]
+
+# ── 3. Streaming: show tokens as they arrive (much better UX for chat/voice)
+async def stream_answer(question: str):
+    async with client.messages.stream(
+        model=MODEL, max_tokens=1024,
+        messages=[{"role": "user", "content": question}],
+    ) as stream:
+        async for text in stream.text_stream:
+            print(text, end="", flush=True)
+
+# ── 4. Structured output: ask for JSON, then VALIDATE it
+from pydantic import BaseModel, ValidationError
+
+class Reminder(BaseModel):
+    title: str
+    when_iso: str
+
+async def extract_reminder(utterance: str) -> Reminder | None:
+    response = await client.messages.create(
+        model=MODEL, max_tokens=300,
+        system='Extract a reminder. Reply with ONLY JSON: {"title": str, "when_iso": str}',
+        messages=[{"role": "user", "content": utterance}],
+    )
+    raw = "".join(b.text for b in response.content if b.type == "text")
+    try:
+        return Reminder.model_validate(json.loads(raw))
+    except (json.JSONDecodeError, ValidationError):
+        return None                      # never trust model output blindly
+
+# ── 5. Images (multimodal)
+# content = [{"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": b64}},
+#            {"type": "text", "text": "What's in this screenshot?"}]
+
+# ── 6. Errors & retries: the SDK retries 429/5xx automatically; handle the rest
+async def safe_ask(q: str) -> str:
+    try:
+        return await ask(q)
+    except anthropic.RateLimitError:
+        return "I'm busy — try again in a moment."
+    except anthropic.APIStatusError as e:
+        return f"AI service error ({e.status_code})"
+
+if __name__ == "__main__":
+    print(asyncio.run(ask("Explain embeddings to a 12-year-old.")))
+
+# Concepts: tokens & context window · temperature/sampling · system prompts ·
+# prompt engineering (clear task, examples, output format) · hallucination ·
+# prompt caching for long repeated prompts · cost = tokens × price · evaluation sets
+</script>
+
+<script type="text/plain" data-code="rag">
+# RAG = Retrieval-Augmented Generation:
+#   INGEST:  document → chunks → embeddings → vector store
+#   QUERY:   question → embedding → top-k similar chunks → LLM answers using ONLY those chunks
+import numpy as np
+import anthropic
+from pypdf import PdfReader
+from sentence_transformers import SentenceTransformer   # pip install sentence-transformers
+
+embedder = SentenceTransformer("all-MiniLM-L6-v2")      # 384-dim, runs locally
+client = anthropic.Anthropic()
+
+# ── 1. Load & chunk (overlap keeps sentences that straddle a boundary)
+def load_pdf(path: str) -> str:
+    return "\n\n".join(page.extract_text() or "" for page in PdfReader(path).pages)
+
+def chunk(text: str, size: int = 900, overlap: int = 150) -> list[str]:
+    chunks, start = [], 0
+    while start < len(text):
+        chunks.append(text[start:start + size])
+        start += size - overlap
+    return [c.strip() for c in chunks if c.strip()]
+
+# ── 2. Embed & index
+class VectorStore:
+    def __init__(self):
+        self.chunks: list[dict] = []
+        self.matrix: np.ndarray | None = None
+
+    def add(self, source: str, texts: list[str]):
+        vecs = embedder.encode(texts, normalize_embeddings=True)    # unit vectors
+        self.chunks += [{"source": source, "text": t} for t in texts]
+        self.matrix = vecs if self.matrix is None else np.vstack([self.matrix, vecs])
+
+    def search(self, query: str, k: int = 4, min_score: float = 0.25) -> list[dict]:
+        q = embedder.encode([query], normalize_embeddings=True)[0]
+        scores = self.matrix @ q                                      # cosine similarity
+        idx = np.argsort(scores)[::-1][:k]
+        return [{**self.chunks[i], "score": float(scores[i])} for i in idx if scores[i] >= min_score]
+
+store = VectorStore()
+store.add("refund-policy.pdf", chunk(load_pdf("refund-policy.pdf")))
+
+# ── 3. Generate a grounded answer with citations
+def answer(question: str) -> str:
+    hits = store.search(question)
+    if not hits:
+        return "I couldn't find that in your documents."
+    context = "\n\n".join(f"[{i + 1}] ({h['source']})\n{h['text']}" for i, h in enumerate(hits))
+    response = client.messages.create(
+        model="claude-opus-5-5",
+        max_tokens=800,
+        system=("Answer ONLY from the provided context. Cite sources like [1]. "
+                "If the context doesn't contain the answer, say you don't know."),
+        messages=[{"role": "user", "content": f"<context>\n{context}\n</context>\n\nQuestion: {question}"}],
+    )
+    return "".join(b.text for b in response.content if b.type == "text")
+
+print(answer("How many days do I have to request a refund?"))
+
+# Make it production-grade:
+#  • Store vectors in pgvector / Chroma / Pinecone instead of RAM
+#  • Hybrid search: BM25 keywords + vectors, then a re-ranker
+#  • Chunk by structure (headings, paragraphs), keep metadata (page, title, user_id)
+#  • Filter by user_id so users only search THEIR documents
+#  • Evaluate: build 30 question→expected-source pairs; measure hit rate@k and answer accuracy
+</script>
+
+<script type="text/plain" data-code="ai-agents">
+# An agent = an LLM in a loop that can call TOOLS until the task is done.
+#   user → LLM → tool_use → run tool → tool_result → LLM → … → final answer
+import json
+import anthropic
+from datetime import datetime
+
+client = anthropic.Anthropic()
+MODEL = "claude-opus-5-5"
+
+# ── 1. Tools: plain functions + a JSON Schema description the model reads
+TASKS: list[dict] = []
+
+def get_time() -> str:
+    return datetime.now().isoformat(timespec="minutes")
+
+def add_task(title: str, remind_at: str | None = None) -> str:
+    TASKS.append({"id": len(TASKS) + 1, "title": title, "remind_at": remind_at})
+    return f"Created task #{len(TASKS)}"
+
+def calculate(expression: str) -> str:
+    import ast, operator as op
+    ops = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul, ast.Div: op.truediv, ast.Pow: op.pow}
+    def ev(n):                              # safe math — NEVER eval() model output
+        if isinstance(n, ast.Constant): return n.value
+        if isinstance(n, ast.BinOp): return ops[type(n.op)](ev(n.left), ev(n.right))
+        raise ValueError("unsupported")
+    return str(ev(ast.parse(expression, mode="eval").body))
+
+REGISTRY = {"get_time": get_time, "add_task": add_task, "calculate": calculate}
+TOOLS = [
+    {"name": "get_time", "description": "Current local date and time.",
+     "input_schema": {"type": "object", "properties": {}}},
+    {"name": "add_task", "description": "Create a to-do. Use remind_at (ISO 8601) for reminders.",
+     "input_schema": {"type": "object",
+                      "properties": {"title": {"type": "string"}, "remind_at": {"type": "string"}},
+                      "required": ["title"]}},
+    {"name": "calculate", "description": "Exact arithmetic, e.g. '18 * 0.15'.",
+     "input_schema": {"type": "object", "properties": {"expression": {"type": "string"}},
+                      "required": ["expression"]}},
+]
+
+# ── 2. The agent loop
+def run_agent(user_message: str, max_steps: int = 8) -> str:
+    messages = [{"role": "user", "content": user_message}]
+    for step in range(max_steps):                         # hard limit: no infinite loops
+        response = client.messages.create(
+            model=MODEL, max_tokens=2000, tools=TOOLS,
+            system="You are JARVIS. Use tools when they help. Be brief.",
+            messages=messages,
+        )
+        messages.append({"role": "assistant", "content": response.content})
+
+        if response.stop_reason != "tool_use":            # model is done
+            return "".join(b.text for b in response.content if b.type == "text")
+
+        results = []
+        for block in response.content:
+            if block.type == "tool_use":
+                print(f"  🔧 {block.name}({block.input})")
+                try:
+                    output = REGISTRY[block.name](**block.input)
+                    results.append({"type": "tool_result", "tool_use_id": block.id, "content": output})
+                except Exception as e:                    # report errors back; the model can recover
+                    results.append({"type": "tool_result", "tool_use_id": block.id,
+                                    "content": f"Error: {e}", "is_error": True})
+        messages.append({"role": "user", "content": results})
+    return "Stopped: too many steps."
+
+print(run_agent("What's 15% tip on ₹1,840? Also remind me to pay rent tomorrow at 9am."))
+
+# Agent design rules:
+#  • Small, well-described tools with strict input schemas
+#  • Validate tool inputs; check the user is allowed to do the action
+#  • Confirm before irreversible actions (send money, delete, email)
+#  • Log every step (tool, input, output, tokens) for debugging and evals
+#  • Patterns: router → specialist agents, planner/executor, reflection, human-in-the-loop
+#  • MCP (Model Context Protocol) exposes your tools to any MCP client (Claude Desktop, IDEs)
+</script>
+
+<script type="text/plain" data-code="mlops">
+# MLOps = getting models to production AND keeping them good.
+# Lifecycle: data → train → evaluate → register → deploy → monitor → retrain
+
+# ── 1. Experiment tracking with MLflow   (pip install mlflow; run `mlflow ui`)
+import mlflow, mlflow.sklearn
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import f1_score
+
+mlflow.set_experiment("jarvis-intent")
+with mlflow.start_run(run_name="tfidf-logreg"):
+    params = {"C": 3.0, "ngram_max": 2}
+    mlflow.log_params(params)
+    model = Pipeline([("tfidf", TfidfVectorizer(ngram_range=(1, params["ngram_max"]))),
+                      ("clf", LogisticRegression(C=params["C"], max_iter=1000))])
+    model.fit(X_train, y_train)
+    f1 = f1_score(y_test, model.predict(X_test), average="macro")
+    mlflow.log_metric("f1_macro", f1)
+    mlflow.sklearn.log_model(model, "model", registered_model_name="intent-classifier")
+
+# ── 2. A quality gate in CI: block deploys that make the model worse
+# tests/test_model_quality.py
+def test_model_beats_baseline():
+    import joblib, json
+    model = joblib.load("data/intent_model.joblib")
+    golden = json.load(open("tests/golden_intents.json"))      # fixed, hand-checked examples
+    correct = sum(model.predict([g["text"]])[0] == g["label"] for g in golden)
+    assert correct / len(golden) >= 0.90
+
+# ── 3. LLM evals: same idea for prompts and RAG
+EVAL_SET = [
+    {"q": "Remind me to call mom at 6", "must_call_tool": "add_task"},
+    {"q": "What is 12% of 950?", "must_contain": "114"},
+]
+def run_llm_evals(agent) -> float:
+    passed = 0
+    for case in EVAL_SET:
+        out, tools_used = agent(case["q"])
+        ok = ("must_call_tool" not in case or case["must_call_tool"] in tools_used) and \
+             ("must_contain" not in case or case["must_contain"] in out)
+        passed += ok
+    return passed / len(EVAL_SET)
+
+# ── 4. Serve with a version, log every prediction
+from fastapi import FastAPI
+import joblib, time, logging
+app = FastAPI()
+MODEL_VERSION = "intent-v7"
+clf = joblib.load("data/intent_model.joblib")
+
+@app.post("/predict")
+def predict(text: str):
+    t0 = time.perf_counter()
+    proba = clf.predict_proba([text])[0]
+    label = clf.classes_[proba.argmax()]
+    logging.info("pred version=%s label=%s conf=%.2f ms=%.1f", MODEL_VERSION, label, proba.max(),
+                 (time.perf_counter() - t0) * 1000)
+    return {"label": label, "confidence": float(proba.max()), "model_version": MODEL_VERSION}
+
+# ── 5. Monitoring: watch for drift
+#   • input drift: are user messages changing? (new words, languages, lengths)
+#   • prediction drift: share of "fallback_llm" rising?
+#   • quality: thumbs-down rate, human-labelled samples weekly
+#   • ops: latency p95, error rate, LLM tokens & cost per user
+#
+# Tools: MLflow / Weights & Biases (tracking) · DVC (data versioning) · GitHub Actions (CI/CD)
+#        Evidently (drift) · Langfuse / LangSmith (LLM tracing) · BentoML / SageMaker (serving)
+</script>
+
+<script type="text/plain" data-code="docker">
+# ── Dockerfile for a FastAPI + ML service (multi-stage keeps the image small)
+FROM python:3.12-slim AS builder
+WORKDIR /app
+ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+COPY requirements.txt .
+RUN pip install --prefix=/install -r requirements.txt
+
+FROM python:3.12-slim
+WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+# Non-root user: limits damage if the app is compromised
+RUN useradd --create-home appuser
+COPY --from=builder /install /usr/local
+COPY app ./app
+COPY ml ./ml
+USER appuser
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=3s CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+
+# ── .dockerignore  (keep secrets and junk out of the image)
+#   .venv/  __pycache__/  .pytest_cache/  data/*.db  .env  .git/
+
+# ── Commands
+#   docker build -t jarvis-ai:1.0 .
+#   docker run --rm -p 8000:8000 --env-file ../../.env jarvis-ai:1.0
+#   docker ps · docker logs -f <id> · docker exec -it <id> sh · docker images · docker system prune
+#
+# Layer caching: COPY requirements.txt and pip install BEFORE copying code,
+# so code edits don't reinstall every package.
+
+# ── docker-compose.yml: run the app + its database together
+# services:
+#   api:
+#     build: .
+#     env_file: .env
+#     environment:
+#       DATABASE_URL: postgresql+psycopg://jarvis:jarvis@db:5432/jarvis   # service name = hostname
+#     ports: ["8000:8000"]
+#     depends_on:
+#       db: { condition: service_healthy }
+#   db:
+#     image: postgres:16-alpine
+#     environment: { POSTGRES_USER: jarvis, POSTGRES_PASSWORD: jarvis, POSTGRES_DB: jarvis }
+#     volumes: [pgdata:/var/lib/postgresql/data]                          # data survives restarts
+#     healthcheck: { test: ["CMD-SHELL", "pg_isready -U jarvis"], interval: 5s }
+# volumes:
+#   pgdata:
+#
+#   docker compose up --build -d   ·   docker compose logs -f api   ·   docker compose down
+#
+# GPU models: base on nvidia/cuda or pytorch/pytorch images and run with --gpus all.
+</script>
+
+<script type="text/plain" data-code="aws">
+# boto3 = the AWS SDK for Python.  pip install boto3
+# Credentials: `aws configure` locally; IAM ROLES in the cloud (never hard-code keys).
+import boto3, json
+from botocore.exceptions import ClientError
+
+REGION = "ap-south-1"   # Mumbai
+
+# ── S3: store user uploads (PDFs for RAG, images)
+s3 = boto3.client("s3", region_name=REGION)
+BUCKET = "jarvis-user-docs"
+
+def upload(user_id: str, filename: str, data: bytes) -> str:
+    key = f"users/{user_id}/{filename}"                  # prefix per user
+    s3.put_object(Bucket=BUCKET, Key=key, Body=data, ServerSideEncryption="AES256")
+    return key
+
+def download_link(key: str) -> str:
+    # Presigned URL: temporary access without making the bucket public
+    return s3.generate_presigned_url("get_object", Params={"Bucket": BUCKET, "Key": key}, ExpiresIn=300)
+
+def delete_user_files(user_id: str):
+    pages = s3.get_paginator("list_objects_v2").paginate(Bucket=BUCKET, Prefix=f"users/{user_id}/")
+    for page in pages:
+        objs = [{"Key": o["Key"]} for o in page.get("Contents", [])]
+        if objs:
+            s3.delete_objects(Bucket=BUCKET, Delete={"Objects": objs})
+
+# ── Secrets Manager: API keys and DB passwords
+def get_secret(name: str) -> dict:
+    sm = boto3.client("secretsmanager", region_name=REGION)
+    try:
+        return json.loads(sm.get_secret_value(SecretId=name)["SecretString"])
+    except ClientError as e:
+        raise RuntimeError(f"Secret {name} unavailable: {e.response['Error']['Code']}")
+
+# ── SQS: queue slow jobs (document ingestion) for a background worker
+sqs = boto3.client("sqs", region_name=REGION)
+QUEUE_URL = "https://sqs.ap-south-1.amazonaws.com/123456789012/jarvis-ingest"
+sqs.send_message(QueueUrl=QUEUE_URL, MessageBody=json.dumps({"user_id": "u1", "key": "users/u1/a.pdf"}))
+
+# ── Bedrock: call foundation models (incl. Claude) inside your AWS account
+# bedrock = boto3.client("bedrock-runtime", region_name="us-east-1")
+
+# Where things run:
+#   App Runner / ECS Fargate  → your FastAPI container (no servers to manage)
+#   Lambda                    → small event-driven functions (S3 upload → ingest)
+#   RDS PostgreSQL (+pgvector)→ relational data and embeddings
+#   ECR                       → your Docker images
+#   CloudWatch                → logs, metrics, alarms
+#   SageMaker                 → training and hosting custom ML models
+#   IAM                       → least-privilege roles for every service
+#
+# Deploy flow:  docker build → push to ECR → App Runner/ECS pulls new image → health check → live
+#   aws ecr get-login-password | docker login --username AWS --password-stdin <acct>.dkr.ecr.ap-south-1.amazonaws.com
+#   docker tag jarvis-ai:1.0 <acct>.dkr.ecr.ap-south-1.amazonaws.com/jarvis-ai:1.0
+#   docker push <acct>.dkr.ecr.ap-south-1.amazonaws.com/jarvis-ai:1.0
+#
+# Set a billing alarm before you create anything.
+</script>
+
+<script>
+const META = {
+  title: "Python AI Backend Track",
+  eyebrow: "Backend · Python + AI · 6 stages",
+  lede: "From Python basics to deployed AI agents, in the order you should learn it. Each lesson explains the idea, gives you working code, and points to where the same idea lives in your Jarvis fastapi-ai service.",
+  key: "pyai-done-v1",
+  accent: ["#0B7566", "#4FD1B5"],
+  soft: ["#DDF3EE", "#10302B"],
+};
+
+const STAGES = [
+  { n: 1, title: "Python & Databases" },
+  { n: 2, title: "APIs & Architecture" },
+  { n: 3, title: "Data Science" },
+  { n: 4, title: "Machine Learning" },
+  { n: 5, title: "Generative AI" },
+  { n: 6, title: "Production" },
+];
+
+const L = [
+  { id: "python", s: 1, name: "Python", cat: "Language", file: "basics.py", lang: "python",
+    what: "Python is the language of AI and a strong backend language. Its clean syntax, huge library ecosystem and async support make it the base for everything else in this track.",
+    concepts: ["Types, lists, dicts, sets, comprehensions", "Functions: *args, **kwargs, keyword-only args", "Classes, dataclasses, inheritance, ABCs", "Exceptions and context managers (with)", "Generators and decorators", "Type hints, async/await, virtual environments"],
+    why: "FastAPI, NumPy, pandas, PyTorch and every LLM SDK are Python. Weak Python makes every later stage harder.",
+    tip: "Learn comprehensions, dataclasses and type hints early. Modern Python libraries such as FastAPI and Pydantic are built on type hints.",
+    jarvis: "Read <code class=\"i\">app/config.py</code> and <code class=\"i\">app/timeutil.py</code>. <b>Try:</b> write a <code class=\"i\">@timed</code> decorator and use it on a function in <code class=\"i\">app/nlp/analyzer.py</code>." },
+  { id: "sql", s: 1, name: "SQL", cat: "Databases", file: "queries.sql", lang: "sql",
+    what: "SQL is the language for relational databases. You describe what data you want, and the database works out how to fetch it.",
+    concepts: ["CREATE TABLE, primary and foreign keys, constraints", "SELECT, WHERE, ORDER BY, LIMIT", "INNER and LEFT JOIN", "GROUP BY, HAVING, aggregates", "Subqueries, CTEs, window functions", "Transactions and indexes"],
+    why: "Almost every product stores its core data in SQL. Data analysis and ML feature work start with SQL queries.",
+    tip: "Write the query in this order: FROM → WHERE → GROUP BY → SELECT → ORDER BY. That's the order the database runs it in.",
+    jarvis: "Open <code class=\"i\">app/db/sql.py</code>. Each SQLAlchemy <code class=\"i\">select()</code> there becomes one of these queries. <b>Try:</b> write the raw SQL for \"count of open tasks per user\"." },
+  { id: "postgresql", s: 1, name: "PostgreSQL", cat: "Databases", file: "postgres.sql", lang: "sql",
+    what: "PostgreSQL is the most capable open-source relational database. It adds JSONB, arrays, full-text search and the pgvector extension for AI embeddings.",
+    concepts: ["Types: TIMESTAMPTZ, UUID, JSONB, arrays", "Upserts with ON CONFLICT and RETURNING", "B-tree, GIN and partial indexes", "EXPLAIN ANALYZE", "Full-text search", "pgvector for embeddings", "Migrations with Alembic"],
+    why: "It's the default production database for Python backends, and with pgvector it can also be your RAG vector store.",
+    tip: "Always use <code class=\"i\">TIMESTAMPTZ</code>, not <code class=\"i\">TIMESTAMP</code>. Time zone bugs are hard to fix after data is stored.",
+    jarvis: "<code class=\"i\">docker-compose.yml</code> already runs <code class=\"i\">postgres:16</code>, and <code class=\"i\">DATABASE_URL</code> switches <code class=\"i\">app/db/sql.py</code> to it. <b>Try:</b> add Alembic migrations to fastapi-ai." },
+  { id: "fastapi", s: 2, name: "FastAPI", cat: "Web framework", file: "app/main.py", lang: "python",
+    what: "FastAPI builds APIs from Python type hints. You get request validation, JSON serialization and interactive docs at /docs automatically.",
+    concepts: ["Path operations and routers", "Pydantic models for request and response", "Query, path, header and body parameters", "Dependency injection with Depends", "HTTPException and status codes", "async endpoints, background tasks, streaming (SSE)", "Testing with TestClient"],
+    why: "FastAPI is the most popular way to serve ML models and LLM features over HTTP.",
+    tip: "Use <code class=\"i\">async def</code> only when everything inside is async. A blocking call inside async code freezes the whole server; use plain <code class=\"i\">def</code> for those endpoints.",
+    jarvis: "<code class=\"i\">app/main.py</code>, <code class=\"i\">app/routers/chat.py</code> and <code class=\"i\">app/security.py</code> (the <code class=\"i\">require_internal_key</code> dependency). <b>Try:</b> add a <code class=\"i\">GET /tasks/stats</code> endpoint with a test in <code class=\"i\">tests/test_api.py</code>." },
+  { id: "backend-architecture", s: 2, name: "Backend Architecture", cat: "Design", file: "architecture.py", lang: "python",
+    what: "Architecture is how you split a backend into layers with clear jobs, so it stays easy to test, change and scale as it grows.",
+    concepts: ["Layers: router → service → repository", "Configuration from the environment (12-factor)", "Dependency injection and interfaces (Protocol)", "Centralized error handling", "Logging, request IDs, health checks", "Background jobs, caching, idempotency"],
+    why: "Small scripts work without structure, but real services need it. This is what separates junior and senior backend code.",
+    tip: "Keep business rules free of FastAPI imports. If a service class can be tested without starting a server, you've drawn the layer boundary correctly.",
+    jarvis: "Compare the folders in <code class=\"i\">app/</code>: <code class=\"i\">routers/</code>, <code class=\"i\">db/</code>, <code class=\"i\">storage/</code>, <code class=\"i\">llm/</code>. Note the lifespan and request-id middleware in <code class=\"i\">main.py</code>. <b>Try:</b> move task rules into an <code class=\"i\">app/services/tasks.py</code>." },
+  { id: "numpy", s: 3, name: "NumPy", cat: "Data science", file: "numpy_basics.py", lang: "python",
+    what: "NumPy provides fast n-dimensional arrays and vectorized math. It's the base of pandas, scikit-learn and PyTorch.",
+    concepts: ["Arrays, shape, dtype, reshape", "Indexing, slicing, boolean masks", "Vectorized operations instead of loops", "Broadcasting", "Aggregations along axes", "Matrix multiply (@), norms, cosine similarity"],
+    why: "Embeddings, model inputs and images are all arrays. Understanding shapes prevents most ML bugs.",
+    tip: "Print <code class=\"i\">.shape</code> constantly. Most NumPy and PyTorch errors are shape mismatches.",
+    jarvis: "<code class=\"i\">app/rag/store.py</code> ranks document chunks with NumPy cosine similarity. <b>Try:</b> rewrite its search with <code class=\"i\">np.argpartition</code> for faster top-k." },
+  { id: "pandas", s: 3, name: "Pandas", cat: "Data science", file: "analytics.py", lang: "python",
+    what: "pandas is the tool for loading, cleaning, transforming and summarizing tabular data in Python.",
+    concepts: ["DataFrame and Series", "read_csv, read_sql, read_parquet", "Filtering with masks and query()", "Cleaning: duplicates, missing values, types", "groupby + agg", "merge, pivot_table, resample"],
+    why: "Data prep is most of an ML project. pandas also powers analytics dashboards and reports.",
+    tip: "Avoid <code class=\"i\">for</code> loops over rows (<code class=\"i\">iterrows</code>). There is almost always a vectorized way that is far faster.",
+    jarvis: "<code class=\"i\">streamlit-admin/app.py</code> shows Jarvis analytics. <b>Try:</b> load chat analytics with <code class=\"i\">pd.read_sql</code> and chart p95 latency per intent." },
+  { id: "statistics", s: 3, name: "Statistics", cat: "Data science", file: "stats.py", lang: "python",
+    what: "Statistics tells you what your data means and how sure you can be about it. It's the base of ML evaluation and A/B testing.",
+    concepts: ["Mean, median, std, percentiles", "Distributions: normal, binomial, skewed", "Sampling and the central limit theorem", "Confidence intervals and bootstrapping", "Hypothesis tests and p-values", "Correlation, regression, Bayes' rule"],
+    why: "Without statistics you can't tell whether a new model or prompt is actually better or just lucky.",
+    tip: "For latency and money, report median and p95, not just the mean. Skewed data makes the mean misleading.",
+    jarvis: "<b>Try:</b> run two prompt versions on 100 questions each, then use a chi-square test on thumbs-up rates to decide which version wins." },
+  { id: "machine-learning", s: 4, name: "Machine Learning", cat: "ML", file: "ml/train_intent.py", lang: "python",
+    what: "Machine learning trains models that learn patterns from examples. scikit-learn is the standard library for classic ML.",
+    concepts: ["Supervised vs unsupervised learning", "Train/test split, cross-validation", "Pipelines and feature engineering (TF-IDF)", "Classification and regression algorithms", "Metrics: precision, recall, F1, ROC-AUC", "Overfitting, regularization, hyperparameter tuning"],
+    why: "Many problems don't need an LLM. A small classifier is cheaper and faster, and it can decide when to call the LLM.",
+    tip: "Always compare against a simple baseline first, like the most-common class. If your model barely beats it, the problem is the data, not the algorithm.",
+    jarvis: "<code class=\"i\">ml/train_intent.py</code> trains the intent model from <code class=\"i\">ml/data/intents.json</code>. <b>Try:</b> add 3 new intents and compare LogisticRegression with LinearSVC." },
+  { id: "deep-learning", s: 4, name: "Deep Learning", cat: "ML", file: "ml/train_intent_dl.py", lang: "python",
+    what: "Deep learning uses neural networks with many layers. PyTorch gives you tensors, automatic gradients and building blocks for networks.",
+    concepts: ["Tensors and autograd", "nn.Module, layers, activations", "Loss functions and optimizers", "The training loop", "Overfitting: dropout, weight decay, early stopping", "CNNs, RNNs, transformers, transfer learning"],
+    why: "LLMs, image models and speech recognition are all deep learning. Knowing the training loop helps you understand how LLMs work.",
+    tip: "First get the model to overfit a tiny batch (100% train accuracy). If it can't, there's a bug in your code, not a tuning problem.",
+    jarvis: "<code class=\"i\">ml/train_intent_dl.py</code> is the PyTorch version of the intent classifier. <b>Try:</b> swap bag-of-words for <code class=\"i\">nn.Embedding</code> + <code class=\"i\">nn.LSTM</code> and compare accuracy." },
+  { id: "llms", s: 5, name: "LLMs", cat: "Generative AI", file: "llm_basics.py", lang: "python",
+    what: "Large language models generate text from a prompt. As a backend engineer, you call them through an API and design prompts, streaming, validation and cost control around them.",
+    concepts: ["Tokens, context windows, pricing", "System prompts and multi-turn messages", "Streaming responses", "Structured output + validation", "Multimodal input (images, PDFs)", "Errors, retries, rate limits, prompt caching"],
+    why: "Most new AI products are built on LLM APIs. This is the most in-demand AI backend skill in 2026.",
+    tip: "Treat model output like user input. Validate JSON with Pydantic before you act on it.",
+    jarvis: "<code class=\"i\">app/llm/claude.py</code> holds the shared async client and default parameters. <b>Try:</b> add a <code class=\"i\">summarize(text)</code> helper that returns a validated Pydantic model." },
+  { id: "rag", s: 5, name: "RAG", cat: "Generative AI", file: "rag.py", lang: "python",
+    what: "Retrieval-Augmented Generation answers questions from your own documents. You find the relevant chunks first, then give only those to the LLM.",
+    concepts: ["Chunking with overlap", "Embeddings and vector similarity", "Vector stores (pgvector, Chroma, Pinecone)", "Grounded prompts with citations", "Hybrid search and re-ranking", "Per-user filtering and evaluation"],
+    why: "RAG lets an LLM answer from private, up-to-date data without retraining. It's the most common enterprise AI pattern.",
+    tip: "Most bad RAG answers come from bad retrieval. Print the retrieved chunks before you change the prompt.",
+    jarvis: "<code class=\"i\">app/rag/store.py</code> (chunking, TF-IDF or sentence-transformer embeddings, per-user index) and <code class=\"i\">app/routers/rag.py</code>. <b>Try:</b> move the store to pgvector." },
+  { id: "ai-agents", s: 5, name: "AI Agents", cat: "Generative AI", file: "agent.py", lang: "python",
+    what: "An agent is an LLM running in a loop with tools. It decides which tool to call, reads the result, and keeps going until the task is done.",
+    concepts: ["Tool definitions with JSON Schema", "The tool_use → tool_result loop", "Step limits and error handling", "Safe tool design (no eval, permission checks)", "Memory and context management", "MCP, multi-agent and human-in-the-loop patterns"],
+    why: "Agents turn a chatbot into an assistant that does things: books, reminds, searches and calculates.",
+    tip: "Tool descriptions are prompts. If the agent picks the wrong tool, improve the description before you change the code.",
+    jarvis: "<code class=\"i\">app/agent/agent.py</code> (streaming loop) and <code class=\"i\">app/agent/tools.py</code>. <code class=\"i\">mcp-server/server.py</code> exposes them to Claude Desktop. <b>Try:</b> add a <code class=\"i\">convert_currency</code> tool." },
+  { id: "mlops", s: 6, name: "MLOps", cat: "Production", file: "mlops.py", lang: "python",
+    what: "MLOps is the practice of shipping models reliably: tracking experiments, versioning models, gating releases on quality and monitoring them in production.",
+    concepts: ["Experiment tracking (MLflow, W&B)", "Model registry and versioning", "Quality gates in CI", "LLM and RAG eval sets", "Prediction logging", "Drift and cost monitoring"],
+    why: "Most ML models fail after launch, not in the notebook. MLOps is how you notice and fix that.",
+    tip: "Build a small golden test set (50 hand-checked examples) first. It's the most valuable MLOps tool you can have.",
+    jarvis: "<code class=\"i\">.github/workflows/ci.yml</code> runs the tests. <b>Try:</b> add <code class=\"i\">tests/test_model_quality.py</code> that fails CI if intent accuracy drops below 90%." },
+  { id: "docker", s: 6, name: "Docker", cat: "Production", file: "Dockerfile", lang: "dockerfile",
+    what: "Docker packages your app and its exact dependencies into an image that runs the same way on your laptop, in CI and in the cloud.",
+    concepts: ["Images, containers, layers", "Dockerfile: FROM, COPY, RUN, CMD", "Multi-stage builds, non-root users", ".dockerignore and layer caching", "Volumes and networks", "docker compose for multi-service apps"],
+    why: "Every cloud platform runs containers. \"Works on my machine\" stops being a problem.",
+    tip: "Copy <code class=\"i\">requirements.txt</code> and install dependencies before copying your code. Then code changes rebuild in seconds.",
+    jarvis: "<code class=\"i\">fastapi-ai/Dockerfile</code> and the root <code class=\"i\">docker-compose.yml</code> run the whole stack with <code class=\"i\">docker compose up --build</code>. <b>Try:</b> add a HEALTHCHECK to the Dockerfile." },
+  { id: "aws", s: 6, name: "AWS", cat: "Cloud", file: "aws_services.py", lang: "python",
+    what: "AWS is the largest cloud platform. A Python AI backend typically uses S3, a managed database, containers, queues and secrets.",
+    concepts: ["IAM roles and least privilege", "S3 uploads and presigned URLs", "Secrets Manager", "SQS queues and Lambda workers", "App Runner / ECS + ECR for containers", "RDS, CloudWatch, Bedrock, SageMaker"],
+    why: "Most companies deploy on AWS. Knowing these core services covers most backend jobs.",
+    tip: "Set a billing alarm before you create anything, and never commit access keys. Use IAM roles in the cloud.",
+    jarvis: "<code class=\"i\">app/storage/s3.py</code> stores uploads in S3, and <code class=\"i\">infra/aws/</code> holds the deployment setup. <b>Try:</b> make RAG ingestion asynchronous with an SQS queue." },
+];
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/dockerfile.min.js"></script>
+<script>
+(function () {
+  const KEY = META.key;
+  let done = new Set();
+  try { done = new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify([...done])); } catch (e) {} };
+
+  const code = {};
+  document.querySelectorAll('script[data-code]').forEach(el => {
+    code[el.dataset.code] = el.textContent.replace(/^\n/, "").replace(/\s+$/, "");
+  });
+
+  const route = document.getElementById("route");
+  const picker = document.getElementById("picker");
+  const lesson = document.getElementById("lesson");
+  document.getElementById("count").textContent = L.length;
+
+  // Build nav
+  STAGES.forEach(st => {
+    const items = L.filter(l => l.s === st.n);
+    const div = document.createElement("div");
+    div.className = "stage";
+    div.innerHTML = `<div class="stage-h"><span class="stage-n">${st.n}</span><span class="stage-t">${st.title}</span></div><ul></ul>`;
+    const ul = div.querySelector("ul");
+    const og = document.createElement("optgroup");
+    og.label = `${st.n}. ${st.title}`;
+    items.forEach(l => {
+      const li = document.createElement("li");
+      li.innerHTML = `<button type="button" data-id="${l.id}"><span class="dot"></span><span>${l.name}</span></button>`;
+      ul.appendChild(li);
+      const opt = document.createElement("option");
+      opt.value = l.id; opt.textContent = l.name;
+      og.appendChild(opt);
+    });
+    route.appendChild(div);
+    picker.appendChild(og);
+  });
+  route.addEventListener("click", e => {
+    const b = e.target.closest("button[data-id]");
+    if (b) go(b.dataset.id);
+  });
+  picker.addEventListener("change", () => go(picker.value));
+
+  function go(id) {
+    if (location.hash.slice(1) !== id) location.hash = id;
+    else show(id);
+  }
+
+  function refreshProgress() {
+    const n = L.filter(l => done.has(l.id)).length;
+    document.getElementById("pct").textContent = `${n} / ${L.length} done`;
+    document.getElementById("barfill").style.width = (n / L.length * 100) + "%";
+    route.querySelectorAll("button[data-id]").forEach(b => b.parentElement.classList.toggle("done", done.has(b.dataset.id)));
+  }
+
+  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  function show(id) {
+    const i = Math.max(0, L.findIndex(l => l.id === id));
+    const l = L[i];
+    const st = STAGES[l.s - 1];
+    const prev = L[i - 1], next = L[i + 1];
+    const src = code[l.id] || "";
+    let highlighted = esc(src);
+    try {
+      if (window.hljs && hljs.getLanguage(l.lang)) highlighted = hljs.highlight(src, { language: l.lang }).value;
+    } catch (e) {}
+    const isDone = done.has(l.id);
+
+    lesson.innerHTML = `
+      <div class="cat">Stage ${st.n} · ${st.title} · ${l.cat}</div>
+      <h2>${l.name}</h2>
+      <p class="what">${l.what}</p>
+      <div class="grid2">
+        <div class="box"><h3>Concepts to master</h3><ul>${l.concepts.map(c => `<li>${esc(c)}</li>`).join("")}</ul></div>
+        <div class="box"><h3>Why it matters</h3><p>${l.why}</p></div>
+      </div>
+      <div class="code">
+        <div class="code-bar"><span class="file">${esc(l.file)}</span><button class="copy" type="button" id="copy-btn">Copy code</button></div>
+        <pre><code>${highlighted}</code></pre>
+      </div>
+      <div class="tip"><b>Pro tip</b><p>${l.tip}</p></div>
+      ${l.jarvis ? `<div class="tip jarvis"><b>In Jarvis</b><p>${l.jarvis}</p></div>` : ""}
+      <div class="actions">
+        <button class="btn ${isDone ? "is-done" : "primary"}" type="button" id="done-btn">${isDone ? "✓ Learned" : "Mark as learned"}</button>
+        <div class="nav-pair">
+          <button class="btn" type="button" id="prev-btn" ${prev ? "" : "disabled"}>← ${prev ? esc(prev.name) : "Start"}</button>
+          <button class="btn" type="button" id="next-btn" ${next ? "" : "disabled"}>${next ? esc(next.name) : "Finished"} →</button>
+        </div>
+      </div>`;
+
+    document.getElementById("copy-btn").addEventListener("click", e => {
+      const btn = e.currentTarget;
+      const ok = () => { btn.textContent = "Copied"; setTimeout(() => (btn.textContent = "Copy code"), 1500); };
+      const fallback = () => {
+        const range = document.createRange();
+        range.selectNodeContents(lesson.querySelector("pre code"));
+        const sel = getSelection(); sel.removeAllRanges(); sel.addRange(range);
+        btn.textContent = "Selected — press Ctrl+C";
+      };
+      try { navigator.clipboard.writeText(src).then(ok, fallback); } catch (err) { fallback(); }
+    });
+    document.getElementById("done-btn").addEventListener("click", () => {
+      done.has(l.id) ? done.delete(l.id) : done.add(l.id);
+      save(); refreshProgress(); show(l.id);
+    });
+    if (prev) document.getElementById("prev-btn").addEventListener("click", () => go(prev.id));
+    if (next) document.getElementById("next-btn").addEventListener("click", () => go(next.id));
+
+    route.querySelectorAll("button[data-id]").forEach(b => b.setAttribute("aria-current", b.dataset.id === l.id ? "true" : "false"));
+    picker.value = l.id;
+    refreshProgress();
+  }
+
+  window.addEventListener("hashchange", () => { show(location.hash.slice(1)); window.scrollTo({ top: 0 }); });
+  show(location.hash.slice(1) || L[0].id);
+})();
+</script>
+
+</body>
+</html>

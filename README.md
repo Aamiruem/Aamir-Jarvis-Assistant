@@ -1,2 +1,127 @@
-# Aamir-Jarvis-Assistant
-Performed multiple task for me 
+# J.A.R.V.I.S. - a full-stack AI assistant you build to learn
+
+One project that touches the whole modern stack: **React + Node/Express + MongoDB (MERN)**,
+**Python FastAPI**, **SQL**, **Streamlit**, **AWS**, and the AI layer, **LLMs, agents,
+RAG, MCP, NLP, classic ML, deep learning and computer vision**.
+
+```
+frontend/ (React)                backend/
+  voice · webcam      ┌──────────────────────────────────┐
+  ──────────────────► │ express-api/   Node + Express    │──► MongoDB (users, sessions, OTPs,
+                      │ banking-style auth + OTP (OOP)   │     audit log, conversations)
+                      │ chat history · API gateway       │──► AWS SES / SNS (OTP email/SMS)
+                      └───────────────┬──────────────────┘
+                                      │ X-Internal-Key + X-User-Id
+  streamlit-admin/ ──┐                ▼
+  jarvis.py (CLI) ───┼──► ┌──────────────────────────────────┐
+  mcp-server/ ───────┘    │ fastapi-ai/    Python + FastAPI  │──► Claude API (LLM, agent)
+  (Claude Desktop/Code)   │ agent · RAG · NLP/ML · CV        │──► SQLite / PostgreSQL
+                          │ tasks · memory · reminders       │──► AWS S3 (files)
+                          └──────────────────────────────────┘
+```
+
+**Backend overview, OOP design and auth flows:** [backend/README.md](backend/README.md)
+
+| Folder | Tech | What it does |
+|---|---|---|
+| [backend/express-api/](backend/express-api/) | Node, Express 5, Mongoose, JWT, AWS SDK | Banking-style auth (OTP, lockout, sessions), chat history, gateway |
+| [backend/fastapi-ai/](backend/fastapi-ai/) | FastAPI, Anthropic SDK, scikit-learn, OpenCV, SQLAlchemy, boto3 | The brain: streaming agent, RAG, NLP, CV, tasks |
+| [frontend/](frontend/) | React 18, Vite, Web Speech API | Chat UI, voice in/out, webcam vision, docs, tasks |
+| [dashboard/](dashboard/) | Next.js 16, TypeScript, Tailwind, shadcn/ui, Redux Toolkit, Zustand, GraphQL, Recharts/Chart.js/D3, Leaflet, Vitest, Playwright | Second web client (port 3001): overview charts, streaming chat, tasks, memories, weather map |
+| [backend/mcp-server/](backend/mcp-server/) | MCP (FastMCP) | Exposes Jarvis tools to Claude Desktop / Claude Code |
+| [backend/streamlit-admin/](backend/streamlit-admin/) | Streamlit, pandas | Admin: analytics, RAG testing, NLP playground |
+| [backend/fastapi-ai/ml/](backend/fastapi-ai/ml/) | scikit-learn, PyTorch | Training scripts for the intent models |
+| [infra/aws/](infra/aws/) | EC2, ECS, RDS, S3, ECR | Deployment guide |
+| [jarvis.py](jarvis.py) | Python stdlib | Terminal client |
+
+**Learning path:** see [docs/LEARNING_ROADMAP.md](docs/LEARNING_ROADMAP.md).
+**Every endpoint:** see [docs/API.md](docs/API.md).
+
+### Backend features
+
+| Feature | Where |
+|---|---|
+| Banking-style auth: email OTP verification, 2-step login (email/SMS OTP), lockout, refresh-token rotation with theft detection, device list, security activity, OTP password reset | [backend/express-api/src/auth/](backend/express-api/src/auth/) |
+| Roles: `user` / `admin` (`ADMIN_EMAILS`), admin overview & role management | [backend/express-api/src/routes/admin.js](backend/express-api/src/routes/admin.js) |
+| Chat history in MongoDB: list, search, rename, delete | [backend/express-api/src/routes/conversations.js](backend/express-api/src/routes/conversations.js) |
+| Streaming agent chat (SSE) with 10 tools | [backend/fastapi-ai/app/agent/](backend/fastapi-ai/app/agent/) |
+| **Per-user data isolation** for tasks, documents, memories, notifications, stats | every query filters on `user_id` |
+| Long-term memory (Jarvis remembers facts about you) | `remember`/`forget` tools, `/memories` |
+| Tasks with timed reminders + background scheduler + notifications | [backend/fastapi-ai/app/scheduler.py](backend/fastapi-ai/app/scheduler.py) |
+| RAG over your PDFs/notes (per-user index), classic vs agentic | [backend/fastapi-ai/app/rag/](backend/fastapi-ai/app/rag/) |
+| NLP + ML intent model, computer vision | [backend/fastapi-ai/app/nlp/](backend/fastapi-ai/app/nlp/), [cv/](backend/fastapi-ai/app/cv/) |
+| Account deletion that erases data across MongoDB, SQL, vector store and S3 | `DELETE /api/auth/me` |
+| Request logging with request ids, graceful shutdown, JSON 404s | `app/main.py`, `backend/express-api/src/app.js` |
+| Tests: 17 Python + 25 Node, CI on every push | [backend/fastapi-ai/tests/](backend/fastapi-ai/tests/), [backend/express-api/test/](backend/express-api/test/), [.github/workflows/ci.yml](.github/workflows/ci.yml) |
+
+---
+
+## Quick start (local, no Docker)
+
+You need Python 3.11+, Node 20+, and MongoDB (local install or a free MongoDB Atlas cluster).
+
+```bash
+cp .env.example .env        # then set ANTHROPIC_API_KEY, JWT_SECRET, OTP_SECRET, ADMIN_EMAILS=<your email>
+```
+
+**1. AI service: FastAPI** (terminal 1)
+```bash
+cd backend/fastapi-ai
+python -m venv .venv
+.venv\Scripts\activate             # macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+pytest -q                          # 17 tests, no API key needed
+uvicorn app.main:app --reload --port 8000
+```
+Open http://localhost:8000/docs for the interactive API.
+
+**2. API + auth: Express** (terminal 2)
+```bash
+cd backend/express-api
+npm install
+npm test                           # 25 tests, no MongoDB needed
+npm run dev                        # http://localhost:4000 - OTP codes are printed here
+```
+
+**3. Frontend** (terminal 3)
+```bash
+cd frontend
+npm install
+npm run dev                        # http://localhost:5173: register, enter the OTP, chat
+```
+
+**4. Optional extras**
+```bash
+pip install -r backend/streamlit-admin/requirements.txt && streamlit run backend/streamlit-admin/app.py
+pip install -r backend/mcp-server/requirements.txt && claude mcp add jarvis -- python "%CD%\backend\mcp-server\server.py"
+python jarvis.py                   # terminal chat
+```
+
+## Quick start (Docker)
+
+```bash
+cp .env.example .env               # add ANTHROPIC_API_KEY
+docker compose up --build
+```
+UI → http://localhost:3000 · Admin → http://localhost:8501 · API docs → http://localhost:8000/docs
+(Docker runs MongoDB **and** PostgreSQL for you.) Sign-up and sign-in codes appear in
+`docker compose logs -f express-api` until you set `OTP_PROVIDER=aws`.
+
+## Windows note: Smart App Control
+
+If Windows blocks a file with *"An Application Control policy has blocked this file"*, that's
+**Smart App Control** refusing freshly downloaded native binaries. On this machine it blocked
+`jiter` (needed by the `anthropic` package). The frontend avoids the same problem by using
+Rollup's WebAssembly build (`overrides` in `frontend/package.json`). Workarounds for the Python
+side: run the stack with **Docker** or inside **WSL** (Linux isn't affected).
+
+## Things to try once it runs
+
+- "Remind me to stretch in 2 minutes", then wait for the 🔔.
+- "Remember that I'm vegetarian", then in a new chat: "suggest a dinner recipe".
+- "Remind me to renew my passport next Friday", then "what's on my list?"
+- Upload a PDF in **Knowledge**, then ask about it in **Chat** (agentic RAG).
+- "What's 18% GST on 74,999 and the weather in Jaipur?" (parallel tool calls).
+- **Vision** tab → start camera → "What's on my desk?"
+- Click 🎙 and talk; tick 🔊 to hear replies.
+- Watch the Streamlit **Overview** fill with intents, latency and token counts.
