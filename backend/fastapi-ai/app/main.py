@@ -95,6 +95,25 @@ async def health():
 
 
 if __name__ == "__main__":
+    import socket
+
     import uvicorn
 
-    uvicorn.run("app.main:app", host="127.0.0.1", port=int(os.environ.get("AI_PORT", "8001")))
+    preferred_port = int(os.environ.get("AI_PORT", "8001"))
+
+    def _resolve_port(port: int) -> int:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            try:
+                sock.bind(("127.0.0.1", port))
+                return port
+            except OSError:
+                for candidate in range(port + 1, port + 20):
+                    try:
+                        sock.bind(("127.0.0.1", candidate))
+                        log.warning("Port %s is already in use; falling back to %s", port, candidate)
+                        return candidate
+                    except OSError:
+                        continue
+                raise
+
+    uvicorn.run("app.main:app", host="127.0.0.1", port=_resolve_port(preferred_port))
