@@ -53,6 +53,10 @@ instantly without the AI; anything else goes to the AI, which understands free w
 | shut down the computer | Jarvis asks you to confirm, then shuts down **after 60 seconds**. Say "cancel shutdown" to stop it |
 | restart the computer | same, restarts |
 | how's my computer doing? | CPU, memory, disk and battery |
+| open my resume · play the lofi song I downloaded · where's the electricity bill? | searches Desktop, Documents, Downloads, Pictures, Music and Videos by name (newest first) and opens it; asks which one when several match. Programs and scripts are never opened |
+| summarize this · translate what I copied · fix the grammar in my clipboard | reads the text you copied; rewritten text goes back on the clipboard, ready to paste |
+| copy that · put this reply on my clipboard | copies Jarvis's text so you can paste it anywhere |
+| what's on my screen? · explain this error · help me with this page | Jarvis takes a screenshot that only Claude sees (it isn't saved) and answers about it |
 
 ## What each action does on each OS
 

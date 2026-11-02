@@ -33,6 +33,13 @@ const TOOL_LABELS = {
   system_control: 'Done on your PC',
   system_status: 'Checked your PC',
   compose_email: 'Email draft opened in Gmail',
+  find_contact: 'Checked your contacts',
+  add_contact: 'Contact saved',
+  find_files: 'Searched your files',
+  open_file: 'Opened file',
+  read_clipboard: 'Read your clipboard',
+  copy_to_clipboard: 'Copied to clipboard',
+  look_at_screen: 'Looked at your screen',
 };
 const STOP_WORDS = /^(stop|stop listening|that's all|that is all|goodbye|bye|bye jarvis|exit|go to sleep)[.!]?$/i;
 const MAX_SILENT_ROUNDS = 4; // hands-free pauses after this many listens with no speech

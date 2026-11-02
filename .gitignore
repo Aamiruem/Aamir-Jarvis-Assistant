@@ -24,3 +24,7 @@ backend/fastapi-ai/data/
 test-results/
 playwright-report/
 coverage/
+
+# Local runtime data (users, sessions, OTPs, local DB)
+backend/express-api/data/
+backend/fastapi-ai/data/

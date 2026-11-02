@@ -297,3 +297,80 @@ def test_new_key_in_env_file_is_picked_up_without_restart(tmp_path, monkeypatch)
     env.write_text("ANTHROPIC_API_KEY=sk-ant-new\n")
     os.utime(env, (time.time() + 5, time.time() + 5))  # make sure the change is seen on coarse clocks
     assert claude._current_key() == "sk-ant-new"
+
+
+# ---------- files, clipboard and screen ----------
+
+@pytest.fixture
+def home(tmp_path, monkeypatch, pc):
+    """The user's folders, pointed at a temp dir with a few files in it."""
+    folders = {name: tmp_path / name.capitalize() for name in ("documents", "downloads", "music")}
+    for folder in folders.values():
+        folder.mkdir()
+    monkeypatch.setattr(sc, "FOLDERS", folders)
+    for name, age in (("documents/Resume 2024.docx", 3600), ("downloads/setup-resume.exe", 60), ("downloads/resume_final.pdf", 0)):
+        path = tmp_path / name.split("/")[0].capitalize() / name.split("/")[1]
+        path.write_text("x")
+        os.utime(path, (time.time() - age, time.time() - age))
+    (folders["music"] / "lofi beats.mp3").write_text("x")
+    (folders["documents"] / "node_modules").mkdir()
+    (folders["documents"] / "node_modules" / "resume.js").write_text("x")
+    return folders
+
+
+def test_find_files_matches_every_word_newest_first(home):
+    found = sc.find_files("resume")
+    assert [f["name"] for f in found["files"]] == ["resume_final.pdf", "setup-resume.exe", "Resume 2024.docx"]
+    assert found["searched_everything"]
+    assert [f["name"] for f in sc.find_files("RESUME pdf")["files"]] == ["resume_final.pdf"]
+    assert [f["name"] for f in sc.find_files("lofi", folder="music")["files"]] == ["lofi beats.mp3"]
+    assert sc.find_files("lofi", folder="documents")["files"] == []
+    with pytest.raises(sc.SystemControlError):
+        sc.find_files("resume", folder="windows")
+
+
+def test_open_file_only_opens_documents_inside_the_user_folders(home, pc, tmp_path):
+    pdf = home["downloads"] / "resume_final.pdf"
+    assert sc.open_file(str(pdf))["ok"]
+    assert pc[-1] == ("start", str(pdf.resolve()))
+    outside = tmp_path / "secret.txt"
+    outside.write_text("x")
+    for bad in (home["downloads"] / "setup-resume.exe", outside, home["documents"] / "missing.pdf",
+                home["documents"] / ".." / ".." / "secret.txt"):
+        with pytest.raises(sc.SystemControlError):
+            sc.open_file(str(bad))
+    assert len([d for d in pc if d[0] == "start"]) == 1
+
+
+def test_clipboard_text_is_never_parsed_as_powershell(pc, monkeypatch):
+    calls = []
+    monkeypatch.setattr(sc, "_powershell", lambda script, env=None, timeout=20: calls.append((script, env)) or "copied text")
+    tricky = "'; Remove-Item C:\\ -Recurse #"
+    assert sc.write_clipboard(tricky)["ok"]
+    script, env = calls[0]
+    assert tricky not in script and env == {"JARVIS_CLIP": tricky}
+    assert sc.read_clipboard()["text"] == "copied text"
+    monkeypatch.setattr(sc, "_powershell", lambda script, env=None, timeout=20: "  \n")
+    assert sc.read_clipboard()["text"] == ""
+
+
+def test_look_at_screen_hands_claude_a_small_picture(pc, monkeypatch):
+    from PIL import Image
+
+    monkeypatch.setattr(sc, "_capture", lambda shot: Image.new("RGB", (3840, 2160), "navy").save(shot))
+    out, err = run_tool("look_at_screen", {}, ToolContext("alice"))
+    assert not err and out[0]["type"] == "image" and out[0]["source"]["media_type"] == "image/jpeg"
+    import base64
+    import io as _io
+
+    with Image.open(_io.BytesIO(base64.b64decode(out[0]["source"]["data"]))) as img:
+        assert max(img.size) <= sc.SCREEN_MAX_SIDE
+    assert json.loads(out[1]["text"])["note"]
+
+
+def test_new_pc_tools_respect_the_off_switch(home, monkeypatch):
+    monkeypatch.setattr(settings, "system_control", False)
+    for name, args in [("find_files", {"query": "resume"}), ("read_clipboard", {}), ("copy_to_clipboard", {"text": "hi"}),
+                       ("look_at_screen", {}), ("open_file", {"path": str(home["downloads"] / "resume_final.pdf")})]:
+        out, err = run_tool(name, args, ToolContext("alice"))
+        assert err and "turned off" in json.loads(out)["error"], name

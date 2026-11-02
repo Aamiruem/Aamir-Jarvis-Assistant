@@ -20,10 +20,12 @@ from pydantic import BaseModel, Field
 from app.config import settings
 from app.db import sql
 from app.rag.store import get_store
+from app import system_control as pc
 from app.system_control import ACTIONS, FOLDERS, app_names, run_action, system_status
 from app.timeutil import parse_when
 
 HTTP_HEADERS = {"User-Agent": "JarvisLearningProject/1.0 (educational assistant)"}
+IMAGE_KEY = "_image"  # a tool result holding (media_type, base64) under this key is sent to Claude as a picture
 
 
 @dataclass(frozen=True)
@@ -98,6 +100,28 @@ class SystemControl(BaseModel):
 
 
 class SystemStatus(BaseModel):
+    pass
+
+
+class FindFiles(BaseModel):
+    query: str = Field(description="Words from the file's name, e.g. 'resume' or 'electricity bill pdf'. Leave out filler like 'my' or 'the'.")
+    folder: str | None = Field(None, description=f"Only search this folder: one of {', '.join(FOLDERS)}. Omit to search all of them.")
+    limit: int = Field(10, ge=1, le=25, description="Most matches to return (newest first).")
+
+
+class OpenFile(BaseModel):
+    path: str = Field(description="Full path of the file, exactly as find_files returned it.")
+
+
+class ReadClipboard(BaseModel):
+    pass
+
+
+class CopyToClipboard(BaseModel):
+    text: str = Field(description="The exact text to put on the clipboard.")
+
+
+class LookAtScreen(BaseModel):
     pass
 
 
@@ -226,6 +250,27 @@ def get_system_status(args: SystemStatus, ctx: ToolContext) -> dict:
     return system_status()
 
 
+def find_files(args: FindFiles, ctx: ToolContext) -> dict:
+    return pc.find_files(args.query, args.folder, args.limit)
+
+
+def open_file(args: OpenFile, ctx: ToolContext) -> dict:
+    return pc.open_file(args.path)
+
+
+def read_clipboard(args: ReadClipboard, ctx: ToolContext) -> dict:
+    return pc.read_clipboard()
+
+
+def copy_to_clipboard(args: CopyToClipboard, ctx: ToolContext) -> dict:
+    return pc.write_clipboard(args.text)
+
+
+def look_at_screen(args: LookAtScreen, ctx: ToolContext) -> dict:
+    media_type, data = pc.capture_screen()
+    return {IMAGE_KEY: (media_type, data), "note": "This is the user's screen right now."}
+
+
 def compose_email(args: ComposeEmail, ctx: ToolContext) -> dict:
     """Opens a ready-to-send Gmail draft in the browser; the user reviews it and presses Send."""
     url = "https://mail.google.com/mail/?" + urlencode({"view": "cm", "fs": "1", "to": args.to, "su": args.subject, "body": args.body})
@@ -312,6 +357,32 @@ TOOLS: dict[str, tuple[str, type[BaseModel], callable]] = {
     ),
     "add_contact": ("Save a new person to the user's contact list.", AddContact, add_contact),
     "system_status": ("Get this PC's CPU, memory and disk usage, free disk space and battery level.", SystemStatus, get_system_status),
+    "find_files": (
+        "Find files on the user's computer by name, in their Desktop, Documents, Downloads, Pictures, Music and Videos "
+        "folders. Use when they ask to find, open, play or show one of their files ('open my resume', 'play the song "
+        "I downloaded', 'where's the electricity bill?'). Matches newest first. If several fit, ask which one.",
+        FindFiles, find_files,
+    ),
+    "open_file": (
+        "Open one of the user's files with its default app (documents, PDFs, pictures, music, videos). Only paths "
+        "returned by find_files; programs and scripts are never opened.",
+        OpenFile, open_file,
+    ),
+    "read_clipboard": (
+        "Read the text the user has copied. Use when they refer to 'this', 'what I copied' or 'the clipboard' "
+        "('summarize this', 'translate what I copied', 'fix the grammar in my clipboard').",
+        ReadClipboard, read_clipboard,
+    ),
+    "copy_to_clipboard": (
+        "Put text on the user's clipboard so they can paste it anywhere (a rewritten paragraph, a reply, a command). "
+        "Use when they ask you to copy something, or after rewriting clipboard text so the result is ready to paste.",
+        CopyToClipboard, copy_to_clipboard,
+    ),
+    "look_at_screen": (
+        "See what is on the user's screen right now (a screenshot shown only to you, not saved). Use when they ask about "
+        "'my screen', 'this error', 'this page', 'what am I looking at', or need help with whatever is in front of them.",
+        LookAtScreen, look_at_screen,
+    ),
 }
 
 
@@ -328,8 +399,11 @@ def tool_specs() -> list[dict]:
     ]
 
 
-def run_tool(name: str, raw_input, ctx: ToolContext) -> tuple[str, bool]:
-    """Validate and execute one tool call. Returns (json_result, is_error)."""
+def run_tool(name: str, raw_input, ctx: ToolContext) -> tuple[str | list[dict], bool]:
+    """Validate and execute one tool call. Returns (json_result, is_error).
+
+    A tool that returns an image (IMAGE_KEY) gets content blocks instead of a JSON string, so Claude sees the picture.
+    """
     if name not in TOOLS:
         return json.dumps({"error": f"Unknown tool {name}"}), True
     _, model, fn = TOOLS[name]
@@ -338,6 +412,13 @@ def run_tool(name: str, raw_input, ctx: ToolContext) -> tuple[str, bool]:
     except Exception as e:
         return json.dumps({"error": "INVALID_INPUT", "detail": str(e)[:500]}), True
     try:
-        return json.dumps(fn(args, ctx), default=str), False
+        result = fn(args, ctx)
     except Exception as e:
         return json.dumps({"error": str(e)[:500]}), True
+    if isinstance(result, dict) and IMAGE_KEY in result:
+        media_type, data = result.pop(IMAGE_KEY)
+        return [
+            {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": data}},
+            {"type": "text", "text": json.dumps(result, default=str)},
+        ], False
+    return json.dumps(result, default=str), False

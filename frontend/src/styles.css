@@ -229,12 +229,12 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
   background: var(--topbar-bg); backdrop-filter: blur(16px); position: relative; z-index: 5;
 }
 .menu { flex: none; }
-/* Narrower desktops: inactive tabs show just their icon (the name is in the tooltip). */
+/* Narrower screens: every tab keeps its name, stacked in small type under the icon so all fit. */
 @media (max-width: 1600px) {
-  .app:not(.collapsed) .tab:not(.active) span { display: none; }
+  .app:not(.collapsed) .tab { flex-direction: column; gap: 2px; padding: 5px 9px; font-size: 11px; line-height: 1.2; }
 }
 @media (max-width: 1100px) {
-  .tab:not(.active) span { display: none; }
+  .tab { flex-direction: column; gap: 2px; padding: 5px 9px; font-size: 11px; line-height: 1.2; }
 }
 /* Desktop: the menu button collapses the sidebar. */
 @media (min-width: 761px) {
@@ -542,8 +542,7 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
   .search-bar { width: auto; padding: 8px; }
   .msg { max-width: 98%; }
   .msg-avatar { display: none; }
-  .tab span { display: none; }
-  .tab.active span { display: inline; }
+  .tab { padding: 4px 7px; font-size: 10px; }
   .search-bar span, .search-bar kbd { display: none; }
   .panel { padding: 18px 16px 32px; }
   .page-head h2 { font-size: 24px; }

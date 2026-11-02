@@ -8,12 +8,15 @@ these lists; nothing they send is ever run as a command. Turn it off with SYSTEM
 Shutdown and restart wait POWER_DELAY_SECONDS and can be cancelled ("cancel shutdown"), so a
 misheard voice command never switches the computer off without warning.
 """
+import base64
+import io
 import json
 import os
 import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import webbrowser
@@ -348,6 +351,12 @@ def _screenshot() -> dict:
     out_dir = Path.home() / "Pictures" / "Jarvis Screenshots"
     out_dir.mkdir(parents=True, exist_ok=True)
     shot = out_dir / f"screenshot-{datetime.now():%Y%m%d-%H%M%S}.png"
+    _capture(shot)
+    return {"ok": True, "message": f"Screenshot saved to {shot}.", "path": str(shot)}
+
+
+def _capture(shot: Path) -> None:
+    """Saves the whole screen (all monitors) as a PNG at shot."""
     system = current_os()
     if system == "windows":
         _powershell(_SCREENSHOT_PS, env={"JARVIS_SHOT": str(shot)})
@@ -364,7 +373,6 @@ def _screenshot() -> dict:
         if not args:
             raise SystemControlError("Screenshots need one of: grim, gnome-screenshot, spectacle or scrot.")
         _run(args, "Screenshot")
-    return {"ok": True, "message": f"Screenshot saved to {shot}.", "path": str(shot)}
 
 
 _POWER_COMMANDS = {
@@ -506,3 +514,140 @@ def system_status() -> dict:
         status = {"os": "windows", **json.loads(_powershell(_STATUS_PS, timeout=30))}  # same numbers, slower
     _status_cache = (time.monotonic(), status)
     return status
+
+
+# ---------- files, clipboard and screen (for the agent) ----------
+
+# open_file never opens these: they would run a program rather than show a document.
+RUNNABLE = {
+    ".exe", ".msi", ".bat", ".cmd", ".com", ".ps1", ".psm1", ".vbs", ".vbe", ".js", ".jse", ".wsf", ".wsh",
+    ".scr", ".pif", ".lnk", ".url", ".reg", ".hta", ".cpl", ".msc", ".jar", ".py", ".pyw", ".sh", ".app",
+    ".command", ".appimage", ".run", ".desktop",
+}
+SKIP_DIRS = {"node_modules", "__pycache__", "venv", "site-packages", "$recycle.bin", "appdata"}
+FIND_SECONDS = 4  # a search is spoken to; never keep the user waiting longer than this
+FIND_MAX_SCANNED = 60_000
+CLIPBOARD_MAX_CHARS = 20_000
+SCREEN_MAX_SIDE = 1568  # larger images cost more tokens without Claude seeing more detail
+
+
+def _inside_user_folders(path: Path) -> bool:
+    return any(path.is_relative_to(folder.resolve()) for folder in FOLDERS.values())
+
+
+def find_files(query: str, folder: str | None = None, limit: int = 10) -> dict:
+    """Files in the user's own folders whose name contains every word of query, newest first."""
+    _check_enabled()
+    words = query.lower().split()
+    if not words:
+        raise SystemControlError("Say part of the file's name to search for.")
+    if folder and folder not in FOLDERS:
+        raise SystemControlError(f"I can search these folders: {', '.join(FOLDERS)}.")
+    roots = [FOLDERS[folder]] if folder else list(FOLDERS.values())
+    deadline = time.monotonic() + FIND_SECONDS
+    hits, scanned, complete = [], 0, True
+    for root in roots:
+        for dirpath, dirnames, filenames in os.walk(root):
+            dirnames[:] = [d for d in dirnames if not d.startswith(".") and d.lower() not in SKIP_DIRS]
+            scanned += len(filenames)
+            for name in filenames:
+                if all(w in name.lower() for w in words):
+                    path = Path(dirpath) / name
+                    try:
+                        st = path.stat()
+                    except OSError:
+                        continue
+                    hits.append((st.st_mtime, path, st.st_size))
+            if scanned > FIND_MAX_SCANNED or time.monotonic() > deadline:
+                complete = False
+                break
+        if not complete:
+            break
+    hits.sort(key=lambda h: h[0], reverse=True)
+    files = [
+        {"name": p.name, "path": str(p), "size_kb": round(size / 1024), "modified": datetime.fromtimestamp(mtime).isoformat(timespec="minutes")}
+        for mtime, p, size in hits[:limit]
+    ]
+    result = {"query": query, "files": files, "searched_everything": complete}
+    if not files:
+        result["note"] = f"No file in {folder or 'your main folders'} has '{query}' in its name."
+    return result
+
+
+def open_file(path: str) -> dict:
+    """Opens a document, picture, song or video from the user's folders with its default app."""
+    _check_enabled()
+    target = Path(path).expanduser().resolve()
+    if not _inside_user_folders(target):
+        raise SystemControlError(f"I only open files inside your {', '.join(FOLDERS)} folders.")
+    if not target.is_file():
+        raise SystemControlError(f"There's no file at {target}.")
+    if target.suffix.lower() in RUNNABLE:
+        raise SystemControlError(f"For safety I don't open programs or scripts ({target.suffix} files).")
+    _open_path(str(target))
+    return {"ok": True, "message": f"Opened {target.name}."}
+
+
+def _output(args: list[str], what: str, input_text: str | None = None) -> str:
+    """Like _run, but returns what the command printed."""
+    try:
+        done = subprocess.run(args, capture_output=True, text=True, encoding="utf-8", input=input_text, timeout=10)
+    except FileNotFoundError:
+        raise SystemControlError(f"{what} needs '{args[0]}', which isn't installed on this computer.")
+    if done.returncode != 0:
+        raise SystemControlError(f"{what} failed: {done.stderr.strip()[:200] or 'no details'}")
+    return done.stdout
+
+
+def _linux_clipboard(wayland: list[str], x11: list[str]) -> list[str]:
+    args = wayland if os.environ.get("WAYLAND_DISPLAY") and shutil.which(wayland[0]) else x11
+    if not shutil.which(args[0]):
+        raise SystemControlError("The clipboard needs wl-clipboard (Wayland) or xclip (X11): sudo apt install wl-clipboard xclip")
+    return args
+
+
+def read_clipboard() -> dict:
+    """The text currently on the clipboard (cut to CLIPBOARD_MAX_CHARS)."""
+    _check_enabled()
+    system = current_os()
+    if system == "windows":
+        text = _powershell("[Console]::OutputEncoding = [Text.Encoding]::UTF8; Get-Clipboard -Raw")
+    elif system == "mac":
+        text = _output(["pbpaste"], "Reading the clipboard")
+    else:
+        text = _output(_linux_clipboard(["wl-paste", "--no-newline"], ["xclip", "-selection", "clipboard", "-o"]), "Reading the clipboard")
+    text = text or ""
+    if not text.strip():
+        return {"text": "", "note": "The clipboard is empty (or holds something that isn't text, like an image)."}
+    return {"text": text[:CLIPBOARD_MAX_CHARS], "truncated": len(text) > CLIPBOARD_MAX_CHARS}
+
+
+def write_clipboard(text: str) -> dict:
+    """Puts text on the clipboard so the user can paste it anywhere."""
+    _check_enabled()
+    text = text[:CLIPBOARD_MAX_CHARS]
+    system = current_os()
+    if system == "windows":
+        # Passed in an environment variable, so the text is never parsed as PowerShell.
+        _powershell("Set-Clipboard -Value $env:JARVIS_CLIP", env={"JARVIS_CLIP": text})
+    elif system == "mac":
+        _output(["pbcopy"], "Copying", input_text=text)
+    else:
+        _output(_linux_clipboard(["wl-copy"], ["xclip", "-selection", "clipboard"]), "Copying", input_text=text)
+    return {"ok": True, "message": f"Copied {len(text)} characters. Paste with Ctrl+V."}
+
+
+def capture_screen() -> tuple[str, str]:
+    """The screen right now, shrunk for Claude to look at: (media_type, base64 data). Nothing is saved."""
+    _check_enabled()
+    from PIL import Image
+
+    with tempfile.TemporaryDirectory(prefix="jarvis-screen-") as tmp:
+        shot = Path(tmp) / "screen.png"
+        _capture(shot)
+        with Image.open(shot) as img:
+            img = img.convert("RGB")
+            img.thumbnail((SCREEN_MAX_SIDE, SCREEN_MAX_SIDE))
+            buf = io.BytesIO()
+            img.save(buf, format="JPEG", quality=80)
+    return "image/jpeg", base64.b64encode(buf.getvalue()).decode()

@@ -2,7 +2,7 @@
 //   npm run dev -- --open   also opens Jarvis in the browser once it's ready (used by the desktop shortcut)
 // Each service's output is prefixed with its name. Ctrl+C stops them all.
 // A service whose port is already in use is assumed to be running and is skipped.
-// A service that crashes is restarted automatically (with a growing pause, max 5 tries per 2 minutes).
+// A service that crashes is restarted automatically (with a growing pause; after 5 crashes in 2 minutes it waits 60s, then keeps trying).
 import { exec, spawn } from 'node:child_process';
 import net from 'node:net';
 import path from 'node:path';
@@ -40,11 +40,14 @@ function run(s, tag) {
     if (stopping) return;
     const now = Date.now();
     s.crashes = (s.crashes || []).filter((t) => now - t < 120_000).concat(now);
-    if (s.crashes.length > 5) {
-      console.log(`${tag}\x1b[31mcrashed ${s.crashes.length} times in 2 minutes; not restarting. Fix the error above, then run npm run dev again.\x1b[0m`);
-      return;
+    // Never give up for good (Jarvis is meant to run unattended): after a burst of crashes,
+    // cool down for a minute so a slow dependency (e.g. MongoDB after a reboot) can come up.
+    const burst = s.crashes.length > 5;
+    if (burst) {
+      console.log(`${tag}\x1b[31mcrashed ${s.crashes.length} times in 2 minutes; check the error above. Trying again in 60s…\x1b[0m`);
+      s.crashes = [];
     }
-    const wait = 1000 * 2 ** (s.crashes.length - 1);
+    const wait = burst ? 60_000 : 1000 * 2 ** (s.crashes.length - 1);
     console.log(`${tag}\x1b[33mstopped (exit ${code}); restarting in ${wait / 1000}s…\x1b[0m`);
     await sleep(wait);
     if (!stopping) run(s, tag);
