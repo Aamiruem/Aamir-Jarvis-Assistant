@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 
 import { LoginForm } from "@/components/auth/login-form";
 
-export const metadata: Metadata = { title: "Sign in" };
+export const metadata: Metadata = {
+  title: "Sign in",
+  description: "Sign in to Jarvis, your AI voice assistant, with a one-time code.",
+  alternates: { canonical: "/login" },
+};
 
 export default function LoginPage() {
   return (

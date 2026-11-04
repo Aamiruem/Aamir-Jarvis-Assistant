@@ -560,3 +560,19 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition: none !important; }
 }
+
+/* ---------- Welcome prompt (session start) ---------- */
+.welcome-backdrop { align-items: center; padding: 16px; }
+.welcome {
+  width: min(460px, 100%); text-align: center; padding: 32px 28px 22px; border-radius: 20px;
+  background: var(--float-bg); border: 1px solid var(--border-hi); box-shadow: var(--shadow), 0 0 60px rgba(56, 225, 255, 0.12);
+  animation: welcome-in 0.25s ease;
+}
+.welcome .orb { margin: 0 auto 18px; width: 84px; height: 84px; }
+.welcome h2 { margin: 0 0 10px; font-size: 26px; }
+.welcome p { margin: 0 auto 22px; max-width: 36ch; line-height: 1.55; }
+.welcome-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.welcome-actions .btn { padding: 11px 18px; }
+.welcome-auto { display: inline-flex; align-items: center; gap: 8px; margin-top: 18px; font-size: 13px; color: var(--muted); cursor: pointer; }
+@keyframes welcome-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+@media (prefers-reduced-motion: reduce) { .welcome { animation: none; } }

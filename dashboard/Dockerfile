@@ -11,7 +11,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # The /api proxy target is baked in at build time (Next evaluates rewrites during the build).
 ARG BACKEND_URL=http://express-api:4000
-ENV BACKEND_URL=$BACKEND_URL NEXT_OUTPUT=standalone NEXT_TELEMETRY_DISABLED=1
+# SEO: canonical links, sitemap.xml and the Google Search Console tag are built from these.
+ARG NEXT_PUBLIC_SITE_URL=http://localhost:3001
+ARG GOOGLE_SITE_VERIFICATION=
+ENV BACKEND_URL=$BACKEND_URL NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL GOOGLE_SITE_VERIFICATION=$GOOGLE_SITE_VERIFICATION NEXT_OUTPUT=standalone NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 FROM node:22-alpine AS run

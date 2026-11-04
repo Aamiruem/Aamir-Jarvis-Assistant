@@ -49,14 +49,21 @@ services:
     depends_on: [fastapi-ai]
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_SITE_URL: ${SITE_URL:-}
+        VITE_GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
     ports: ["3000:80"]
     depends_on: [express-api]
 
   dashboard:
     build:
       context: ./dashboard
-      args: { BACKEND_URL: "http://express-api:4000" }
+      args:
+        BACKEND_URL: "http://express-api:4000"
+        NEXT_PUBLIC_SITE_URL: ${DASHBOARD_SITE_URL:-http://localhost:3001}
+        GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
     ports: ["3001:3001"]
     depends_on: [express-api]
 

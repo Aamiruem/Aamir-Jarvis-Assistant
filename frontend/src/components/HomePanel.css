@@ -121,6 +121,12 @@
 .cc-date { margin: 0; color: var(--cc-muted); font-size: 13px; display: flex; align-items: center; gap: 6px; }
 .cc-time { font-family: Rajdhani, Inter, sans-serif; font-size: 22px; color: var(--cc-cyan); letter-spacing: 0.06em; text-shadow: 0 0 18px rgba(56, 225, 255, 0.45); font-variant-numeric: tabular-nums; }
 .cc-hero-side { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cc-start { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.cc-start-btn { padding: 11px 20px; font-size: 15px; animation: cc-start-glow 2.8s ease-in-out infinite; }
+.cc-start-link { background: none; border: none; padding: 2px 4px; font-size: 12px; color: var(--muted); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.cc-start-link:hover { color: var(--accent); }
+@keyframes cc-start-glow { 50% { box-shadow: 0 0 0 6px rgba(56, 225, 255, 0.12), 0 8px 26px rgba(124, 58, 237, 0.35); } }
+@media (prefers-reduced-motion: reduce) { .cc-start-btn { animation: none; } }
 .cc-pill { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; padding: 8px 14px; border: 1px solid var(--cc-line); border-radius: 999px; background: var(--cc-panel); backdrop-filter: blur(10px); }
 .cc-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--cc-muted); }
 .cc-pill.ok { color: var(--cc-ok); border-color: rgba(52, 211, 153, 0.4); }

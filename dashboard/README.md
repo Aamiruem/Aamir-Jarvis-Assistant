@@ -48,13 +48,13 @@ it). The landing page, forms and weather map work without it.
 | | Yup | the task form |
 | Animation | Framer Motion | sliding nav highlight, list enter/exit, chat bubbles |
 | | GSAP | [`jarvis-orb.tsx`](src/components/jarvis-orb.tsx): rotating rings via `useGSAP`, respects reduced motion |
-| | AOS | landing page scroll reveals |
+| | CSS scroll-driven animations (`animation-timeline: view()`) | landing page scroll reveals, no JavaScript |
 | Charts | Recharts | intents bar chart |
 | | Chart.js | sentiment doughnut (canvas) |
 | | D3.js | response-time line with hover crosshair (D3 for math, React for DOM) |
 | Maps | Leaflet | [`components/maps/weather-map.tsx`](src/components/maps/weather-map.tsx): click for weather (Open-Meteo) |
 | Testing | Vitest + React Testing Library | `src/**/*.test.ts(x)`: 19 tests |
-| | Playwright | [`e2e/`](e2e/): 5 scenarios × desktop + mobile |
+| | Playwright | [`e2e/`](e2e/): 7 scenarios × desktop + mobile, including SEO tags, robots.txt and sitemap |
 | Tools | ESLint, npm, Git/GitHub Actions | `dashboard` job in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) |
 
 Chart colors are checked for color-vision deficiency, every chart has a "Show as table" view, and

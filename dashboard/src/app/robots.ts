@@ -1,0 +1,11 @@
+import type { MetadataRoute } from "next";
+
+import { SITE } from "@/lib/site";
+
+// /robots.txt: crawl the public pages, never the signed-in dashboard or the API.
+export default function robots(): MetadataRoute.Robots {
+  return {
+    rules: { userAgent: "*", allow: "/", disallow: ["/dashboard", "/api/"] },
+    sitemap: `${SITE.url}/sitemap.xml`,
+  };
+}

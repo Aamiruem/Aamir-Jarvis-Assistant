@@ -37,6 +37,7 @@ frontend/ (React)                backend/
 **Learning path:** see [docs/LEARNING_ROADMAP.md](docs/LEARNING_ROADMAP.md).
 **Voice commands, "Hey Jarvis", Room Watch and Windows/Linux/macOS control:** see [docs/VOICE_AND_PC_CONTROL.md](docs/VOICE_AND_PC_CONTROL.md).
 **Every endpoint:** see [docs/API.md](docs/API.md).
+**SEO and Google Search Console:** see [docs/SEO.md](docs/SEO.md).
 
 ### Backend features
 
@@ -53,7 +54,7 @@ frontend/ (React)                backend/
 | NLP + ML intent model, computer vision | [backend/fastapi-ai/app/nlp/](backend/fastapi-ai/app/nlp/), [cv/](backend/fastapi-ai/app/cv/) |
 | Account deletion that erases data across MongoDB, SQL, vector store and S3 | `DELETE /api/auth/me` |
 | Request logging with request ids, graceful shutdown, JSON 404s | `app/main.py`, `backend/express-api/src/app.js` |
-| Tests: 17 Python + 25 Node, CI on every push | [backend/fastapi-ai/tests/](backend/fastapi-ai/tests/), [backend/express-api/test/](backend/express-api/test/), [.github/workflows/ci.yml](.github/workflows/ci.yml) |
+| Tests: 50 Python, 38 Node, 33 frontend (voice and session start), 19 dashboard + 14 Playwright, CI on every push | [backend/fastapi-ai/tests/](backend/fastapi-ai/tests/), [backend/express-api/test/](backend/express-api/test/), [frontend/src/](frontend/src/) `*.test.js(x)`, [.github/workflows/ci.yml](.github/workflows/ci.yml) |
 
 ---
 
@@ -71,7 +72,7 @@ cd backend/fastapi-ai
 python -m venv .venv
 .venv\Scripts\activate             # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-pytest -q                          # 17 tests, no API key needed
+pytest -q                          # 50 tests, no API key needed
 uvicorn app.main:app --reload --port 8000
 ```
 Open http://localhost:8000/docs for the interactive API.
@@ -80,7 +81,7 @@ Open http://localhost:8000/docs for the interactive API.
 ```bash
 cd backend/express-api
 npm install
-npm test                           # 25 tests, no MongoDB needed
+npm test                           # 38 tests, no MongoDB needed
 npm run dev                        # http://localhost:4000 - OTP codes are printed here
 ```
 
@@ -88,7 +89,8 @@ npm run dev                        # http://localhost:4000 - OTP codes are print
 ```bash
 cd frontend
 npm install
-npm run dev                        # http://localhost:5173: register, enter the OTP, chat
+npm test                           # 33 tests: voice timing, echo, interruptions, session start
+npm run dev                        # http://localhost:5173: register, enter the OTP, then "Start talking"
 ```
 
 **4. Optional extras**
@@ -124,5 +126,6 @@ side: run the stack with **Docker** or inside **WSL** (Linux isn't affected).
 - Upload a PDF in **Knowledge**, then ask about it in **Chat** (agentic RAG).
 - "What's 18% GST on 74,999 and the weather in Jaipur?" (parallel tool calls).
 - **Vision** tab → start camera → "What's on my desk?"
-- Click 🎙 and talk; tick 🔊 to hear replies.
+- Click **Start talking** when Jarvis opens: the first time it asks a few questions and remembers you.
+- Click 🎙 and talk; tick 🔊 to hear replies. In **Voice mode**, talk over Jarvis to interrupt it.
 - Watch the Streamlit **Overview** fill with intents, latency and token counts.

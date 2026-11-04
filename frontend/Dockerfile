@@ -3,6 +3,10 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+# SEO: the public address and the Google Search Console tag are baked into the build.
+ARG VITE_SITE_URL=
+ARG VITE_GOOGLE_SITE_VERIFICATION=
+ENV VITE_SITE_URL=$VITE_SITE_URL VITE_GOOGLE_SITE_VERIFICATION=$VITE_GOOGLE_SITE_VERIFICATION
 RUN npm run build
 
 FROM nginx:1.27-alpine

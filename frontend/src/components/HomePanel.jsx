@@ -86,7 +86,7 @@ const Panel = ({ icon, title, extra, className = '', children }) => (
   </section>
 );
 
-export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpenConversation }) {
+export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpenConversation, onStartSession }) {
   const now = useNow(60_000); // the feed only needs minute precision
   const [health, setHealth] = useState(null);
   const [tasks, setTasks] = useState([]);
@@ -165,6 +165,16 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
       <header className="cc-hero">
         <Clock name={user.name} />
         <div className="cc-hero-side">
+          {speechSupported && (
+            <div className="cc-start">
+              <button className="btn primary cc-start-btn" onClick={() => onStartSession()} title="Jarvis greets you, reads today's reminders and starts listening">
+                <Icon name="mic" size="1.1em" /> Start Jarvis
+              </button>
+              <button className="cc-start-link" onClick={() => onStartSession({ interview: true })}>
+                Tell Jarvis about you
+              </button>
+            </div>
+          )}
           <span className={`cc-pill ${health ? (allUp ? 'ok' : 'bad') : ''}`}>
             <i />
             {health ? (allUp ? 'All systems optimal' : 'Running degraded') : 'Checking systems…'}

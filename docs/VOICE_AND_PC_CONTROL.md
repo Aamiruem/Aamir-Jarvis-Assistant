@@ -9,14 +9,46 @@ command. Turn it off with `SYSTEM_CONTROL=false` in `.env` (always, on a server)
 | Mode | How to start | What it does |
 |---|---|---|
 | One request | Mic button in the chat | Listens once, until you pause |
-| Voice mode | **Voice mode** button | Listens, answers aloud, listens again; stops after ~30 s of silence or when you say "stop" |
+| Voice mode | **Voice mode** button | A conversation: the mic stays open, every pause sends what you said, the reply is spoken while it is still being written. Stops after ~30 s of silence or when you say "stop" |
 | Always listening | **Hey Jarvis** button | Never times out. Only acts on speech that starts with **"Jarvis"** ("Jarvis, open Notepad"). After each answer you have 8 seconds to follow up without saying "Jarvis" again. Saying just "Jarvis" gets a "Yes?" |
+
+## Starting Jarvis: greeting and questions
+
+When you open Jarvis, a **Jarvis is online** prompt appears (browsers only let a page talk after a
+click, so this click is what lets Jarvis speak). **Start talking**, the **Start Jarvis** button on
+Home, or *Start Jarvis* in the Ctrl+K palette all start a spoken session:
+
+- **The first time**, Jarvis interviews you: what to call you, your city, your work or studies,
+  what you want help with, and when your day starts. Each answer is saved to **Memory** (it keeps
+  only the useful part: "call me Aamir" saves "Aamir"). Say "skip" to skip a question or "later"
+  to stop. *Tell Jarvis about you* on Home runs the interview again.
+- **Every time after**, it greets you by name, reads today's reminders and asks one question
+  ("What's the most important thing you want to get done today?"). Your answer goes to the AI
+  together with the question, so the reply makes sense.
+
+Untick *Show this when I open Jarvis* to stop the prompt; the buttons still work.
+
+## How voice keeps up with you
+
+- **Nothing is missed:** in voice mode the microphone never closes between turns. If you keep
+  talking while Jarvis is thinking, it sends that as soon as it finishes answering.
+- **Quick turn-taking:** about 0.75 s of silence ends your turn once the recognizer has settled on
+  the words, about 1.25 s while it is still guessing, and longer after a word like "and" or "to"
+  that means you haven't finished.
+- **Answers start straight away:** each sentence is spoken as soon as it has been written, and when
+  a tool takes a moment Jarvis says "One moment." Spoken requests also ask the AI for short,
+  conversational replies with no Markdown.
+- **Interrupt like with a person:** just talk over Jarvis and it stops (in "Hey Jarvis" mode, say
+  its name). What the mic hears of Jarvis's own voice is recognized and ignored.
+- **A natural voice:** Jarvis picks the most natural voice installed for your language, such as
+  Edge's "Online (Natural)" voices. To force one, run
+  `localStorage.setItem('jarvis-voice', 'Exact voice name')` in the browser console.
 
 ## Room Watch (Jarvis notices you walk in)
 
 Click the **eye** button in the top bar. Jarvis watches the webcam for motion, and when someone
-moves in an empty room it checks for a face. Then it greets you by name, reads today's reminders,
-and starts **Always listening** mode, so you can just answer.
+moves in an empty room it checks for a face. Then it greets you by name, reads today's reminders, asks
+a question, and starts **Always listening** mode, so you can just answer.
 
 - Motion is measured in the browser on a tiny 64×48 grey image. Face detection runs on your PC
   (OpenCV). No camera image is sent to Claude or anywhere else for Room Watch.

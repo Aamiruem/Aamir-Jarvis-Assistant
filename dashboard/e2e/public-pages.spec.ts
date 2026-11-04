@@ -2,12 +2,33 @@ import { expect, test } from "@playwright/test";
 
 test("landing page introduces Jarvis and links to sign-in", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Everything Jarvis knows");
-  await expect(page.getByRole("heading", { name: "What you can do" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("AI voice assistant");
+  await expect(page.getByRole("heading", { name: "What you can do with Jarvis" })).toBeAttached();
 
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/login$/);
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+});
+
+test("landing page is ready for search engines", async ({ page, request }) => {
+  await page.goto("/");
+  await expect(page).toHaveTitle(/AI Voice Assistant/);
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", /voice assistant/);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /^https?:\/\//);
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /opengraph-image/);
+  const jsonLd = JSON.parse((await page.locator('script[type="application/ld+json"]').textContent()) ?? "{}");
+  expect(jsonLd["@graph"].map((n: { "@type": string }) => n["@type"])).toContain("FAQPage");
+
+  const robots = await (await request.get("/robots.txt")).text();
+  expect(robots).toContain("Disallow: /dashboard");
+  expect(robots).toMatch(/Sitemap: .*\/sitemap\.xml/);
+  expect(await (await request.get("/sitemap.xml")).text()).toContain("<loc>");
+});
+
+test("signed-in pages are kept out of search results", async ({ request }) => {
+  // The HTML a crawler receives (in a browser, signed-out visitors are sent on to /login).
+  const html = await (await request.get("/dashboard")).text();
+  expect(html).toMatch(/<meta name="robots" content="noindex, nofollow"/);
 });
 
 test("login form validates before calling the server", async ({ page }) => {

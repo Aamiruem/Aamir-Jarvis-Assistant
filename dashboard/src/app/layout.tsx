@@ -3,15 +3,39 @@ import { Inter, Rajdhani } from "next/font/google";
 
 import { Providers } from "@/components/providers";
 import { themeBootScript } from "@/context/theme-context";
+import { SITE } from "@/lib/site";
 
 import "./globals.css";
 
-const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
-const rajdhani = Rajdhani({ variable: "--font-rajdhani", subsets: ["latin"], weight: ["500", "600", "700"] });
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
+const rajdhani = Rajdhani({ variable: "--font-rajdhani", subsets: ["latin"], weight: ["500", "600", "700"], display: "swap" });
 
+// Defaults for every page; pages override title/description. Relative URLs resolve against metadataBase.
 export const metadata: Metadata = {
-  title: { default: "Jarvis Dashboard", template: "%s · Jarvis" },
-  description: "Your AI assistant's command center: chat, tasks, memories, analytics and weather.",
+  metadataBase: new URL(SITE.url),
+  title: { default: SITE.title, template: `%s · ${SITE.shortName}` },
+  description: SITE.description,
+  applicationName: SITE.name,
+  keywords: [...SITE.keywords],
+  authors: [{ name: SITE.author }],
+  creator: SITE.author,
+  category: "productivity",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: SITE.name,
+    title: SITE.title,
+    description: SITE.description,
+    url: "/",
+    locale: SITE.locale,
+  },
+  twitter: { card: "summary_large_image", title: SITE.title, description: SITE.description },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
+  },
+  ...(SITE.googleVerification && { verification: { google: SITE.googleVerification } }),
 };
 
 export const viewport: Viewport = {

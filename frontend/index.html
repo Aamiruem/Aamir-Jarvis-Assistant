@@ -3,8 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JARVIS</title>
+    <title>Jarvis – AI Voice Assistant for Tasks, Reminders &amp; Your PC</title>
+    <meta name="description" content="Jarvis is a personal AI voice assistant powered by Claude. Talk naturally to set reminders, manage tasks, search your documents and control your Windows, Mac or Linux PC, hands-free." />
+    <meta name="keywords" content="AI assistant, AI voice assistant, Jarvis AI, personal assistant, voice assistant for PC, hands-free, reminders, task manager, Claude" />
+    <meta name="author" content="Aamir Hussain" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#050816" />
+    <meta name="color-scheme" content="dark light" />
+    <!-- Link previews (WhatsApp, LinkedIn, X, Slack). og:url, og:image and the canonical link are
+         made absolute at build time from VITE_SITE_URL (see the seo plugin in vite.config.js). -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Jarvis AI Assistant" />
+    <meta property="og:title" content="Jarvis – AI Voice Assistant for Tasks, Reminders &amp; Your PC" />
+    <meta property="og:description" content="Talk naturally. Jarvis handles reminders, tasks, documents and your PC, hands-free." />
+    <meta property="og:locale" content="en_IN" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Jarvis – AI Voice Assistant" />
+    <meta name="twitter:description" content="Talk naturally. Jarvis handles reminders, tasks, documents and your PC, hands-free." />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <script>
       // Apply the saved color theme before the page draws (see src/theme.js).
       try {
@@ -13,14 +33,43 @@
         document.documentElement.dataset.theme = t;
       } catch (e) {}
     </script>
-    <meta name="description" content="Jarvis: your AI assistant for tasks, reminders, documents, voice and your Windows PC." />
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3CradialGradient id='g' cx='.4' cy='.35'%3E%3Cstop offset='0' stop-color='%23a5f3fc'/%3E%3Cstop offset='.5' stop-color='%2338e1ff'/%3E%3Cstop offset='1' stop-color='%236d28d9'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='15' fill='%23050816'/%3E%3Ccircle cx='16' cy='16' r='9' fill='url(%23g)'/%3E%3Ccircle cx='16' cy='16' r='13' fill='none' stroke='%2338e1ff' stroke-opacity='.6'/%3E%3C/svg%3E" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Jarvis AI Assistant",
+        "applicationCategory": "ProductivityApplication",
+        "operatingSystem": "Windows, macOS, Linux, Web",
+        "browserRequirements": "Voice needs Google Chrome or Microsoft Edge",
+        "description": "A personal AI voice assistant powered by Claude: reminders, tasks, long-term memory, chat with your documents and control of your computer, hands-free.",
+        "author": { "@type": "Person", "name": "Aamir Hussain" }
+      }
+    </script>
+    <!-- Fonts load without blocking the first paint; the system font shows until they arrive. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" /></noscript>
+    <style>
+      /* Splash shown the instant the HTML arrives, before any JavaScript; React replaces it. */
+      .boot { min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 14px; padding: 24px; text-align: center; background: #050816; color: #e3ecff; font-family: Inter, system-ui, sans-serif; }
+      [data-theme='light'] .boot { background: #f4f7fd; color: #0f1b33; }
+      .boot-orb { width: 72px; height: 72px; border-radius: 50%; background: radial-gradient(circle at 38% 34%, #a5f3fc, #38e1ff 45%, #6d28d9); box-shadow: 0 0 40px rgba(56, 225, 255, 0.55); animation: boot 1.4s ease-in-out infinite; }
+      .boot h1 { margin: 6px 0 0; font: 700 26px/1.2 Rajdhani, system-ui, sans-serif; letter-spacing: 0.3em; }
+      .boot p { margin: 0; max-width: 34ch; opacity: 0.7; font-size: 14px; line-height: 1.5; }
+      @keyframes boot { 50% { transform: scale(1.08); } }
+      @media (prefers-reduced-motion: reduce) { .boot-orb { animation: none; } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main class="boot">
+        <div class="boot-orb" aria-hidden="true"></div>
+        <h1>J.A.R.V.I.S.</h1>
+        <p>Your personal AI voice assistant for reminders, tasks, documents and your computer.</p>
+        <noscript><p>Jarvis needs JavaScript. Please enable it to continue.</p></noscript>
+      </main>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
