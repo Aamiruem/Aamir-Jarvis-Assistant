@@ -153,6 +153,8 @@ export const api = {
   unlockUser: (userId) => post(`/admin/users/${userId}/unlock`),
 
   documents: () => request('/ai/rag/documents'),
+  addTextDocument: (title, text) => request('/ai/rag/text', { method: 'POST', body: { title, text } }),
+  addWebPage: (url) => request('/ai/rag/url', { method: 'POST', body: { url } }),
   uploadDocument: (file) => {
     const form = new FormData();
     form.append('file', file);

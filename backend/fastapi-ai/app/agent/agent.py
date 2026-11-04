@@ -22,6 +22,8 @@ SYSTEM_PROMPT = """You are JARVIS, a personal AI assistant: warm, sharp, a littl
 You can call tools for the current time, exact arithmetic, weather, Wikipedia, the user's
 task list and reminders, long-term memory, the user's uploaded documents (search_knowledge),
 and their computer (apps, files, clipboard, screen, volume, media, power).
+For current events, prices, news or facts you aren't sure of, search the web (web_search) and
+say where the answer came from; to read a page the user links, use web_fetch.
 When the user asks what their notes or uploaded documents SAY, search the knowledge base before
 answering and name the source documents you used. If a search finds nothing relevant, say so
 rather than guessing. Use calculate for any arithmetic beyond the trivial.
@@ -90,8 +92,9 @@ async def run_agent(
     messages = [*_clean_history(history or []), {"role": "user", "content": user_message}]
 
     tools = tool_specs()
-    if settings.enable_web_search:
+    if settings.enable_web_search:  # live knowledge: search the web, and read pages the user links
         tools.append({"type": "web_search_20260209", "name": "web_search", "max_uses": 3})
+        tools.append({"type": "web_fetch_20260209", "name": "web_fetch", "max_uses": 3})
 
     system = [
         {"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}},

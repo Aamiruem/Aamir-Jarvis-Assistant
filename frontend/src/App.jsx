@@ -27,13 +27,15 @@ const AccountPanel = lazy(() => import('./components/AccountPanel.jsx'));
 const AdminPanel = lazy(() => import('./components/AdminPanel.jsx'));
 const AutomatePanel = lazy(() => import('./components/AutomatePanel.jsx'));
 const MlLabPanel = lazy(() => import('./components/MlLabPanel.jsx'));
+const NotesPanel = lazy(() => import('./components/NotesPanel.jsx'));
 
 // Each tab has its own color (--hue), used for its icon in the top bar and the sidebar.
 const TABS = [
   { id: 'home', label: 'Home', icon: 'home', hue: 205 },
   { id: 'chat', label: 'Chat', icon: 'chat', hue: 190 },
   { id: 'automate', label: 'Automate', icon: 'rocket', hue: 300 },
-  { id: 'mllab', label: 'ML Lab', icon: 'flask', hue: 160, isNew: true },
+  { id: 'mllab', label: 'ML Lab', icon: 'flask', hue: 160 },
+  { id: 'notes', label: 'Notes', icon: 'notes', hue: 45, isNew: true },
   { id: 'tasks', label: 'Tasks', icon: 'tasks', hue: 38 },
   { id: 'memory', label: 'Memory', icon: 'brain', hue: 330 },
   { id: 'knowledge', label: 'Knowledge', icon: 'book', hue: 265 },
@@ -42,9 +44,9 @@ const TABS = [
   { id: 'account', label: 'Account', icon: 'user', hue: 220 },
   { id: 'admin', label: 'Admin', icon: 'shield', hue: 0, adminOnly: true },
 ].map((t, i) => ({ ...t, key: i + 1 })); // Alt+1 … Alt+9
-const SIDEBAR_TABS = ['home', 'chat', 'automate', 'mllab', 'tasks', 'memory', 'knowledge'];
+const SIDEBAR_TABS = ['home', 'chat', 'automate', 'mllab', 'notes', 'tasks', 'memory', 'knowledge'];
 // Phones: the main tabs sit in a bar at the bottom, everything else is under "More" (the sidebar).
-const BOTTOM_TABS = ['home', 'chat', 'automate', 'mllab'];
+const BOTTOM_TABS = ['home', 'chat', 'notes', 'mllab'];
 // A link like /?tab=mllab (the installed app's shortcuts) opens that tab.
 const startTab = () => {
   const wanted = new URLSearchParams(window.location.search).get('tab');
@@ -96,6 +98,7 @@ export default function App() {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState('');
   const [installHelp, setInstallHelp] = useState(false);
+  const [notesTarget, setNotesTarget] = useState(null); // { chapter, heading } from search
   const [contactQuery, setContactQuery] = useState('');
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [roomWatchOn, setRoomWatchOn] = useState(readRoomWatch);
@@ -384,6 +387,7 @@ export default function App() {
             )}
             {tab === 'automate' && <AutomatePanel onAsk={ask} onOpenTab={setTab} />}
             {tab === 'mllab' && <MlLabPanel />}
+            {tab === 'notes' && <NotesPanel target={notesTarget} />}
             {tab === 'vision' && <VisionPanel />}
             {tab === 'knowledge' && <KnowledgePanel />}
             {tab === 'tasks' && <TasksPanel />}
@@ -401,7 +405,7 @@ export default function App() {
         onClose={() => setPaletteOpen(false)}
         tabs={tabs}
         conversations={conversations}
-        actions={{ openTab: setTab, ask, newChat, startSession, openConversation, openContacts, toggleTheme: () => theme.setChoice(theme.mode === 'dark' ? 'light' : 'dark') }}
+        actions={{ openTab: setTab, ask, newChat, startSession, openNotes: (chapter, heading) => { setNotesTarget({ chapter, heading, at: Date.now() }); setTab('notes'); }, openConversation, openContacts, toggleTheme: () => theme.setChoice(theme.mode === 'dark' ? 'light' : 'dark') }}
       />
       <nav className="bottom-nav" aria-label="Main (phone)">
         {tabs.filter((t) => BOTTOM_TABS.includes(t.id)).map((t) => (

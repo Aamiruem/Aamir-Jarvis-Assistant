@@ -1,3 +1,4 @@
+import asyncio
 import io
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -5,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from app.llm.claude import complete
 from app.rag.store import get_store
+from app.rag.webpage import PageError, fetch_page
 from app.security import Caller, get_caller
 from app.storage.s3 import save_file
 
@@ -46,6 +48,23 @@ class TextDoc(BaseModel):
 @router.post("/text")
 async def add_text(doc: TextDoc, caller: Caller = Depends(get_caller)):
     return get_store().add_document(caller.user_id, doc.title, doc.text)
+
+
+class WebPage(BaseModel):
+    url: str = Field(min_length=8, max_length=2000)
+
+
+@router.post("/url")
+async def add_web_page(body: WebPage, caller: Caller = Depends(get_caller)):
+    """Reads a public web page (your portfolio, an article, docs) into your knowledge base."""
+    try:
+        page = await asyncio.to_thread(fetch_page, body.url)
+    except PageError as e:
+        raise HTTPException(422, str(e))
+    except Exception:
+        raise HTTPException(502, "Couldn't load that page. Check the link and your internet connection.")
+    doc = get_store().add_document(caller.user_id, f"{page['title']} ({page['url']})", page["text"])
+    return {**doc, "title": page["title"], "url": page["url"], "chars": len(page["text"])}
 
 
 @router.get("/documents")

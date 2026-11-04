@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     claude_model: str = "claude-opus-5-5"
     claude_effort: str = "medium"          # low | medium | high | xhigh | max
     claude_fallbacks: str = "default"      # server-side refusal fallback; "" disables
-    enable_web_search: bool = False        # Anthropic server-side web_search tool
+    enable_web_search: bool = True         # Anthropic server-side web_search + web_fetch tools
     agent_max_steps: int = 8
 
     # Assistant behaviour
