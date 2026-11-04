@@ -29,6 +29,7 @@ const readSize = () => {
 };
 
 const SMART_LIBRARY_KEY = 'jarvis-smart-notes-library';
+const SMART_NOTES_KEY = 'jarvis-user-smart-notes';
 const smartBooks = () => {
   try {
     const parsed = JSON.parse(localStorage.getItem(SMART_LIBRARY_KEY) || '[]');
@@ -40,6 +41,19 @@ const smartBooks = () => {
 const writeSmartBooks = (books) => {
   try {
     localStorage.setItem(SMART_LIBRARY_KEY, JSON.stringify(books));
+  } catch {}
+};
+const userSmartNotes = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SMART_NOTES_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+const writeUserSmartNotes = (notes) => {
+  try {
+    localStorage.setItem(SMART_NOTES_KEY, JSON.stringify(notes));
   } catch {}
 };
 const isAIML = (text = '') => /ai[- ]?ml|artificial intelligence|a\.i\./i.test(text);
@@ -142,6 +156,9 @@ export default function NotesPanel({ target }) {
   const [searching, setSearching] = useState(false);
   const [teaching, setTeaching] = useState(null); // { done, total }
   const [error, setError] = useState('');
+  const [smartNotes, setSmartNotes] = useState(() => userSmartNotes());
+  const [smartManagerOpen, setSmartManagerOpen] = useState(false);
+  const [smartDraft, setSmartDraft] = useState({ id: null, title: '', category: 'AIML', content: '' });
   const reader = useRef(null);
   const scrollTo = useRef(null);
 
@@ -182,6 +199,65 @@ export default function NotesPanel({ target }) {
       scrollTo.current = target.heading || null;
     }
   }, [target]);
+
+  const openSmartNoteManager = (note = null) => {
+    setSmartManagerOpen(true);
+    const nextDraft = note ? { ...note } : { id: null, title: '', category: categoryFilter === 'ml' ? 'ML' : 'AIML', content: '' };
+    setSmartDraft(nextDraft);
+  };
+
+  const updateSmartNote = (noteId, nextData) => {
+    setSmartNotes((current) => {
+      const updated = current.some((note) => note.id === noteId)
+        ? current.map((note) => (note.id === noteId ? { ...note, ...nextData, updatedAt: new Date().toISOString() } : note))
+        : [{ id: noteId, ...nextData, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }, ...current];
+      writeUserSmartNotes(updated);
+      return updated;
+    });
+  };
+
+  const saveSmartNote = () => {
+    const title = smartDraft.title.trim();
+    const content = smartDraft.content.trim();
+    if (!title || !content) {
+      setError('Add a note title and content before saving.');
+      return;
+    }
+
+    const payload = {
+      id: smartDraft.id || `smart-note-${Date.now()}`,
+      title,
+      category: smartDraft.category || 'AIML',
+      content,
+      createdAt: smartDraft.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    setSmartNotes((current) => {
+      const updated = current.some((note) => note.id === payload.id)
+        ? current.map((note) => (note.id === payload.id ? payload : note))
+        : [payload, ...current];
+      writeUserSmartNotes(updated);
+      return updated;
+    });
+    setSmartManagerOpen(false);
+    setSmartDraft({ id: null, title: '', category: categoryFilter === 'ml' ? 'ML' : 'AIML', content: '' });
+    setError('');
+    toast('Smart note saved');
+  };
+
+  const deleteSmartNote = (noteId) => {
+    setSmartNotes((current) => {
+      const updated = current.filter((note) => note.id !== noteId);
+      writeUserSmartNotes(updated);
+      return updated;
+    });
+    if (smartDraft.id === noteId) {
+      setSmartDraft({ id: null, title: '', category: categoryFilter === 'ml' ? 'ML' : 'AIML', content: '' });
+    }
+    setSmartManagerOpen(false);
+    toast('Smart note deleted');
+  };
   useEffect(() => {
     if (!book || !chapter) return;
     setText('');
@@ -251,6 +327,88 @@ export default function NotesPanel({ target }) {
     }
   };
 
+  if (smartManagerOpen) {
+    return (
+      <div className="panel notes-panel">
+        <PageHeader icon="notes" hue={45} title="Smart notes" subtitle="Create, edit, and delete your personal notes.">
+          <button className="btn sm ghost" onClick={() => setSmartManagerOpen(false)}>Back</button>
+        </PageHeader>
+
+        <div className="notes-manager-page">
+          <aside className="notes-manager-list">
+            <div className="notes-manager-header">
+              <strong>Saved notes</strong>
+              <button className="btn sm ghost" onClick={() => openSmartNoteManager()}><Icon name="file" size="1em" /> New</button>
+            </div>
+            {smartNotes.length === 0 ? (
+              <div className="notes-empty-state">No notes saved yet.</div>
+            ) : (
+              smartNotes.map((note) => (
+                <button
+                  type="button"
+                  key={note.id}
+                  className={`notes-manager-item ${smartDraft.id === note.id ? 'active' : ''}`}
+                  onClick={() => openSmartNoteManager(note)}
+                >
+                  <span className="notes-manager-title">{note.title}</span>
+                  <span className="notes-manager-meta">{note.category}</span>
+                </button>
+              ))
+            )}
+          </aside>
+
+          <div className="notes-manager-editor">
+            <div className="field">
+              <label htmlFor="smart-note-title">Note name</label>
+              <input
+                id="smart-note-title"
+                type="text"
+                value={smartDraft.title}
+                onChange={(e) => setSmartDraft((draft) => ({ ...draft, title: e.target.value }))}
+                placeholder="My smart note"
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="smart-note-category">Category</label>
+              <select
+                id="smart-note-category"
+                value={smartDraft.category}
+                onChange={(e) => setSmartDraft((draft) => ({ ...draft, category: e.target.value }))}
+              >
+                <option value="AIML">AIML</option>
+                <option value="ML">ML</option>
+                <option value="General">General</option>
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="smart-note-content">Details</label>
+              <textarea
+                id="smart-note-content"
+                rows={14}
+                value={smartDraft.content}
+                onChange={(e) => setSmartDraft((draft) => ({ ...draft, content: e.target.value }))}
+                placeholder="Write your note here..."
+              />
+            </div>
+            <div className="notes-manager-actions">
+              {smartDraft.id && (
+                <button className="btn sm danger" onClick={() => deleteSmartNote(smartDraft.id)}>
+                  <Icon name="trash" size="1em" /> Delete
+                </button>
+              )}
+              <button className="btn sm ghost" onClick={() => setSmartManagerOpen(false)}>
+                Cancel
+              </button>
+              <button className="btn sm primary" onClick={saveSmartNote}>
+                <Icon name="save" size="1em" /> Save note
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (error && !book) return <div className="panel"><p className="error">{error}</p></div>;
   if (!library) return <div className="panel"><p className="muted">Loading notes…</p></div>;
   if (!filteredLibrary.length) {
@@ -291,18 +449,7 @@ export default function NotesPanel({ target }) {
           <button className={categoryFilter === 'ml' ? 'active' : ''} onClick={() => setCategoryFilter('ml')} role="tab" aria-selected={categoryFilter === 'ml'}>ML</button>
         </div>
         <div className="smart-actions">
-          <button className="btn sm ghost" onClick={() => {
-            const title = window.prompt('Name your smart note', 'Smart note');
-            if (!title) return;
-            const nextBook = createSmartBook({ title, kind: categoryFilter === 'ml' ? 'ml' : 'aiml', folder: 'Quick Notes', chapterTitle: title });
-            const updated = [...smartBooks(), nextBook];
-            writeSmartBooks(updated);
-            setLibrary((prev) => [...(prev || []), nextBook]);
-            setBook(nextBook);
-            setDone(readChapters(nextBook.slug));
-            setChapterId(chaptersOf(nextBook)[0]?.id);
-            setMode('read');
-          }}><Icon name="file" size="1em" /> New Note</button>
+          <button className="btn sm ghost" onClick={() => openSmartNoteManager()}><Icon name="file" size="1em" /> New Note</button>
           <button className="btn sm ghost" onClick={() => {
             const input = document.createElement('input');
             input.type = 'file';
