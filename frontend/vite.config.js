@@ -56,6 +56,8 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (!id.includes('node_modules')) return;
             if (/[\/](react|react-dom|scheduler)[\/]/.test(id)) return 'react';
+            // Formulas and tables are only needed by Notes: keep them out of what Chat downloads.
+            if (/[\/](katex|rehype-katex|remark-math|remark-gfm|micromark-extension-(math|gfm[^\/]*)|mdast-util-(math|gfm[^\/]*)|hast-util-from-dom|hast-util-to-text|unist-util-find-after|ccount|escape-string-regexp|markdown-table)[\/]/.test(id)) return 'notes-vendor';
             return 'vendor';
           },
         },

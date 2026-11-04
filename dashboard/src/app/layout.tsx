@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   description: SITE.description,
   applicationName: SITE.name,
   keywords: [...SITE.keywords],
-  authors: [{ name: SITE.author }],
+  authors: [{ name: SITE.author, url: SITE.authorUrl }],
   creator: SITE.author,
   category: "productivity",
   alternates: { canonical: "/" },

@@ -23,6 +23,8 @@ export default function KnowledgePanel() {
   const [dragging, setDragging] = useState(false);
   const [error, setError] = useState('');
   const [loaded, setLoaded] = useState(false);
+  const [url, setUrl] = useState('');
+  const [fetching, setFetching] = useState(false);
 
   const load = () =>
     api.documents()
@@ -63,6 +65,24 @@ export default function KnowledgePanel() {
     setSearched(query.trim());
     setHits(await api.searchDocuments(query.trim()).catch((err) => { setError(err.message); return []; }));
   };
+  // A public web page (your portfolio, an article, documentation) read into the knowledge base.
+  const addPage = async (e) => {
+    e.preventDefault();
+    const link = url.trim();
+    if (!link) return;
+    setFetching(true);
+    setError('');
+    try {
+      const page = await api.addWebPage(/^https?:\/\//i.test(link) ? link : `https://${link}`);
+      toast(`Learned “${page.title}” (${page.chunks} chunks)`);
+      setUrl('');
+      await load();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setFetching(false);
+    }
+  };
   const remove = (d) => api.deleteDocument(d.doc_id).then(() => { toast(`Removed ${d.source}`); load(); });
 
   return (
@@ -92,6 +112,20 @@ export default function KnowledgePanel() {
           </>
         )}
       </label>
+      <form className="composer-card web-page-form" onSubmit={addPage}>
+        <Icon name="globe" className="accent-icon" />
+        <input
+          className="grow"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          placeholder="Add a web page: your portfolio, an article, docs… (https://…)"
+          aria-label="Web page address"
+          inputMode="url"
+        />
+        <button className="btn primary" disabled={fetching || !url.trim()}>
+          <Icon name="download" size="1em" /> {fetching ? 'Reading…' : 'Add page'}
+        </button>
+      </form>
       {error && <div className="error">{error}</div>}
 
       {loaded && docs.length === 0 ? (

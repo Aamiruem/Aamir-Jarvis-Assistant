@@ -337,7 +337,7 @@ export default function App() {
           </nav>
           <button className="search-bar" onClick={() => openSearch('')} title="Search (Ctrl+K)" aria-label="Search chats, contacts, tasks and commands">
             <Icon name="search" size="1em" />
-            <span className="grow">Search chats, contacts, tasks…</span>
+            <span className="grow">Search everything…</span>
             <kbd>Ctrl K</kbd>
           </button>
           <button
@@ -405,7 +405,7 @@ export default function App() {
         onClose={() => setPaletteOpen(false)}
         tabs={tabs}
         conversations={conversations}
-        actions={{ openTab: setTab, ask, newChat, startSession, openNotes: (chapter, heading) => { setNotesTarget({ chapter, heading, at: Date.now() }); setTab('notes'); }, openConversation, openContacts, toggleTheme: () => theme.setChoice(theme.mode === 'dark' ? 'light' : 'dark') }}
+        actions={{ openTab: setTab, ask, newChat, startSession, install: installApp, share: shareJarvis, openNotes: (chapter, heading) => { setNotesTarget({ chapter, heading, at: Date.now() }); setTab('notes'); }, openConversation, openContacts, toggleTheme: () => theme.setChoice(theme.mode === 'dark' ? 'light' : 'dark') }}
       />
       <nav className="bottom-nav" aria-label="Main (phone)">
         {tabs.filter((t) => BOTTOM_TABS.includes(t.id)).map((t) => (

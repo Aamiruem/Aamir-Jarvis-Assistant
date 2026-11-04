@@ -20,7 +20,13 @@ export const SITE = {
     "chat with documents",
     "productivity app",
   ],
-  author: "Aamir Hussain",
+  author: "Aamir Hussain Azad",
+  authorUrl: "https://aamir-hussain-azad.vercel.app/",
+  authorProfiles: [
+    "https://github.com/Aamiruem",
+    "https://www.linkedin.com/in/aamir-hussain-azad-62623924b",
+    "https://leetcode.com/u/Aamiruem/",
+  ],
   locale: "en_IN",
   // Google Search Console > Settings > Ownership verification > HTML tag: the content="…" value.
   googleVerification: process.env.GOOGLE_SITE_VERIFICATION || process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "",

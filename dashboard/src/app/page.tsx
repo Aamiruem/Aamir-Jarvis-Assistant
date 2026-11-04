@@ -89,7 +89,7 @@ const JSON_LD = {
       applicationCategory: "ProductivityApplication",
       operatingSystem: "Windows, macOS, Linux, Web",
       description: SITE.description,
-      author: { "@type": "Person", name: SITE.author },
+      author: { "@type": "Person", name: SITE.author, url: SITE.authorUrl, sameAs: [...SITE.authorProfiles] },
       featureList: FEATURES.map((f) => f.title),
     },
     {
@@ -298,7 +298,10 @@ export default function LandingPage() {
       <footer className="border-t">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-8 text-sm text-muted-foreground sm:px-6">
           <p>
-            <span className="font-display font-bold tracking-[0.2em] text-primary">J.A.R.V.I.S.</span> · {SITE.name} by {SITE.author}
+            <span className="font-display font-bold tracking-[0.2em] text-primary">J.A.R.V.I.S.</span> · {SITE.name} by{" "}
+            <a href={SITE.authorUrl} target="_blank" rel="noopener author" className="font-medium text-foreground hover:underline">
+              {SITE.author}
+            </a>
           </p>
           <nav aria-label="Footer" className="flex gap-5">
             {NAV.map((n) => (

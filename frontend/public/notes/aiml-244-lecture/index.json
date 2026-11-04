@@ -1,0 +1,57 @@
+{
+ "slug": "aiml-244-lecture",
+ "title": "AIML 244 Lecture",
+ "source": "https://www.youtube.com/watch?v=1z5-O7-5AXk",
+ "imported": "2026-11-04",
+ "chapters": 3,
+ "chars": 16650,
+ "parts": [
+  {
+   "name": "Python Fundamentals",
+   "chapters": [
+    {
+     "id": "01",
+     "file": "01-python-fundamentals-overview.md",
+     "title": "Python Fundamentals Overview",
+     "version": 1,
+     "headings": [
+      "Python Fundamentals Overview",
+      "Why Python for AIML",
+      "Core Programming Concepts",
+      "Beginner-Friendly Workflow"
+     ],
+     "chars": 5080
+    },
+    {
+     "id": "02",
+     "file": "02-python-core-concepts.md",
+     "title": "Variables, Data Types, Operators and Control Flow",
+     "version": 1,
+     "headings": [
+      "Variables, Data Types, Operators and Control Flow",
+      "Variables and Data Types",
+      "Operators",
+      "Conditional Statements",
+      "Loops",
+      "Functions"
+     ],
+     "chars": 5720
+    },
+    {
+     "id": "03",
+     "file": "03-python-practice-and-interview-tips.md",
+     "title": "Practice, Debugging and AIML Interview Tips",
+     "version": 1,
+     "headings": [
+      "Practice, Debugging and AIML Interview Tips",
+      "Data Structures",
+      "Debugging Techniques",
+      "Common Interview Questions",
+      "Study Plan"
+     ],
+     "chars": 5850
+    }
+   ]
+  }
+ ]
+}

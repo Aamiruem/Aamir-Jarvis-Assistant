@@ -1,10 +1,18 @@
 [
  {
   "slug": "ml-basics-to-advanced",
-  "title": "ML Basics to Advanced",
+  "title": "AIML Basics to Advanced",
   "source": "https://chatgpt.com/share/6a776415-7694-83ee-ad55-30d0709c7e16",
   "imported": "2026-11-04",
   "chapters": 45,
   "chars": 1169464
+ },
+ {
+  "slug": "aiml-244-lecture",
+  "title": "AIML 244 Lecture",
+  "source": "https://www.youtube.com/watch?v=1z5-O7-5AXk",
+  "imported": "2026-11-04",
+  "chapters": 3,
+  "chars": 16650
  }
 ]
