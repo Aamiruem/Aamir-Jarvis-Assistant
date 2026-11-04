@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { api, streamChat } from '../api.js';
 import { Icon } from '../icons.jsx';
+import { AiNotice, aiProblemOf, isSetupError } from './AiNotice.jsx';
 import { openUrl, quickCommand } from '../quickCommands.js';
 import { cleanAnswer, markOnboarded } from '../session.js';
 import { toast } from '../ui.jsx';
@@ -76,6 +77,13 @@ export default function Chat({ userId, conversationId, onConversation, prompt, o
   // Getting-to-know-you interview: { questions, index, answers, silent }
   const interviewRef = useRef(null);
   const [interviewStep, setInterviewStep] = useState(null); // { index, total } for the voice bar
+  // Why AI answers can't work right now (rejected key, AI service down…), shown once at the top.
+  const [aiProblem, setAiProblem] = useState(null);
+  const [aiNoteHidden, setAiNoteHidden] = useState(false);
+  const checkAi = () => api.health().then((h) => setAiProblem(aiProblemOf(h))).catch(() => {});
+  useEffect(() => {
+    checkAi();
+  }, []);
 
   const speech = useSpeech({
     onFinal: (heard) => {
@@ -361,6 +369,7 @@ export default function Chat({ userId, conversationId, onConversation, prompt, o
       clearTimeout(filler);
       patchLast((m) => ({ ...m, pending: false }));
       setBusy(false);
+      if (failure) checkAi();
       if (out) {
         if (!reply && failure) out.push(`Sorry, that didn't work. ${failure}`);
         out.end(afterReply);
@@ -380,14 +389,22 @@ export default function Chat({ userId, conversationId, onConversation, prompt, o
   const copyReply = (text) =>
     navigator.clipboard.writeText(text).then(() => toast('Copied to clipboard'), () => toast("Couldn't copy", 'error'));
 
+  // The user message a failed reply answered, so "Try again" can send it once more.
+  const retry = (i) => {
+    const asked = messages.slice(0, i).findLast((m) => m.role === 'user')?.content;
+    if (asked) send(asked);
+  };
+  const explained = Boolean(aiProblem) && !aiNoteHidden;
+
   return (
     <div className="chat">
       <div className="messages">
+        {aiProblem && !aiNoteHidden && <AiNotice problem={aiProblem} onDismiss={() => setAiNoteHidden(true)} className="chat-notice" />}
         {messages.length === 0 && (
-          <div className="welcome">
+          <div className="chat-welcome">
             <div className={`orb big ${speech.listening ? 'pulse' : ''}`} />
             <h2>Good to see you. <span className="grad-text">How can I help?</span></h2>
-            <p className="muted">Ask anything, give several tasks at once, or switch on Voice mode and just talk.</p>
+            <p className="muted">Ask anything, give several tasks at once, or turn on Voice mode and just talk.</p>
             <div className="suggestions">
               {SUGGESTIONS.map((x) => (
                 <button key={x.text} className="suggestion" style={{ '--hue': x.hue }} onClick={() => send(x.text)}>
@@ -408,29 +425,44 @@ export default function Chat({ userId, conversationId, onConversation, prompt, o
                   const { name, ok } = typeof t === 'string' ? { name: t, ok: true } : t;
                   return (
                     <span key={j} className={`tool-chip ${ok ? 'ok' : 'failed'}`}>
-                      {ok ? '✓' : '✗'} {TOOL_LABELS[name] || name}
+                      <Icon name={ok ? 'check' : 'x'} size="0.95em" /> {TOOL_LABELS[name] || name}
                     </span>
                   );
                 })}
               </div>
             )}
-            <div className="bubble">
-              {m.role === 'assistant' ? <ReactMarkdown>{m.content || (m.pending ? m.status || '…' : '')}</ReactMarkdown> : m.content}
-              {m.error && <div className="error">{m.error}</div>}
-              {m.links?.length > 0 && (
-                <div className="link-row">
-                  {m.links.map((l, j) => (
-                    <a key={j} className="btn open-link" href={l.url} target="_blank" rel="noopener noreferrer">Open {l.label} ↗</a>
-                  ))}
-                </div>
-              )}
-              {m.popupBlocked && (
-                <p className="hint popup-tip">
-                  To let Jarvis open sites by voice automatically: click the blocked pop-up icon at the right end of the
-                  address bar → <b>Always allow pop-ups and redirects from {window.location.host}</b> → Done. You only need to do this once.
-                </p>
-              )}
-            </div>
+            {m.error && !m.content ? (
+              <MessageError message={m.error} explained={explained} onRetry={busy ? null : () => retry(i)} />
+            ) : (
+              <div className="bubble">
+                {m.role === 'assistant' ? (
+                  m.pending && !m.content ? (
+                    <span className="typing" aria-label="Jarvis is thinking">
+                      <i /><i /><i />
+                      {m.status && <small>{m.status}</small>}
+                    </span>
+                  ) : (
+                    <ReactMarkdown>{m.content}</ReactMarkdown>
+                  )
+                ) : (
+                  m.content
+                )}
+                {m.error && <MessageError message={m.error} explained={explained} onRetry={busy ? null : () => retry(i)} />}
+                {m.links?.length > 0 && (
+                  <div className="link-row">
+                    {m.links.map((l, j) => (
+                      <a key={j} className="btn open-link" href={l.url} target="_blank" rel="noopener noreferrer">Open {l.label} ↗</a>
+                    ))}
+                  </div>
+                )}
+                {m.popupBlocked && (
+                  <p className="hint popup-tip">
+                    To let Jarvis open sites by voice automatically: click the blocked pop-up icon at the right end of the
+                    address bar → <b>Always allow pop-ups and redirects from {window.location.host}</b> → Done. You only need to do this once.
+                  </p>
+                )}
+              </div>
+            )}
             {m.role === 'assistant' && m.content && !m.pending && (
               <div className="msg-actions">
                 <button className="icon-btn" title="Copy" aria-label="Copy reply" onClick={() => copyReply(m.content)}><Icon name="copy" size="1em" /></button>
@@ -467,60 +499,104 @@ export default function Chat({ userId, conversationId, onConversation, prompt, o
                         : 'Listening… say several things at once, or “stop” to finish'
                     : 'Getting ready…'}
           </span>
-          {speech.speaking && <button type="button" className="btn" onClick={interrupt}>Interrupt</button>}
-          <button type="button" className="btn danger" onClick={endHandsFree}>End voice mode</button>
+          {speech.speaking && <button type="button" className="btn sm" onClick={interrupt}>Interrupt</button>}
+          <button type="button" className="btn sm danger" onClick={endHandsFree}>End voice mode</button>
         </div>
       )}
-      {(speech.error || voiceNote) && <div className="voice-note">{speech.error || voiceNote}</div>}
+      {(speech.error || voiceNote) && (
+        <div className="voice-note" role="status">
+          <Icon name={speech.error ? 'alert' : 'mic'} size="1.1em" />
+          <span className="grow">{speech.error || voiceNote}</span>
+          {!speech.error && <button type="button" className="btn sm" onClick={() => startHandsFree()}>Resume voice mode</button>}
+          {!speech.error && (
+            <button type="button" className="icon-btn" aria-label="Hide" title="Hide" onClick={() => setVoiceNote('')}>
+              <Icon name="x" size="1em" />
+            </button>
+          )}
+        </div>
+      )}
 
       <form className="composer" onSubmit={(e) => { e.preventDefault(); send(); }}>
-        {speech.supported && (
+        <div className="composer-main">
+          <input
+            value={speech.listening && !handsFree ? speech.interim || 'Listening…' : input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask Jarvis anything, or give it several tasks at once…"
+            aria-label="Message Jarvis"
+            disabled={speech.listening && !handsFree}
+          />
+          {busy ? (
+            <button type="button" className="send-btn stop" onClick={() => abortRef.current?.abort()} aria-label="Stop" title="Stop">
+              <Icon name="stop" size="1.05em" />
+            </button>
+          ) : (
+            <button className="send-btn" disabled={!input.trim()} aria-label="Send" title="Send (Enter)"><Icon name="send" size="1.1em" /></button>
+          )}
+        </div>
+        <div className="composer-tools">
+          {speech.supported && (
+            <button
+              type="button"
+              className={`tool-btn ${speech.listening && !handsFree ? 'live' : ''}`}
+              onClick={speech.listening ? speech.stop : () => speech.start()}
+              disabled={handsFree}
+              title="Say one thing, then Jarvis answers"
+            >
+              <Icon name="mic" size="1.05em" /> <span>{speech.listening && !handsFree ? 'Listening…' : 'Speak'}</span>
+            </button>
+          )}
+          {speech.supported && (
+            <button
+              type="button"
+              className={`tool-btn ${handsFree ? 'on' : ''}`}
+              onClick={handsFree ? endHandsFree : () => startHandsFree()}
+              aria-pressed={handsFree}
+              title="Hands-free conversation: Jarvis keeps listening and answers out loud"
+            >
+              <Icon name="zap" size="1.05em" /> <span>{handsFree ? (wake ? 'Listening for “Jarvis”' : 'Voice mode on') : 'Voice mode'}</span>
+            </button>
+          )}
+          {speech.supported && !handsFree && (
+            <button
+              type="button"
+              className="tool-btn"
+              onClick={() => startHandsFree({ wake: true })}
+              title="Always listening: Jarvis only answers when you say “Jarvis” first"
+            >
+              <Icon name="sparkles" size="1.05em" /> <span>Hey Jarvis</span>
+            </button>
+          )}
+          <span className="grow" />
           <button
             type="button"
-            className={`icon-btn mic ${speech.listening && !handsFree ? 'live' : ''}`}
-            onClick={speech.listening ? speech.stop : speech.start}
-            disabled={handsFree}
-            title="Say one thing"
+            className={`tool-btn ${voiceReplies ? 'on' : ''}`}
+            onClick={() => setVoiceReplies((v) => !v)}
+            aria-pressed={voiceReplies}
+            title="Read every reply aloud"
           >
-            <Icon name="mic" />
+            <Icon name="volume" size="1.05em" /> <span>Read aloud</span>
           </button>
-        )}
-        {speech.supported && (
-          <button
-            type="button"
-            className={`btn voice-mode ${handsFree ? 'on' : ''}`}
-            onClick={handsFree ? endHandsFree : () => startHandsFree()}
-            title="Hands-free: Jarvis keeps listening and answers out loud"
-          >
-            <Icon name="mic" size="1em" /> {handsFree ? (wake ? 'Listening for “Jarvis”' : 'Voice on') : 'Voice mode'}
-          </button>
-        )}
-        {speech.supported && !handsFree && (
-          <button
-            type="button"
-            className="btn voice-mode"
-            onClick={() => startHandsFree({ wake: true })}
-            title="Always listening: Jarvis only answers when you say “Jarvis” first"
-          >
-            Hey Jarvis
-          </button>
-        )}
-        <input
-          value={speech.listening && !handsFree ? speech.interim || 'Listening…' : input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask Jarvis anything…"
-          disabled={speech.listening && !handsFree}
-        />
-        <label className="toggle" title="Read replies aloud">
-          <input type="checkbox" checked={voiceReplies} onChange={(e) => setVoiceReplies(e.target.checked)} />
-          <Icon name="volume" size="1.1em" />
-        </label>
-        {busy ? (
-          <button type="button" className="btn" onClick={() => abortRef.current?.abort()}><Icon name="stop" size="1em" /> Stop</button>
-        ) : (
-          <button className="btn primary send-btn" disabled={!input.trim()} aria-label="Send"><Icon name="send" size="1em" /> <span>Send</span></button>
-        )}
+        </div>
       </form>
+    </div>
+  );
+}
+
+/** A failed reply, as a calm card instead of a wall of red text. */
+function MessageError({ message, explained, onRetry }) {
+  const setup = isSetupError(message);
+  return (
+    <div className={`notice ${setup ? 'setup' : 'danger'} inline`} role="alert">
+      <span className="notice-icon"><Icon name={setup ? 'key' : 'alert'} /></span>
+      <div className="notice-body">
+        <strong>{setup ? "I couldn't answer: AI answers are switched off" : "Sorry, that didn't work"}</strong>
+        <p>{setup && explained ? 'The note at the top of this chat shows how to fix it in a minute.' : message}</p>
+        {onRetry && (
+          <button type="button" className="btn sm" onClick={onRetry}>
+            <Icon name="refresh" size="1em" /> Try again
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -132,3 +132,11 @@ test('unknown API routes return JSON 404', async () => {
   assert.equal(res.status, 404);
   assert.deepEqual(res.body, { error: 'Not found' });
 });
+
+test('network addresses for the phone link are for signed-in users only', async () => {
+  assert.equal((await call('/api/system/network')).status, 401);
+  const { status, body } = await call('/api/system/network', { token: tokenFor('u-net') });
+  assert.equal(status, 200);
+  assert.ok(Array.isArray(body.lanAddresses));
+  assert.ok(body.lanAddresses.every((ip) => /^\d+\.\d+\.\d+\.\d+$/.test(ip) && ip !== '127.0.0.1'));
+});

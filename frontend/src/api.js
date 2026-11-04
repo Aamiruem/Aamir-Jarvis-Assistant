@@ -16,6 +16,10 @@ export function onSessionExpired(fn) {
   onSignedOut = fn;
 }
 
+// Starting only the web page (npm run dev inside frontend/) is the usual cause, so say where to run it.
+const SERVER_DOWN =
+  "Can't reach the Jarvis server. Start everything with \"npm run dev\" in the main project folder (not inside frontend), or double-click the Jarvis shortcut, then try again.";
+
 export class ApiError extends Error {
   constructor(message, status, data) {
     super(message);
@@ -61,7 +65,7 @@ async function request(path, options = {}) {
   if (!res.ok) {
     // A non-JSON 5xx comes from the dev proxy / nginx, not from our API: the server isn't reachable.
     if (!isJson && res.status >= 500) {
-      throw new ApiError("Can't reach the Jarvis server. Make sure backend/express-api is running (npm run dev).", res.status, data);
+      throw new ApiError(SERVER_DOWN, res.status, data);
     }
     throw new ApiError(data.error || data.detail || `Request failed (${res.status})`, res.status, data);
   }
@@ -113,6 +117,7 @@ export const api = {
   deleteConversation: (id) => request(`/conversations/${id}`, { method: 'DELETE' }),
 
   memories: () => request('/ai/memories'),
+  network: () => request('/system/network'),
   addMemory: (fact) => request('/ai/memories', { method: 'POST', body: { fact } }),
   deleteMemory: (id) => request(`/ai/memories/${id}`, { method: 'DELETE' }),
 

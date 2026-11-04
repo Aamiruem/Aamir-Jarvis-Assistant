@@ -18,7 +18,7 @@ export default function WelcomePrompt({ name, autoStart, onAutoStartChange, onSt
   const first = (name || '').split(' ')[0];
   return (
     <div className="palette-backdrop welcome-backdrop" onClick={onClose}>
-      <div className="welcome" role="dialog" aria-modal="true" aria-labelledby="welcome-title" onClick={(e) => e.stopPropagation()}>
+      <div className="welcome-card" role="dialog" aria-modal="true" aria-labelledby="welcome-title" onClick={(e) => e.stopPropagation()}>
         <div className="orb big pulse" aria-hidden="true" />
         <h2 id="welcome-title">
           Hello{first ? `, ${first}` : ''}. <span className="grad-text">Jarvis is online.</span>

@@ -43,6 +43,8 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), seo(env)],
     server: {
       port: 5173,
+      // Only with "npm run dev -- --phone": reachable from other devices on the home Wi-Fi.
+      host: process.env.JARVIS_PHONE === '1' ? true : 'localhost',
       proxy: { '/api': 'http://localhost:4000' },
     },
     build: {

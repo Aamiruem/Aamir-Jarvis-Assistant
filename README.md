@@ -127,5 +127,7 @@ side: run the stack with **Docker** or inside **WSL** (Linux isn't affected).
 - "What's 18% GST on 74,999 and the weather in Jaipur?" (parallel tool calls).
 - **Vision** tab → start camera → "What's on my desk?"
 - Click **Start talking** when Jarvis opens: the first time it asks a few questions and remembers you.
+- Open **Automate** for one-click automations (plan my day, social media plan, customer replies) and your apps.
+- On your phone: start with `npm run dev:phone`, then open the link it prints (same Wi-Fi). Away from home, use Tailscale; Automate shows the steps.
 - Click 🎙 and talk; tick 🔊 to hear replies. In **Voice mode**, talk over Jarvis to interrupt it.
 - Watch the Streamlit **Overview** fill with intents, latency and token counts.

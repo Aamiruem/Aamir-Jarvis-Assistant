@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import mongoose from 'mongoose';
+import os from 'node:os';
 import morgan from 'morgan';
 import { aiGate, aiHeaders, checkAi, markAiDown } from './ai.js';
 import { AppError } from './auth/errors.js';
@@ -75,6 +76,16 @@ export function createApp(container) {
       claude: info?.claude ?? 'unknown',
       systemControl: info?.system_control ?? false,
     });
+  });
+
+  // This computer's addresses on the home network, so the app can show the link to open Jarvis
+  // on a phone ("Use Jarvis from your phone"). Signed-in users only.
+  app.get('/api/system/network', requireAuth, (_req, res) => {
+    const lanAddresses = Object.values(os.networkInterfaces())
+      .flat()
+      .filter((a) => a && a.family === 'IPv4' && !a.internal && !a.address.startsWith('169.254.'))
+      .map((a) => a.address);
+    res.json({ lanAddresses });
   });
 
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));

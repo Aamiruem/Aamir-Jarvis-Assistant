@@ -3,6 +3,7 @@ import { api } from '../api.js';
 import { useNow, useVisibleInterval } from '../hooks.js';
 import { Icon } from '../icons.jsx';
 import { speechSupported } from '../useSpeech.js';
+import { AiNotice, aiProblemOf } from './AiNotice.jsx';
 import NeuralField from './NeuralField.jsx';
 import './HomePanel.css';
 
@@ -19,14 +20,6 @@ const COMMANDS = [
   { icon: 'folder', hue: 150, label: 'Open Downloads', hint: 'On this PC', prompt: 'open my downloads folder', send: true },
   { icon: 'screenshot', hue: 12, label: 'Screenshot', hint: 'Saved to Pictures', prompt: 'take a screenshot', send: true },
 ];
-
-// What /api/health's "claude" field means for the user. Quick commands (open, search, volume) still work.
-const CLAUDE_PROBLEMS = {
-  no_key: 'No Claude API key is set, so Jarvis can only run quick commands. Run "npm run set-key" in the project folder and paste a key from console.anthropic.com.',
-  invalid_key: 'Your Claude API key was rejected (invalid or revoked), so Jarvis can only run quick commands. Run "npm run set-key" in the project folder with a new key from console.anthropic.com.',
-  no_credits: 'Your Anthropic account is out of credits, so Jarvis can only run quick commands. Add credits at console.anthropic.com.',
-  unreachable: "Can't reach the Claude API right now (internet connection?). Quick commands still work.",
-};
 
 const fmtTime = (iso) => new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 const fmtWhen = (iso) => {
@@ -115,8 +108,8 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
   }, 60_000);
 
   const aiUp = health?.ai === 'up';
-  const claudeProblem = aiUp && CLAUDE_PROBLEMS[health?.claude];
-  const allUp = health?.server === 'up' && aiUp && !claudeProblem;
+  const aiProblem = health?.server === 'up' ? aiProblemOf(health) : null;
+  const allUp = health?.server === 'up' && !aiProblem;
 
   const { open, done, unread, timeline, feed, dueToday } = useMemo(() => {
     const open = tasks.filter((t) => !t.done);
@@ -149,10 +142,10 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
   };
 
   const overview = [
-    ['zap', 'AI Core', !aiUp ? 'Offline' : claudeProblem ? 'Quick commands only' : 'Online', aiUp && !claudeProblem],
+    ['zap', 'AI answers', !aiUp ? 'Offline' : aiProblem ? 'Quick commands only' : 'Ready', !aiProblem],
     ['brain', 'Memory', `${memories.length} facts stored`, true],
-    ['mic', 'Voice', speechSupported ? 'Hands-free voice ready' : 'Needs Chrome or Edge', speechSupported],
-    ['cpu', 'Windows control', health?.systemControl ? 'Apps, volume, lock' : 'Off', Boolean(health?.systemControl)],
+    ['mic', 'Voice', speechSupported ? 'Ready to listen' : 'Needs Chrome or Edge', speechSupported],
+    ['cpu', 'PC control', health?.systemControl ? 'Apps, files, volume' : 'Off', Boolean(health?.systemControl)],
     ['folder', 'Storage', health?.storage === 'mongo' ? 'MongoDB' : 'Local files', health?.server === 'up'],
   ];
 
@@ -177,7 +170,7 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
           )}
           <span className={`cc-pill ${health ? (allUp ? 'ok' : 'bad') : ''}`}>
             <i />
-            {health ? (allUp ? 'All systems optimal' : 'Running degraded') : 'Checking systems…'}
+            {health ? (allUp ? 'All systems ready' : aiProblem ? 'Needs attention' : 'Partly offline') : 'Checking systems…'}
           </span>
           <span className="cc-operator">
             <span className="cc-avatar">{user.name.slice(0, 1).toUpperCase()}</span>
@@ -189,14 +182,15 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
         </div>
       </header>
 
-      {(!aiUp && health) || problem || claudeProblem ? (
-        <div className="cc-alert" role="status">
-          <Icon name="alert" />
-          <span>
-            {!aiUp && health
-              ? 'The AI service is offline, so chat, tasks and documents are unavailable. Run "npm run dev" in the project folder (or double-click the Jarvis shortcut) to start everything.'
-              : problem || claudeProblem}
-          </span>
+      {aiProblem ? (
+        <AiNotice problem={aiProblem} className="cc-notice" />
+      ) : problem ? (
+        <div className="notice danger cc-notice" role="status">
+          <span className="notice-icon"><Icon name="alert" /></span>
+          <div className="notice-body">
+            <strong>Some of your data couldn't load</strong>
+            <p>{problem}</p>
+          </div>
         </div>
       ) : null}
 
@@ -208,7 +202,7 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
       </div>
 
       <div className="cc-row cc-row-main">
-        <Panel icon="pulse" title="AI Core Overview">
+        <Panel icon="pulse" title="System status">
           <ul className="cc-overview">
             {overview.map(([icon, name, value, ok]) => (
               <li key={name} className={ok ? 'ok' : 'bad'}>
@@ -241,28 +235,28 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
           >
             <Icon name="mic" /> Talk to Jarvis
           </button>
-          <small className="muted">Say several things at once. Say “stop” to finish.</small>
+          <small className="muted">Talk naturally. Interrupt any time, or say “stop” to finish.</small>
           <form className="cc-askbar" onSubmit={submitAsk}>
             <Icon name="sparkles" className="cc-ask-icon" />
             <input
               value={ask}
               onChange={(e) => setAsk(e.target.value)}
-              placeholder="Give Jarvis a command… “Remind me to pay rent on Friday at 10am”"
+              placeholder="Ask or tell Jarvis… “Remind me to pay rent on Friday at 10am”"
               aria-label="Command for Jarvis"
             />
-            <button className="cc-go" aria-label="Execute">
+            <button className="cc-go" aria-label="Ask Jarvis">
               <Icon name="send" />
-              <span>Execute</span>
+              <span>Ask</span>
             </button>
           </form>
         </section>
 
-        <Panel icon="bell" title="Live Intelligence Feed" extra={feed.length > 0 && <span className="cc-live">LIVE</span>}>
+        <Panel icon="bell" title="Up next" extra={feed.length > 0 && <span className="cc-live">LIVE</span>}>
           <ul className="cc-feed">
             {feed.length === 0 && (
               <li className="cc-empty">
                 <Icon name="check" size="1.6em" />
-                All quiet. No alerts or upcoming reminders.
+                You're all caught up. No reminders in the next 24 hours.
               </li>
             )}
             {feed.map((f) => (
@@ -279,7 +273,7 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
         </Panel>
       </div>
 
-      <Panel icon="zap" title="Quick Commands" className="cc-commands-panel">
+      <Panel icon="zap" title="Quick actions" className="cc-commands-panel">
         <div className="cc-commands">
           {COMMANDS.map((c) => (
             <button key={c.label} style={{ '--hue': c.hue }} onClick={() => runCommand(c)}>
@@ -294,7 +288,7 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
       </Panel>
 
       <div className="cc-row cc-row-cards">
-        <Panel icon="timeline" title="Mission Timeline">
+        <Panel icon="timeline" title="Your tasks">
           <ul className="cc-timeline">
             {timeline.length === 0 && <li className="muted">No open tasks. Add one with “New task”.</li>}
             {timeline.slice(0, 6).map((t) => (
@@ -309,7 +303,7 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
           </ul>
         </Panel>
 
-        <Panel icon="brain" title="Memory Insights">
+        <Panel icon="brain" title="What Jarvis knows">
           <div className="cc-big">{memories.length}<small>facts Jarvis knows about you</small></div>
           <ul className="cc-mem">
             {memories.slice(0, 3).map((m) => <li key={m.id}><Icon name="sparkles" size="1em" />{m.fact}</li>)}
@@ -318,7 +312,7 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
           <button className="cc-link" onClick={() => onOpenTab('memory')}>View memory <Icon name="chevron" size="1em" /></button>
         </Panel>
 
-        <Panel icon="cpu" title="System Monitor">
+        <Panel icon="cpu" title="Your PC">
           {pc === undefined ? (
             <div className="cc-rings">
               {['CPU', 'RAM', 'Disk'].map((l) => <div key={l} className="cc-ring-wrap"><div className="cc-ring skeleton" /><small>{l}</small></div>)}

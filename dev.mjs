@@ -1,10 +1,12 @@
 // Starts the whole app with one command:  npm run dev   (from the project folder)
 //   npm run dev -- --open   also opens Jarvis in the browser once it's ready (used by the desktop shortcut)
+//   npm run dev -- --phone  also lets phones on the same Wi-Fi open Jarvis (prints the link)
 // Each service's output is prefixed with its name. Ctrl+C stops them all.
 // A service whose port is already in use is assumed to be running and is skipped.
 // A service that crashes is restarted automatically (with a growing pause; after 5 crashes in 2 minutes it waits 60s, then keeps trying).
 import { exec, spawn } from 'node:child_process';
 import net from 'node:net';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -17,6 +19,13 @@ const SERVICES = [
 ];
 const APP_URL = 'http://localhost:5173';
 const openBrowser = process.argv.includes('--open');
+const phone = process.argv.includes('--phone');
+if (phone) process.env.JARVIS_PHONE = '1'; // read by frontend/vite.config.js
+const lanUrls = () =>
+  Object.values(os.networkInterfaces())
+    .flat()
+    .filter((a) => a && a.family === 'IPv4' && !a.internal && !a.address.startsWith('169.254.'))
+    .map((a) => `http://${a.address}:5173`);
 
 const inUse = (port) =>
   new Promise((resolve) => {
@@ -69,6 +78,7 @@ for (const s of SERVICES) {
     const up = await Promise.all(SERVICES.map((s) => inUse(s.port)));
     if (up.every(Boolean)) {
       console.log(`\n\x1b[32m✓ Jarvis is ready: ${APP_URL}\x1b[0m  (Ctrl+C stops everything started here)\n`);
+      if (phone) console.log(`  On your phone (same Wi-Fi): ${lanUrls().join('  or  ') || 'no network found'}\n`);
       if (openBrowser) exec(process.platform === 'win32' ? `start "" ${APP_URL}` : `xdg-open ${APP_URL}`);
       return;
     }

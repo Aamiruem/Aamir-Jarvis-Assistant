@@ -1,22 +1,21 @@
 /* Command Center (Home): a HUD-style dashboard in the dark or light theme.
    Accent colors per tile come from --hue (set inline), so one rule colors every card. */
 .cc {
-  --cc-bg: #050816;
-  --cc-panel: rgba(13, 20, 42, 0.62);
-  --cc-panel-hi: rgba(22, 32, 64, 0.72);
-  --cc-line: rgba(120, 160, 255, 0.16);
-  --cc-line-hi: rgba(56, 225, 255, 0.45);
-  --cc-text: #e3ecff;
-  --cc-muted: #8a9bc0;
-  --cc-cyan: #38e1ff;
-  --cc-violet: #8b5cf6;
-  --cc-pink: #f472b6;
-  --cc-ok: #34d399;
-  --cc-bad: #fb7185;
-  --cc-warn: #fbbf24;
-  --cc-grad: linear-gradient(100deg, var(--cc-cyan), var(--cc-violet) 55%, var(--cc-pink));
-  --cc-field: rgba(5, 8, 22, 0.55);
-  --cc-alert-text: #fde68a;
+  --cc-bg: var(--bg);
+  --cc-panel: var(--panel);
+  --cc-panel-hi: var(--panel-solid);
+  --cc-line: var(--border);
+  --cc-line-hi: var(--border-hi);
+  --cc-text: var(--text);
+  --cc-muted: var(--muted);
+  --cc-cyan: var(--accent);
+  --cc-violet: var(--violet);
+  --cc-pink: var(--pink);
+  --cc-ok: var(--ok);
+  --cc-bad: var(--danger);
+  --cc-warn: var(--warn);
+  --cc-grad: var(--grad);
+  --cc-field: var(--field);
   --cc-core-text: #effcff;
   position: relative;
   isolation: isolate;
@@ -36,23 +35,7 @@
 
 /* Light theme (theme button in the top bar): bright glass, deeper accents. */
 :root[data-theme='light'] .cc {
-  --cc-bg: #f4f7fd;
-  --cc-panel: rgba(255, 255, 255, 0.78);
-  --cc-panel-hi: #ffffff;
-  --cc-line: rgba(60, 90, 160, 0.16);
-  --cc-line-hi: rgba(8, 145, 178, 0.55);
-  --cc-text: #0f1b33;
-  --cc-muted: #5b6b8c;
-  --cc-cyan: #0891b2;
-  --cc-violet: #7c3aed;
-  --cc-pink: #db2777;
-  --cc-ok: #059669;
-  --cc-bad: #e11d48;
-  --cc-warn: #b45309;
-  --cc-field: #ffffff;
-  --cc-alert-text: #92400e;
   --cc-core-text: #1e1b4b;
-  --badge-l: 38%;
 }
 :root[data-theme='light'] .cc-panel { box-shadow: 0 8px 24px rgba(30, 50, 100, 0.08); }
 :root[data-theme='light'] .cc-time,
@@ -66,9 +49,9 @@
   position: absolute;
   inset: -20%;
   background:
-    radial-gradient(40% 35% at 20% 10%, rgba(56, 225, 255, 0.16), transparent 70%),
-    radial-gradient(35% 35% at 85% 20%, rgba(139, 92, 246, 0.2), transparent 70%),
-    radial-gradient(40% 40% at 70% 95%, rgba(244, 114, 182, 0.12), transparent 70%);
+    radial-gradient(40% 35% at 20% 10%, var(--glow-1), transparent 70%),
+    radial-gradient(35% 35% at 85% 20%, var(--glow-2), transparent 70%),
+    radial-gradient(40% 40% at 70% 95%, var(--glow-3), transparent 70%);
   animation: cc-aurora 24s ease-in-out infinite alternate;
 }
 .cc-bg::after {
@@ -87,14 +70,14 @@
 .cc-panel {
   background: var(--cc-panel);
   border: 1px solid var(--cc-line);
-  border-radius: 18px;
-  padding: 16px;
+  border-radius: 20px;
+  padding: 18px;
   backdrop-filter: blur(14px) saturate(140%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 10px 30px rgba(0, 0, 0, 0.25);
   min-width: 0;
 }
-.cc-panel h4 { margin: 0 0 14px; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cc-muted); display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.cc-panel h4 .icon { color: var(--cc-cyan); }
+.cc-panel h4 { margin: 0 0 14px; font-size: 15px; letter-spacing: 0.01em; color: var(--cc-text); display: flex; align-items: center; gap: 9px; font-weight: 600; }
+.cc-panel h4 .icon { color: var(--cc-cyan); padding: 5px; width: 28px; height: 28px; border-radius: 9px; background: rgba(34, 211, 238, 0.12); }
 .cc-badge {
   --h: var(--hue, 190);
   width: 38px;
@@ -136,8 +119,8 @@
 .cc-operator small { display: block; color: var(--cc-muted); font-weight: 400; font-size: 11px; }
 .cc-avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #fff; background: var(--cc-grad); }
 
-.cc-alert { display: flex; gap: 10px; align-items: flex-start; border: 1px solid rgba(251, 191, 36, 0.5); color: var(--cc-alert-text); background: linear-gradient(90deg, rgba(251, 191, 36, 0.14), rgba(251, 191, 36, 0.04)); border-radius: 14px; padding: 12px 16px; font-size: 13px; line-height: 1.5; }
-.cc-alert .icon { color: var(--cc-warn); margin-top: 1px; }
+.cc-notice { animation: none; }
+.cc .cmd { color: var(--cc-cyan); }
 
 /* ---- stat tiles ---- */
 .cc-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
@@ -161,7 +144,7 @@
 }
 .cc-stat .cc-badge { grid-row: span 2; }
 .cc-stat strong { font-family: Rajdhani, Inter, sans-serif; font-size: 30px; line-height: 1; font-weight: 700; }
-.cc-stat small { color: var(--cc-muted); font-size: 12px; }
+.cc-stat small { color: var(--cc-muted); font-size: 13px; }
 .cc-stat::after { content: ''; position: absolute; right: -30px; top: -30px; width: 100px; height: 100px; border-radius: 50%; background: hsl(var(--h) 90% 60% / 0.14); filter: blur(10px); }
 .cc-stat:hover, .cc-commands button:hover { transform: translateY(-3px); border-color: hsl(var(--h) 90% 65% / 0.6); box-shadow: 0 12px 28px hsl(var(--h) 90% 50% / 0.18); }
 
@@ -197,7 +180,7 @@
 .cc-orbit.o2 { inset: 6%; border-color: rgba(139, 92, 246, 0.5); transform: rotateY(65deg); animation: cc-spin 20s linear infinite reverse; }
 .cc-orbit.o3 { inset: 12%; border-style: dashed; border-color: rgba(244, 114, 182, 0.35); animation: cc-spin 30s linear infinite; }
 .cc-core-text { position: relative; text-align: center; }
-.cc-core-text strong { display: block; font-family: Rajdhani, Inter, sans-serif; font-size: 32px; letter-spacing: 0.35em; margin-left: 0.35em; color: var(--cc-core-text); text-shadow: 0 0 20px rgba(56, 225, 255, 0.8); }
+.cc-core-text strong { display: block; font-family: Rajdhani, Inter, sans-serif; font-size: 32px; letter-spacing: 0.35em; margin-left: 0.35em; color: var(--cc-core-text); text-shadow: 0 0 20px rgba(34, 211, 238, 0.8); }
 .cc-core-text small { letter-spacing: 0.4em; color: var(--cc-cyan); font-size: 11px; }
 .cc-talk {
   display: inline-flex;
@@ -206,9 +189,10 @@
   border: none;
   color: #fff !important;
   font-weight: 600;
-  background: var(--cc-grad);
+  background: var(--grad-btn);
   border-radius: 999px;
-  padding: 11px 26px;
+  padding: 12px 28px;
+  font-size: 15px;
   cursor: pointer;
   box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4), 0 0 0 0 rgba(56, 225, 255, 0.5);
   animation: cc-ping 2.6s infinite;
@@ -223,7 +207,7 @@
 .cc-ask-icon { color: var(--cc-violet); }
 .cc .cc-askbar input:not([type='checkbox']) { flex: 1; min-width: 0; background: transparent; border: none; color: var(--cc-text); padding: 8px 4px; font: inherit; font-size: 14px; }
 .cc .cc-askbar input:not([type='checkbox']):focus { outline: none; box-shadow: none; }
-.cc-go { display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: 999px; padding: 9px 18px; cursor: pointer; color: #fff !important; font-weight: 600; background: linear-gradient(90deg, #0891b2, var(--cc-violet)); }
+.cc-go { display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: 999px; padding: 9px 18px; cursor: pointer; color: #fff !important; font-weight: 600; background: var(--grad-btn); }
 
 .cc-feed { display: grid; gap: 8px; }
 .cc-feed li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, 0.03); border-left: 3px solid var(--cc-cyan); overflow-wrap: anywhere; }
@@ -245,8 +229,8 @@
   align-items: center;
   gap: 12px;
   text-align: left;
-  padding: 12px;
-  border-radius: 14px;
+  padding: 14px;
+  border-radius: 16px;
   cursor: pointer;
   border: 1px solid hsl(var(--h) 90% 65% / 0.18);
   background: linear-gradient(135deg, hsl(var(--h) 80% 50% / 0.1), rgba(255, 255, 255, 0.02));
@@ -254,7 +238,7 @@
   font-weight: 600;
   transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
-.cc-commands small { display: block; color: var(--cc-muted); font-weight: 400; font-size: 11px; margin-top: 2px; }
+.cc-commands small { display: block; color: var(--cc-muted); font-weight: 400; font-size: 12px; margin-top: 2px; }
 
 /* ---- lower cards ---- */
 .cc-timeline { display: grid; gap: 4px; position: relative; }

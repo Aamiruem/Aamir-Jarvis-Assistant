@@ -23,18 +23,22 @@ const MemoryPanel = lazy(() => import('./components/MemoryPanel.jsx'));
 const ContactsPanel = lazy(() => import('./components/ContactsPanel.jsx'));
 const AccountPanel = lazy(() => import('./components/AccountPanel.jsx'));
 const AdminPanel = lazy(() => import('./components/AdminPanel.jsx'));
+const AutomatePanel = lazy(() => import('./components/AutomatePanel.jsx'));
 
+// Each tab has its own color (--hue), used for its icon in the top bar and the sidebar.
 const TABS = [
-  { id: 'home', label: 'Home', icon: 'home' },
-  { id: 'chat', label: 'Chat', icon: 'chat' },
-  { id: 'vision', label: 'Vision', icon: 'eye' },
-  { id: 'knowledge', label: 'Knowledge', icon: 'book' },
-  { id: 'tasks', label: 'Tasks', icon: 'tasks' },
-  { id: 'memory', label: 'Memory', icon: 'brain' },
-  { id: 'contacts', label: 'Contacts', icon: 'contacts' },
-  { id: 'account', label: 'Account', icon: 'user' },
-  { id: 'admin', label: 'Admin', icon: 'shield', adminOnly: true },
+  { id: 'home', label: 'Home', icon: 'home', hue: 205 },
+  { id: 'chat', label: 'Chat', icon: 'chat', hue: 190 },
+  { id: 'automate', label: 'Automate', icon: 'rocket', hue: 300, isNew: true },
+  { id: 'tasks', label: 'Tasks', icon: 'tasks', hue: 38 },
+  { id: 'memory', label: 'Memory', icon: 'brain', hue: 330 },
+  { id: 'knowledge', label: 'Knowledge', icon: 'book', hue: 265 },
+  { id: 'vision', label: 'Vision', icon: 'eye', hue: 160 },
+  { id: 'contacts', label: 'Contacts', icon: 'contacts', hue: 280 },
+  { id: 'account', label: 'Account', icon: 'user', hue: 220 },
+  { id: 'admin', label: 'Admin', icon: 'shield', hue: 0, adminOnly: true },
 ].map((t, i) => ({ ...t, key: i + 1 })); // Alt+1 … Alt+9
+const SIDEBAR_TABS = ['home', 'chat', 'automate', 'tasks', 'memory', 'knowledge'];
 
 // Desktop: the menu button collapses the sidebar (remembered per browser). Phone: it slides in.
 const readCollapsed = () => {
@@ -215,6 +219,16 @@ export default function App() {
     setTab('chat');
     setMenuOpen(false);
   };
+  // The desktop shortcut starts all of Jarvis and opens it (scripts/windows/install-shortcut.ps1).
+  const copyShortcutCommand = () =>
+    navigator.clipboard.writeText('npm run install-shortcut').then(
+      () => toast('Copied "npm run install-shortcut": run it once in the project folder for a desktop shortcut'),
+      () => toast('Run "npm run install-shortcut" in the project folder for a desktop shortcut'),
+    );
+  const go = (id) => {
+    setTab(id);
+    setMenuOpen(false);
+  };
   const openContacts = (q = '') => {
     setContactQuery(q);
     setTab('contacts');
@@ -252,44 +266,78 @@ export default function App() {
       <div className="app-bg" aria-hidden="true" />
       {menuOpen && <div className="scrim" onClick={() => setMenuOpen(false)} />}
       <aside className={`sidebar ${menuOpen ? 'open' : ''}`}>
-        <div className="brand">
-          <div className="orb small" />
-          <span>J.A.R.V.I.S.</span>
+        <div className="side-head">
+          <div className="brand">
+            <div className="orb small" />
+            <span>Jarvis</span>
+          </div>
+          <button className="icon-btn side-collapse" onClick={toggleMenu} title="Hide the sidebar" aria-label="Hide the sidebar">
+            <Icon name="collapse" size="1.15em" />
+          </button>
         </div>
-        <button className="btn primary full" onClick={newChat}>
-          <Icon name="plus" /> New chat
+        <button className="side-new" onClick={newChat}>
+          <Icon name="plus" size="1.15em" /> New chat
         </button>
-        <label className="side-search">
-          <Icon name="search" size="1em" />
-          <input value={convQuery} onChange={(e) => setConvQuery(e.target.value)} placeholder="Search chats" aria-label="Search chats" />
-        </label>
-        <div className="conv-list">
-          {shownConversations.length === 0 && (
-            <p className="muted conv-empty">{convQuery ? 'No chats match.' : 'Your conversations will appear here.'}</p>
-          )}
-          {shownConversations.map(([group, list]) => (
-            <div key={group} className="conv-group">
-              <div className="conv-group-title">{group}</div>
-              {list.map((c) => (
-                <div key={c._id} className={`conv ${c._id === activeId && tab === 'chat' ? 'active' : ''}`}>
-                  <button className="conv-title" onClick={() => openConversation(c._id)} title={c.title}>
-                    <Icon name="chat" size="1em" />
-                    <span>{c.title}</span>
-                  </button>
-                  <button className="icon-btn" title="Rename" aria-label="Rename" onClick={() => renameConversation(c)}><Icon name="edit" size="0.9em" /></button>
-                  <button className="icon-btn" title="Delete" aria-label="Delete" onClick={() => removeConversation(c)}><Icon name="trash" size="0.9em" /></button>
-                </div>
-              ))}
-            </div>
-          ))}
+        <nav className="side-nav" aria-label="Main">
+          {tabs
+            .filter((t) => SIDEBAR_TABS.includes(t.id))
+            .map((t) => (
+              <button key={t.id} className={`side-link ${tab === t.id ? 'active' : ''}`} style={{ '--hue': t.hue }} onClick={() => go(t.id)} aria-current={tab === t.id ? 'page' : undefined}>
+                <Icon name={t.icon} size="1.45em" />
+                <span className="grow">{t.label}</span>
+                {t.isNew && <span className="new-pill">New</span>}
+              </button>
+            ))}
+        </nav>
+        <div className="side-chats">
+          <div className="side-section">Recent chats</div>
+          <label className="side-search">
+            <Icon name="search" size="1em" />
+            <input value={convQuery} onChange={(e) => setConvQuery(e.target.value)} placeholder="Search chats" aria-label="Search chats" />
+          </label>
+          <div className="conv-list">
+            {shownConversations.length === 0 && (
+              <p className="muted conv-empty">{convQuery ? 'No chats match.' : 'Your conversations will appear here.'}</p>
+            )}
+            {shownConversations.map(([group, list]) => (
+              <div key={group} className="conv-group">
+                <div className="conv-group-title">{group}</div>
+                {list.map((c) => (
+                  <div key={c._id} className={`conv ${c._id === activeId && tab === 'chat' ? 'active' : ''}`}>
+                    <button className="conv-title" onClick={() => openConversation(c._id)} title={c.title}>
+                      <Icon name="chat" size="1em" />
+                      <span>{c.title}</span>
+                    </button>
+                    <button className="icon-btn" title="Rename" aria-label="Rename" onClick={() => renameConversation(c)}><Icon name="edit" size="0.9em" /></button>
+                    <button className="icon-btn" title="Delete" aria-label="Delete" onClick={() => removeConversation(c)}><Icon name="trash" size="0.9em" /></button>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="user-box">
-          <span className="avatar">{user.name.slice(0, 1).toUpperCase()}</span>
-          <span className="grow user-name">
-            {user.name}
-            <small>{user.role === 'admin' ? 'Administrator' : 'Operator'}</small>
-          </span>
-          <button className="icon-btn" onClick={logout} title="Log out" aria-label="Log out"><Icon name="logout" /></button>
+        <div className="promo">
+          <strong>Unlock Jarvis everywhere</strong>
+          <p>Ask from your phone, automate emails and posts, plan your day, all from one place.</p>
+          <button className="promo-btn" onClick={() => go('automate')}>
+            <Icon name="rocket" size="1.1em" /> Explore Automate
+          </button>
+        </div>
+        <div className="side-links">
+          <button onClick={() => go('automate')}>
+            <Icon name="phone" size="1.25em" /> Jarvis on your phone
+          </button>
+          <button onClick={copyShortcutCommand}>
+            <Icon name="monitor" size="1.25em" /> Desktop shortcut
+          </button>
+        </div>
+        <div className="side-foot">
+          <button className="side-avatar" onClick={() => go('account')} title={`${user.name}: account and security`} aria-label="Account">
+            {user.name.slice(0, 1).toUpperCase()}
+          </button>
+          <button className="icon-btn" onClick={() => go('contacts')} title="Contacts" aria-label="Contacts"><Icon name="mail" size="1.25em" /></button>
+          <button className="icon-btn" onClick={() => { setPaletteQuery(''); setPaletteOpen(true); }} title="Help and commands (Ctrl+K)" aria-label="Help"><Icon name="help" size="1.25em" /></button>
+          <button className="icon-btn" onClick={logout} title="Log out" aria-label="Log out"><Icon name="logout" size="1.25em" /></button>
         </div>
       </aside>
 
@@ -298,7 +346,7 @@ export default function App() {
           <button className="icon-btn menu" onClick={toggleMenu} aria-label={collapsed ? 'Show sidebar' : 'Menu'} title="Menu"><Icon name="menu" /></button>
           <nav className="tabs">
             {tabs.map((t) => (
-              <button key={t.id} className={`tab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)} title={`${t.label} (Alt+${t.key})`} aria-label={t.label}>
+              <button key={t.id} className={`tab ${tab === t.id ? 'active' : ''}`} style={{ '--hue': t.hue }} onClick={() => setTab(t.id)} title={`${t.label} (Alt+${t.key})`} aria-label={t.label}>
                 <Icon name={t.icon} size="1.05em" />
                 <span>{t.label}</span>
               </button>
@@ -346,6 +394,7 @@ export default function App() {
                 onConversation={(id) => { setActiveId(id); refreshConversations(); }}
               />
             )}
+            {tab === 'automate' && <AutomatePanel onAsk={ask} onOpenTab={setTab} />}
             {tab === 'vision' && <VisionPanel />}
             {tab === 'knowledge' && <KnowledgePanel />}
             {tab === 'tasks' && <TasksPanel />}
