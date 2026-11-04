@@ -16,6 +16,7 @@ import { createAdminRouter } from './routes/admin.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createChatRouter } from './routes/chat.js';
 import { createConversationRouter } from './routes/conversations.js';
+import { createUserNotesRouter } from './routes/user-notes.js';
 
 /**
  * Builds the Express app from a container (see container.js). It doesn't connect to MongoDB
@@ -60,9 +61,10 @@ export function createApp(container) {
 
   app.use(express.json({ limit: '1mb' }));
   app.use('/api/auth', createAuthRouter({ authService: container.authService, requireAuth, settings: container.settings }));
-  const { users, conversations, sessions, audit } = container;
+  const { users, conversations, sessions, audit, notes } = container;
   app.use('/api/conversations', createConversationRouter({ requireAuth, conversations }));
   app.use('/api/chat', createChatRouter({ requireAuth, conversations }));
+  app.use('/api/user-notes', createUserNotesRouter({ requireAuth, notes }));
   app.use('/api/admin', createAdminRouter({ requireAuth, requireAdmin, users, conversations, sessions, audit }));
 
   app.get('/api/health', async (_req, res) => {

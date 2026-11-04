@@ -3,7 +3,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 import { expireSession, getAccessToken, setAccessToken } from "@/lib/auth-token";
-import type { AuthResult, ConversationSummary, Memory, SignedIn, Task } from "@/types/api";
+import type { AuthResult, ConversationSummary, Memory, SignedIn, Task, UserNote } from "@/types/api";
 
 export class ApiError extends Error {
   constructor(
@@ -100,6 +100,14 @@ export const memoriesApi = {
   list: () => data(http.get<Memory[]>("/ai/memories")),
   add: (fact: string) => data(http.post<Memory>("/ai/memories", { fact })),
   remove: (id: number) => http.delete(`/ai/memories/${id}`),
+};
+
+export const notesApi = {
+  list: () => data(http.get<UserNote[]>("/user-notes")),
+  add: (title: string, content: string, category = "General") => data(http.post<UserNote>("/user-notes", { title, content, category })),
+  update: (id: string, patch: Partial<Pick<UserNote, "title" | "content" | "category">>) =>
+    data(http.put<UserNote>(`/user-notes/${id}`, patch)),
+  remove: (id: string) => http.delete(`/user-notes/${id}`),
 };
 
 export const conversationsApi = {

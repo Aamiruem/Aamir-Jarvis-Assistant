@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Brain, CheckSquare, LayoutDashboard, LogOut, Map, MessageSquare } from "lucide-react";
+import { Brain, CheckSquare, FileText, LayoutDashboard, LogOut, Map, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -16,6 +16,7 @@ const NAV = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/chat", label: "Chat", icon: MessageSquare },
   { href: "/dashboard/tasks", label: "Tasks", icon: CheckSquare },
+  { href: "/dashboard/notes", label: "Notes", icon: FileText },
   { href: "/dashboard/memories", label: "Memories", icon: Brain },
   { href: "/dashboard/map", label: "Weather map", icon: Map },
 ] as const;

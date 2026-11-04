@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import { Conversation } from '../models/Conversation.js';
 import { AuditLog, OtpChallenge, Session } from '../models/Security.js';
 import { User } from '../models/User.js';
+import { UserNote } from '../models/UserNote.js';
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -154,5 +155,41 @@ export class MongoConversationRepository {
 
   async count() {
     return Conversation.countDocuments();
+  }
+}
+
+export class MongoUserNoteRepository {
+  async listForUser(userId) {
+    const docs = await UserNote.find({ userId }).sort({ updatedAt: -1 }).lean();
+    return docs.map((doc) => ({ id: String(doc._id), title: doc.title, content: doc.content, category: doc.category, createdAt: doc.createdAt, updatedAt: doc.updatedAt }));
+  }
+
+  async findForUser(userId, id) {
+    if (!mongoose.isValidObjectId(id)) return null;
+    const doc = await UserNote.findOne({ _id: id, userId }).lean();
+    if (!doc) return null;
+    return { id: String(doc._id), title: doc.title, content: doc.content, category: doc.category, createdAt: doc.createdAt, updatedAt: doc.updatedAt };
+  }
+
+  async create({ userId, title, content, category = 'General' }) {
+    const doc = await UserNote.create({ userId, title, content, category });
+    const plain = doc.toObject();
+    return { id: String(plain._id), title: plain.title, content: plain.content, category: plain.category, createdAt: plain.createdAt, updatedAt: plain.updatedAt };
+  }
+
+  async update(id, patch) {
+    if (!mongoose.isValidObjectId(id)) return null;
+    const doc = await UserNote.findByIdAndUpdate(id, patch, { new: true }).lean();
+    if (!doc) return null;
+    return { id: String(doc._id), title: doc.title, content: doc.content, category: doc.category, createdAt: doc.createdAt, updatedAt: doc.updatedAt };
+  }
+
+  async delete(id) {
+    if (!mongoose.isValidObjectId(id)) return;
+    await UserNote.deleteOne({ _id: id });
+  }
+
+  async deleteAllForUser(userId) {
+    await UserNote.deleteMany({ userId });
   }
 }

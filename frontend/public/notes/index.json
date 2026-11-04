@@ -1,11 +1,11 @@
 [
  {
-  "slug": "ml-basics-to-advanced",
-  "title": "AIML Basics to Advanced",
-  "source": "https://chatgpt.com/share/6a776415-7694-83ee-ad55-30d0709c7e16",
+  "slug": "aiml-ml-section-notes",
+  "title": "AIML & ML Section Notes",
+  "source": "Curated section-wise study notes",
   "imported": "2026-11-04",
-  "chapters": 45,
-  "chars": 1169464
+  "chapters": 4,
+  "chars": 19880
  },
  {
   "slug": "aiml-244-lecture",
@@ -14,5 +14,21 @@
   "imported": "2026-11-04",
   "chapters": 3,
   "chars": 16650
+ },
+ {
+  "slug": "ml-basics-to-advanced",
+  "title": "ML Basics to Advanced",
+  "source": "https://chatgpt.com/share/6a776415-7694-83ee-ad55-30d0709c7e16",
+  "imported": "2026-11-04",
+  "chapters": 45,
+  "chars": 1169464
+ },
+ {
+  "slug": "ai-ml-complete-notes",
+  "title": "AI/ML complete notes",
+  "source": "https://chatgpt.com/share/6a915172-9c7c-83e8-96fb-061112fc1774",
+  "imported": "2026-11-04",
+  "chapters": 26,
+  "chars": 1024016
  }
 ]

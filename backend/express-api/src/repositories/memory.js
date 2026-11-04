@@ -215,3 +215,37 @@ export class InMemoryConversationRepository extends InMemoryRepository {
     return this.rows.size;
   }
 }
+
+export class InMemoryUserNoteRepository extends InMemoryRepository {
+  async listForUser(userId) {
+    return this.where((n) => n.userId === userId)
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+      .map((n) => ({ id: n.id, title: n.title, content: n.content, category: n.category, createdAt: n.createdAt, updatedAt: n.updatedAt }));
+  }
+
+  async findForUser(userId, id) {
+    const row = await this.findById(id);
+    return row && row.userId === userId ? { ...row } : null;
+  }
+
+  async create({ userId, title, content, category = 'General' }) {
+    const now = new Date();
+    return super.create({ userId, title, content, category, createdAt: now, updatedAt: now });
+  }
+
+  async update(id, patch) {
+    const row = await this.findById(id);
+    if (!row) return null;
+    Object.assign(row, { ...patch, updatedAt: new Date() });
+    this._changed();
+    return { ...row };
+  }
+
+  async delete(id) {
+    await super.delete(id);
+  }
+
+  async deleteAllForUser(userId) {
+    this._deleteWhere((n) => n.userId === userId);
+  }
+}

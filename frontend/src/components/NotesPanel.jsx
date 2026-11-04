@@ -28,6 +28,51 @@ const readSize = () => {
   }
 };
 
+const SMART_LIBRARY_KEY = 'jarvis-smart-notes-library';
+const smartBooks = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SMART_LIBRARY_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+const writeSmartBooks = (books) => {
+  try {
+    localStorage.setItem(SMART_LIBRARY_KEY, JSON.stringify(books));
+  } catch {}
+};
+const isAIML = (text = '') => /ai[- ]?ml|artificial intelligence|a\.i\./i.test(text);
+const isML = (text = '') => /machine learning|ml\b/i.test(text);
+const categoryMatches = (entry, filter) => {
+  if (filter === 'all') return true;
+  const label = `${entry.title || ''} ${entry.slug || ''} ${entry.source || ''}`;
+  if (filter === 'aiml') return entry.kind === 'aiml' || isAIML(label);
+  if (filter === 'ml') return entry.kind === 'ml' || (isML(label) && !isAIML(label));
+  return true;
+};
+const createSmartBook = ({ title, kind = 'aiml', folder = 'Quick Notes', chapterTitle = 'New note', body = '' }) => ({
+  slug: `smart-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  title: title || 'My Smart Notes',
+  kind,
+  source: 'local-smart-notes',
+  imported: new Date().toISOString().slice(0, 10),
+  custom: true,
+  chapters: 1,
+  chars: String(body || `# ${chapterTitle}\n\nThis note was added from your smart notes workspace.`).length,
+  parts: [{
+    name: folder,
+    chapters: [{
+      id: '01',
+      file: 'chapter-01.md',
+      title: chapterTitle,
+      body: body || `# ${chapterTitle}\n\nThis note was added from your smart notes workspace.`,
+      custom: true,
+      part: folder,
+    }],
+  }],
+});
+
 function Practice({ book, chapter, text }) {
   const cards = useMemo(() => practiceCards(text), [text]);
   const [marks, setMarks] = useState(() => cardMarks(book, chapter.id));
@@ -90,6 +135,7 @@ export default function NotesPanel({ target }) {
   const [text, setText] = useState('');
   const [mode, setMode] = useState('read');
   const [size, setSize] = useState(readSize);
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [done, setDone] = useState(new Set());
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState(null);
@@ -103,19 +149,32 @@ export default function NotesPanel({ target }) {
   const chapter = chapters.find((c) => c.id === chapterId);
   const at = chapters.findIndex((c) => c.id === chapterId);
 
+  const filteredLibrary = useMemo(() => {
+    if (!library) return [];
+    return library.filter((entry) => categoryMatches(entry, categoryFilter));
+  }, [library, categoryFilter]);
+
   useEffect(() => {
     loadLibrary()
       .then(async (lib) => {
-        setLibrary(lib);
-        if (lib.length) {
-          const b = await loadBook(lib[0].slug);
+        const merged = [...lib, ...smartBooks()];
+        setLibrary(merged);
+        if (merged.length) {
+          const available = merged.filter((entry) => categoryMatches(entry, categoryFilter));
+          const preferred =
+            available.find((entry) => /ai[- ]?ml.*(complete|full|roadmap)/i.test(`${entry.title} ${entry.slug}`))
+            || available.find((entry) => /ai[- ]?ml/i.test(`${entry.title} ${entry.slug}`))
+            || available.find((entry) => /machine learning|ml\b/i.test(`${entry.title} ${entry.slug}`))
+            || available[0];
+          if (!preferred) return;
+          const b = preferred.custom ? preferred : await loadBook(preferred.slug);
           setBook(b);
           setDone(readChapters(b.slug));
           setChapterId(chaptersOf(b)[0]?.id);
         }
       })
       .catch((e) => setError(e.message));
-  }, []);
+  }, [categoryFilter]);
   useEffect(() => {
     if (target?.chapter) {
       setChapterId(target.chapter);
@@ -126,6 +185,10 @@ export default function NotesPanel({ target }) {
   useEffect(() => {
     if (!book || !chapter) return;
     setText('');
+    if (book.custom && chapter.body) {
+      setText(chapter.body);
+      return;
+    }
     loadChapter(book.slug, chapter.file).then(setText).catch((e) => setError(e.message));
   }, [book, chapterId]);
   useEffect(() => {
@@ -155,7 +218,9 @@ export default function NotesPanel({ target }) {
     if (!query.trim()) return setHits(null);
     setSearching(true);
     try {
-      const texts = await Promise.all(chapters.map((c) => loadChapter(book.slug, c.file)));
+      const texts = await Promise.all(chapters.map((c) => (
+        book.custom ? Promise.resolve(c.body || '') : loadChapter(book.slug, c.file)
+      )));
       setHits(searchText(chapters, texts, query));
     } catch (err) {
       setError(err.message);
@@ -166,6 +231,10 @@ export default function NotesPanel({ target }) {
 
   // Puts every chapter into the knowledge base, so Jarvis can answer from these notes in chat.
   const teach = async () => {
+    if (book.custom) {
+      toast('Smart notes are stored locally. Add the files to the project notes folder to teach Jarvis from them.');
+      return;
+    }
     if (!window.confirm(`Add all ${chapters.length} chapters to Jarvis's knowledge base? Jarvis will then answer from your notes in chat.`)) return;
     setTeaching({ done: 0, total: chapters.length });
     try {
@@ -184,6 +253,13 @@ export default function NotesPanel({ target }) {
 
   if (error && !book) return <div className="panel"><p className="error">{error}</p></div>;
   if (!library) return <div className="panel"><p className="muted">Loading notes…</p></div>;
+  if (!filteredLibrary.length) {
+    return (
+      <div className="panel">
+        <EmptyState icon="notes" title="No notes in this track">Switch to a different category or create a smart note.</EmptyState>
+      </div>
+    );
+  }
   if (!library.length) {
     return (
       <div className="panel">
@@ -191,15 +267,91 @@ export default function NotesPanel({ target }) {
       </div>
     );
   }
+  if (!book) {
+    return (
+      <div className="panel">
+        <p className="muted">Loading AIML notes…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="panel notes-panel">
       <PageHeader icon="notes" hue={45} title="Notes" subtitle={book ? `${book.title} · ${book.chapters} chapters · ${done.size} read` : ''}>
-        <button className="btn sm" onClick={teach} disabled={Boolean(teaching) || !book} title="Add these notes to Jarvis's knowledge base">
+        <button className="btn sm" onClick={teach} disabled={Boolean(teaching) || !book || book.custom} title="Add these notes to Jarvis's knowledge base">
           <Icon name="brain" size="1em" /> {teaching ? `Teaching Jarvis… ${teaching.done}/${teaching.total}` : 'Teach Jarvis these notes'}
         </button>
       </PageHeader>
       {error && <p className="error">{error}</p>}
+
+      <div className="notes-utility">
+        <div className="segmented" role="tablist" aria-label="Note track">
+          <button className={categoryFilter === 'all' ? 'active' : ''} onClick={() => setCategoryFilter('all')} role="tab" aria-selected={categoryFilter === 'all'}>All</button>
+          <button className={categoryFilter === 'aiml' ? 'active' : ''} onClick={() => setCategoryFilter('aiml')} role="tab" aria-selected={categoryFilter === 'aiml'}>AIML</button>
+          <button className={categoryFilter === 'ml' ? 'active' : ''} onClick={() => setCategoryFilter('ml')} role="tab" aria-selected={categoryFilter === 'ml'}>ML</button>
+        </div>
+        <div className="smart-actions">
+          <button className="btn sm ghost" onClick={() => {
+            const title = window.prompt('Name your smart note', 'Smart note');
+            if (!title) return;
+            const nextBook = createSmartBook({ title, kind: categoryFilter === 'ml' ? 'ml' : 'aiml', folder: 'Quick Notes', chapterTitle: title });
+            const updated = [...smartBooks(), nextBook];
+            writeSmartBooks(updated);
+            setLibrary((prev) => [...(prev || []), nextBook]);
+            setBook(nextBook);
+            setDone(readChapters(nextBook.slug));
+            setChapterId(chaptersOf(nextBook)[0]?.id);
+            setMode('read');
+          }}><Icon name="file" size="1em" /> New Note</button>
+          <button className="btn sm ghost" onClick={() => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.pdf,.txt,.md';
+            input.onchange = () => {
+              const file = input.files?.[0];
+              if (!file) return;
+              const nextBook = createSmartBook({
+                title: `${file.name} notes`,
+                kind: categoryFilter === 'ml' ? 'ml' : 'aiml',
+                folder: 'PDFs',
+                chapterTitle: file.name,
+                body: `# ${file.name}\n\nImported document: ${file.name}\n\nUse this section to keep notes, references, and summary points for the document.`,
+              });
+              const updated = [...smartBooks(), nextBook];
+              writeSmartBooks(updated);
+              setLibrary((prev) => [...(prev || []), nextBook]);
+              setBook(nextBook);
+              setDone(readChapters(nextBook.slug));
+              setChapterId(chaptersOf(nextBook)[0]?.id);
+              setMode('read');
+            };
+            input.click();
+          }}><Icon name="upload" size="1em" /> Add PDF</button>
+          <button className="btn sm ghost" onClick={() => {
+            const name = window.prompt('New folder name', 'Study folder');
+            if (!name) return;
+            const existing = book && book.custom ? book : (library || []).find((entry) => entry.custom);
+            if (existing) {
+              const nextBook = {
+                ...existing,
+                parts: [...(existing.parts || []), { name, chapters: [] }],
+                chapters: (existing.chapters || 0) + 1,
+              };
+              const updated = (smartBooks() || []).map((entry) => (entry.slug === existing.slug ? nextBook : entry));
+              writeSmartBooks(updated);
+              setLibrary((prev) => (prev || []).map((entry) => (entry.slug === existing.slug ? nextBook : entry)));
+              setBook(nextBook);
+              toast(`Folder “${name}” added to your smart notes.`);
+            } else {
+              const nextBook = createSmartBook({ title: 'My Smart Notes', kind: categoryFilter === 'ml' ? 'ml' : 'aiml', folder: name, chapterTitle: 'New folder note' });
+              const updated = [...smartBooks(), nextBook];
+              writeSmartBooks(updated);
+              setLibrary((prev) => [...(prev || []), nextBook]);
+              setBook(nextBook);
+            }
+          }}><Icon name="folder" size="1em" /> New Folder</button>
+        </div>
+      </div>
 
       <div className="notes-bar">
         <form className="search-box" onSubmit={runSearch}>
@@ -258,7 +410,16 @@ export default function NotesPanel({ target }) {
             text ? <Practice book={book.slug} chapter={chapter} text={text} /> : <p className="muted">Loading…</p>
           ) : (
             <article className="notes-article" style={{ '--notes-size': `${size}px` }}>
-              <p className="notes-crumb muted">{chapter.part} · Chapter {chapter.id} of {chapters.length}</p>
+              <div className="notes-hero">
+                <div className="notes-hero-icon"><Icon name="book" size="1.1em" /></div>
+                <div>
+                  <p className="notes-crumb muted">
+                    <span className="notes-chip notes-chip-main"><Icon name="book" size="0.9em" /> {chapter.part}</span>
+                    <span className="notes-chip notes-chip-accent">Chapter {chapter.id}</span>
+                  </p>
+                  <h2 className="notes-title">{chapter.title}</h2>
+                </div>
+              </div>
               {text ? <MarkdownView source={text} /> : <p className="muted">Loading chapter…</p>}
               <footer className="notes-foot">
                 <button className="btn" disabled={at <= 0} onClick={() => open(chapters[at - 1].id)}><Icon name="chevron" size="1em" className="flip" /> Previous</button>

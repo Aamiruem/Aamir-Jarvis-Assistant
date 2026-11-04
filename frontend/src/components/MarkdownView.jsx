@@ -17,9 +17,50 @@ const textOf = (node) =>
         ? textOf(node.props.children)
         : '';
 
+const ICONS = {
+  ai: 'brain',
+  ml: 'chart',
+  data: 'chart',
+  python: 'flask',
+  model: 'cpu',
+  learning: 'sparkles',
+  math: 'calculator',
+  project: 'rocket',
+  deploy: 'rocket',
+  summary: 'check',
+  workflow: 'timeline',
+  interview: 'briefcase',
+  nlp: 'chat',
+  vision: 'camera',
+  deep: 'pulse',
+  default: 'book',
+};
+
+const iconNameForHeading = (text) => {
+  const t = String(text).toLowerCase();
+  if (/(ai|artificial intelligence|intelligent)/.test(t)) return 'brain';
+  if (/(ml|model|learning|algorithm|prediction)/.test(t)) return 'chart';
+  if (/(python|code|function|loop|list|string)/.test(t)) return 'flask';
+  if (/(data|statistics|math|probab|variance|mean|matrix)/.test(t)) return 'timeline';
+  if (/(project|deploy|production|monitor)/.test(t)) return 'rocket';
+  if (/(summary|final|quick|revision)/.test(t)) return 'check';
+  if (/(nlp|language|text|chatbot|transformer)/.test(t)) return 'chat';
+  if (/(vision|image|cv|camera)/.test(t)) return 'camera';
+  if (/(interview|career|questions)/.test(t)) return 'briefcase';
+  if (/(workflow|pipeline|process|steps)/.test(t)) return 'timeline';
+  return 'book';
+};
+
 function heading(Tag) {
   return function Heading({ children }) {
-    return <Tag id={slug(textOf(children))}>{children}</Tag>;
+    const text = textOf(children);
+    const icon = iconNameForHeading(text);
+    return (
+      <Tag id={slug(text)} className="md-heading md-heading--icon">
+        <span className="md-heading__icon"><Icon name={icon} size="0.9em" /></span>
+        <span>{children}</span>
+      </Tag>
+    );
   };
 }
 

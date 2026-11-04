@@ -22,6 +22,7 @@ function memoryRepos(dataDir) {
     otps: new memory.InMemoryOtpRepository(opts('otps')),
     auditRepo: new memory.InMemoryAuditRepository(opts('audit')),
     conversations: new memory.InMemoryConversationRepository(opts('conversations')),
+    notes: new memory.InMemoryUserNoteRepository(opts('notes')),
   };
 }
 
@@ -32,6 +33,7 @@ function mongoRepos() {
     otps: new mongo.MongoOtpRepository(),
     auditRepo: new mongo.MongoAuditRepository(),
     conversations: new mongo.MongoConversationRepository(),
+    notes: new mongo.MongoUserNoteRepository(),
   };
 }
 
@@ -48,6 +50,7 @@ export function createContainer({ storage = 'mongo', dataDir, notifier, purgeUse
   async function purgeFromAllStores(actingUser) {
     await aiFetch('/me/data', actingUser, { method: 'DELETE' }); // SQL, vector store, S3 files
     await repos.conversations.deleteAllForUser(actingUser.id); // chat history
+    await repos.notes.deleteAllForUser(actingUser.id); // user notes
   }
 
   const authSettings = { ...config.auth, ...settings };

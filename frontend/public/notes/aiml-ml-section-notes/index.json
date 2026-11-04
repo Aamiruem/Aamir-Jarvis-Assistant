@@ -1,0 +1,80 @@
+{
+  "slug": "aiml-ml-section-notes",
+  "title": "AIML & ML Section Notes",
+  "source": "Curated study notes",
+  "imported": "2026-11-04",
+  "chapters": 4,
+  "chars": 19880,
+  "parts": [
+    {
+      "name": "1. AIML",
+      "chapters": [
+        {
+          "id": "01",
+          "file": "01-aiml-overview.md",
+          "title": "AIML Foundations and Core Concepts",
+          "version": 1,
+          "headings": [
+            "AIML Foundations and Core Concepts",
+            "AI vs ML vs DL vs Data Science",
+            "What is AIML",
+            "AIML Workflow",
+            "Applications of AIML",
+            "Concepts and Solutions"
+          ],
+          "chars": 4520
+        },
+        {
+          "id": "02",
+          "file": "02-aiml-systems-and-solutions.md",
+          "title": "AIML Systems, Learning Types and Real Solutions",
+          "version": 1,
+          "headings": [
+            "AIML Systems, Learning Types and Real Solutions",
+            "Types of Learning",
+            "Intelligent Agents",
+            "AI System Design",
+            "Problem-to-Solution Mapping",
+            "AIML Case Examples"
+          ],
+          "chars": 5120
+        }
+      ]
+    },
+    {
+      "name": "2. ML",
+      "chapters": [
+        {
+          "id": "03",
+          "file": "03-ml-fundamentals.md",
+          "title": "Machine Learning Fundamentals and Algorithms",
+          "version": 1,
+          "headings": [
+            "Machine Learning Fundamentals and Algorithms",
+            "Supervised Learning",
+            "Unsupervised Learning",
+            "Feature Engineering",
+            "Model Training",
+            "Evaluation Metrics"
+          ],
+          "chars": 5200
+        },
+        {
+          "id": "04",
+          "file": "04-ml-project-solution-guide.md",
+          "title": "ML Project Solution Guide and Practice Flow",
+          "version": 1,
+          "headings": [
+            "ML Project Solution Guide and Practice Flow",
+            "Problem Definition",
+            "Data Preparation",
+            "Model Selection",
+            "Training and Validation",
+            "Deployment and Monitoring"
+          ],
+          "chars": 5040
+        }
+      ]
+    }
+  ]
+}

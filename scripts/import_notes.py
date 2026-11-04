@@ -183,6 +183,10 @@ def build(title: str, messages: list[dict], source: str) -> dict:
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         raise SystemExit(__doc__)
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
     source = sys.argv[1]
     title, messages = decode(load_page(source))
     book = build(title, messages, sys.argv[2] if len(sys.argv) > 2 else source)

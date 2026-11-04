@@ -48,6 +48,15 @@ export interface Memory {
   created_at: string;
 }
 
+export interface UserNote {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ConversationSummary {
   id: string;
   title: string;
