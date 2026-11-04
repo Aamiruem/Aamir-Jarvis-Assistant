@@ -27,7 +27,7 @@ from app.llm.claude import key_status
 from app.system_control import current_os
 from app.nlp.intent import get_classifier
 from app.rag.store import get_store
-from app.routers import chat, misc, rag, system
+from app.routers import chat, misc, mllab, rag, system
 from app.scheduler import reminder_loop
 from app.security import require_internal_key
 
@@ -77,6 +77,7 @@ app.include_router(chat.router, dependencies=protected)
 app.include_router(rag.router, dependencies=protected)
 app.include_router(misc.router, dependencies=protected)
 app.include_router(system.router, dependencies=protected)
+app.include_router(mllab.router, dependencies=protected)
 
 
 @app.get("/health")

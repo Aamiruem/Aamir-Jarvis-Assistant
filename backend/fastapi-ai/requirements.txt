@@ -11,6 +11,7 @@ anthropic>=1.0
 scikit-learn>=1.6
 numpy>=2.1
 joblib>=1.4
+xgboost>=2.1                # ML Lab's gradient-boosted trees (skipped automatically if it can't load)
 
 # --- Computer Vision ---
 opencv-python-headless>=4.10,<5   # 5.x moved Haar cascades to contrib

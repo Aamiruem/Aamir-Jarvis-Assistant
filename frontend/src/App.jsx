@@ -24,12 +24,14 @@ const ContactsPanel = lazy(() => import('./components/ContactsPanel.jsx'));
 const AccountPanel = lazy(() => import('./components/AccountPanel.jsx'));
 const AdminPanel = lazy(() => import('./components/AdminPanel.jsx'));
 const AutomatePanel = lazy(() => import('./components/AutomatePanel.jsx'));
+const MlLabPanel = lazy(() => import('./components/MlLabPanel.jsx'));
 
 // Each tab has its own color (--hue), used for its icon in the top bar and the sidebar.
 const TABS = [
   { id: 'home', label: 'Home', icon: 'home', hue: 205 },
   { id: 'chat', label: 'Chat', icon: 'chat', hue: 190 },
-  { id: 'automate', label: 'Automate', icon: 'rocket', hue: 300, isNew: true },
+  { id: 'automate', label: 'Automate', icon: 'rocket', hue: 300 },
+  { id: 'mllab', label: 'ML Lab', icon: 'flask', hue: 160, isNew: true },
   { id: 'tasks', label: 'Tasks', icon: 'tasks', hue: 38 },
   { id: 'memory', label: 'Memory', icon: 'brain', hue: 330 },
   { id: 'knowledge', label: 'Knowledge', icon: 'book', hue: 265 },
@@ -38,7 +40,7 @@ const TABS = [
   { id: 'account', label: 'Account', icon: 'user', hue: 220 },
   { id: 'admin', label: 'Admin', icon: 'shield', hue: 0, adminOnly: true },
 ].map((t, i) => ({ ...t, key: i + 1 })); // Alt+1 … Alt+9
-const SIDEBAR_TABS = ['home', 'chat', 'automate', 'tasks', 'memory', 'knowledge'];
+const SIDEBAR_TABS = ['home', 'chat', 'automate', 'mllab', 'tasks', 'memory', 'knowledge'];
 
 // Desktop: the menu button collapses the sidebar (remembered per browser). Phone: it slides in.
 const readCollapsed = () => {
@@ -395,6 +397,7 @@ export default function App() {
               />
             )}
             {tab === 'automate' && <AutomatePanel onAsk={ask} onOpenTab={setTab} />}
+            {tab === 'mllab' && <MlLabPanel />}
             {tab === 'vision' && <VisionPanel />}
             {tab === 'knowledge' && <KnowledgePanel />}
             {tab === 'tasks' && <TasksPanel />}

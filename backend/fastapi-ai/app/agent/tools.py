@@ -19,6 +19,8 @@ from pydantic import BaseModel, Field
 
 from app.config import settings
 from app.db import sql
+from app.mllab import housing
+from app.mllab import registry as ml_models
 from app.rag.store import get_store
 from app import system_control as pc
 from app.system_control import ACTIONS, FOLDERS, app_names, run_action, system_status
@@ -298,6 +300,37 @@ def wikipedia(args: Wikipedia, ctx: ToolContext) -> dict:
     return {"title": page.get("title"), "summary": page.get("extract"), "url": page.get("content_urls", {}).get("desktop", {}).get("page")}
 
 
+# ---------- ML Lab ----------
+
+class PredictHousePrice(housing.HouseInput):
+    pass
+
+
+class ListMlModels(BaseModel):
+    pass
+
+
+class PredictWithModel(BaseModel):
+    model_id: str = Field(..., description="Id from list_ml_models")
+    inputs: dict[str, str | float | int | bool | None] = Field(
+        ..., description="Input column -> value for one row. Leave out unknown inputs; they are filled with typical values.")
+
+
+def predict_house_price(args: PredictHousePrice, ctx: ToolContext) -> dict:
+    if housing.status()["status"] != "ready":
+        return {"status": "training", "note": "The house price model is being trained for the first time; it takes a few minutes."}
+    return housing.predict(args)
+
+
+def list_ml_models(args: ListMlModels, ctx: ToolContext) -> dict:
+    keep = ("id", "name", "task", "target", "best", "test", "features", "summary", "builtin")
+    return {"models": [{k: m[k] for k in keep} for m in ml_models.list_models(ctx.user_id)]}
+
+
+def predict_with_model(args: PredictWithModel, ctx: ToolContext) -> dict:
+    return {"predictions": ml_models.predict(ctx.user_id, args.model_id, [args.inputs])}
+
+
 # ---------- registry ----------
 
 def find_contact(args: FindContact, ctx: ToolContext) -> dict:
@@ -377,6 +410,22 @@ TOOLS: dict[str, tuple[str, type[BaseModel], callable]] = {
         "Put text on the user's clipboard so they can paste it anywhere (a rewritten paragraph, a reply, a command). "
         "Use when they ask you to copy something, or after rewriting clipboard text so the result is ready to paste.",
         CopyToClipboard, copy_to_clipboard,
+    ),
+    "predict_house_price": (
+        "Estimate the median home value of a California neighborhood with the ML Lab house price model (XGBoost "
+        "trained on 1990 US census data). Give the estimate together with its likely range and the model's tested "
+        "typical error; it is an estimate, never a certainty. Ask for inputs the user hasn't given rather than inventing them.",
+        PredictHousePrice, predict_house_price,
+    ),
+    "list_ml_models": (
+        "List the machine learning models in the user's ML Lab (ones they trained on their own CSV files, plus built-in "
+        "projects): what each predicts, its inputs and its accuracy measured on unseen data.",
+        ListMlModels, list_ml_models,
+    ),
+    "predict_with_model": (
+        "Make a prediction with one of the user's ML Lab models (see list_ml_models for ids and inputs). Report the "
+        "prediction with the model's tested accuracy and any warnings in 'notes' (e.g. inputs unlike the training data).",
+        PredictWithModel, predict_with_model,
     ),
     "look_at_screen": (
         "See what is on the user's screen right now (a screenshot shown only to you, not saved). Use when they ask about "

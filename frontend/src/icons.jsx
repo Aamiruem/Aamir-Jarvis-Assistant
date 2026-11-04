@@ -63,6 +63,9 @@ const PATHS = {
   monitor: 'M3 4h18v12H3z M8 20h8 M12 16v4',
   sidebar: 'M3 4h18v16H3z M9 4v16',
   collapse: 'M4 4v16 M20 12H9 M13 7.5 8.5 12l4.5 4.5',
+  flask: 'M9 3h6 M10 3v6L4.5 18.5A1.6 1.6 0 0 0 5.9 21h12.2a1.6 1.6 0 0 0 1.4-2.5L14 9V3 M7 15h10',
+  chart: 'M4 20V4 M4 20h16 M8 16v-5 M12 16V8 M16 16v-3 M20 16V6',
+  house: 'M3 11 12 4l9 7 M5 9.5V20h14V9.5 M10 20v-5h4v5',
 };
 
 export function Icon({ name, size = '1.25em', className = '', title, filled = false }) {

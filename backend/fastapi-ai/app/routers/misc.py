@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from app.cv import vision
 from app.db import sql
+from app.mllab import registry as mllab_registry
 from app.nlp.analyzer import analyze
 from app.nlp.intent import get_classifier
 from app.rag.store import get_store
@@ -195,6 +196,7 @@ async def delete_my_data(caller: Caller = Depends(get_caller)):
         **sql.delete_user_data(caller.user_id),
         "rag_chunks": get_store().delete_user(caller.user_id),
         "files": delete_user_files(caller.user_id),
+        "ml_models": mllab_registry.delete_user(caller.user_id) or "deleted",
     }
 
 

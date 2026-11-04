@@ -67,7 +67,11 @@ async function request(path, options = {}) {
     if (!isJson && res.status >= 500) {
       throw new ApiError(SERVER_DOWN, res.status, data);
     }
-    throw new ApiError(data.error || data.detail || `Request failed (${res.status})`, res.status, data);
+    // FastAPI validation errors arrive as a list: show their messages, not "[object Object]".
+    const detail = Array.isArray(data.detail)
+      ? data.detail.map((d) => `${(d.loc || []).filter((p) => p !== 'body').join('.')}: ${d.msg}`.replace(/^: /, '')).join('; ')
+      : data.detail;
+    throw new ApiError(data.error || detail || `Request failed (${res.status})`, res.status, data);
   }
   return data;
 }
@@ -118,6 +122,22 @@ export const api = {
 
   memories: () => request('/ai/memories'),
   network: () => request('/system/network'),
+  // ML Lab (backend/fastapi-ai/app/routers/mllab.py)
+  mlModels: () => request('/ai/mllab/models'),
+  mlModel: (id) => request(`/ai/mllab/models/${id}`),
+  mlUpload: (file) => {
+    const form = new FormData();
+    form.append('file', file);
+    return request('/ai/mllab/datasets', { method: 'POST', form });
+  },
+  mlProfile: (datasetId, target) => request(`/ai/mllab/datasets/${datasetId}/profile?target=${encodeURIComponent(target)}`),
+  mlTrain: (datasetId, target, name) => request(`/ai/mllab/datasets/${datasetId}/train`, { method: 'POST', body: { target, name } }),
+  mlJob: (id) => request(`/ai/mllab/jobs/${id}`),
+  mlPredict: (id, rows) => request(`/ai/mllab/models/${id}/predict`, { method: 'POST', body: { rows } }),
+  mlDelete: (id) => request(`/ai/mllab/models/${id}`, { method: 'DELETE' }),
+  mlRuns: () => request('/ai/mllab/runs'),
+  housePrice: () => request('/ai/mllab/house-price'),
+  housePredict: (inputs) => request('/ai/mllab/house-price/predict', { method: 'POST', body: inputs }),
   addMemory: (fact) => request('/ai/memories', { method: 'POST', body: { fact } }),
   deleteMemory: (id) => request(`/ai/memories/${id}`, { method: 'DELETE' }),
 
