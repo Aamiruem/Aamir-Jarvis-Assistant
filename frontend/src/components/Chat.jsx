@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import { api, streamChat } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { openUrl, quickCommand } from '../quickCommands.js';
+import { cleanAnswer, markOnboarded } from '../session.js';
 import { toast } from '../ui.jsx';
 import { useSpeech } from '../useSpeech.js';
 import { afterWakeWord } from '../wakeWord.js';
@@ -42,13 +43,22 @@ const TOOL_LABELS = {
   look_at_screen: 'Looked at your screen',
 };
 const STOP_WORDS = /^(stop|stop listening|that's all|that is all|goodbye|bye|bye jarvis|exit|go to sleep)[.!]?$/i;
-const MAX_SILENT_ROUNDS = 4; // hands-free pauses after this many listens with no speech
+const LATER_WORDS = /^(stop|later|not now|cancel|maybe later|let's do this later|that's enough)[.!]?$/i;
+const MAX_SILENT_ROUNDS = 4; // hands-free pauses after this many ~8 s stretches with no speech
 const FOLLOW_UP_MS = 8000; // after Jarvis answers, a follow-up within this time needs no "Jarvis"
+// Said when the answer takes a moment (tools, web), the way a person says "let me check".
+const FILLERS = ['One moment.', 'Let me check.', 'On it.', 'Sure, one second.'];
+const FILLER_AFTER_MS = 1600;
 
-export default function Chat({ conversationId, onConversation, prompt, onPromptUsed }) {
+export default function Chat({ userId, conversationId, onConversation, prompt, onPromptUsed }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusyState] = useState(false);
+  const busyRef = useRef(false);
+  const setBusy = (v) => {
+    busyRef.current = v; // read synchronously by the voice callbacks
+    setBusyState(v);
+  };
   const [voiceReplies, setVoiceReplies] = useState(false);
   const bottomRef = useRef(null);
   const abortRef = useRef(null);
@@ -61,18 +71,23 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
   const [wake, setWake] = useState(false);
   const wakeRef = useRef(false);
   const followUntil = useRef(0);
+  const queuedRef = useRef(''); // said while Jarvis was still working: sent right after
+  const contextRef = useRef(''); // the question Jarvis just asked, so the answer makes sense to the AI
+  // Getting-to-know-you interview: { questions, index, answers, silent }
+  const interviewRef = useRef(null);
+  const [interviewStep, setInterviewStep] = useState(null); // { index, total } for the voice bar
 
   const speech = useSpeech({
     onFinal: (heard) => {
       silentRounds.current = 0;
+      if (interviewRef.current) return answerInterview(heard);
       let text = heard;
       if (handsFreeRef.current && wakeRef.current && Date.now() > followUntil.current) {
         const request = afterWakeWord(heard);
-        if (request === null) return listenSoon(); // not talking to Jarvis
+        if (request === null) return; // not talking to Jarvis
         if (!request) {
           speech.speak('Yes?', () => {
             followUntil.current = Date.now() + FOLLOW_UP_MS;
-            listenSoon();
           });
           return;
         }
@@ -83,44 +98,121 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
         speech.speak('Okay. Voice mode off.');
         return;
       }
-      send(text, { voice: true });
+      if (busyRef.current) {
+        queuedRef.current = `${queuedRef.current} ${text}`.trim();
+        return;
+      }
+      sendSpoken(text);
     },
     onSilence: () => {
-      if (!handsFreeRef.current) return;
-      if (wakeRef.current) return listenSoon(); // always listening: silence is normal
+      if (!handsFreeRef.current || busyRef.current) return;
+      if (interviewRef.current) {
+        // Thinking about the answer is fine; after a long silence, ask again once, then stop asking.
+        const iv = interviewRef.current;
+        iv.silent += 1;
+        if (iv.silent === 2) jarvisSays(`Take your time. ${iv.questions[iv.index].ask(iv.answers)} Or say "skip".`);
+        else if (iv.silent >= 4) stopInterview("Let's do this another time. I'm here whenever you need me.");
+        return;
+      }
+      if (wakeRef.current) return; // always listening: silence is normal
       silentRounds.current += 1;
       if (silentRounds.current >= MAX_SILENT_ROUNDS) {
         endHandsFree();
         setVoiceNote("Voice mode paused: I didn't hear anything. Tap Voice mode to start again.");
-      } else listenSoon();
+      }
+    },
+    // In "Hey Jarvis" mode, background chatter must not cut Jarvis off: only its name does.
+    shouldBargeIn: (heard) => !wakeRef.current || afterWakeWord(heard) !== null,
+    onBargeIn: () => {
+      followUntil.current = Date.now() + FOLLOW_UP_MS;
+      if (busyRef.current && !interviewRef.current) abortRef.current?.abort(); // they've heard enough
     },
   });
 
-  // Hands-free loop: listen -> send -> read the reply aloud -> listen again.
+  function sendSpoken(text) {
+    const asked = contextRef.current;
+    contextRef.current = '';
+    send(text, { voice: true, context: asked ? `(You had just asked me: "${asked}")` : '' });
+  }
+
+  /** Shows a line from Jarvis in the chat and says it. */
+  function jarvisSays(text, then) {
+    setMessages((ms) => [...ms, { role: 'assistant', content: text }]);
+    speech.speak(text, () => {
+      followUntil.current = Date.now() + FOLLOW_UP_MS; // they can answer without "Jarvis"
+      then?.();
+    });
+  }
+
+  function beginInterview(greeting, questions) {
+    interviewRef.current = { questions, index: 0, answers: {}, silent: 0 };
+    setInterviewStep({ index: 0, total: questions.length });
+    jarvisSays(`${greeting} ${questions[0].ask({})}`);
+  }
+  function answerInterview(heard) {
+    const iv = interviewRef.current;
+    if (LATER_WORDS.test(heard.trim())) return stopInterview("No problem, we can do this later. What can I do for you?");
+    const question = iv.questions[iv.index];
+    setMessages((ms) => [...ms, { role: 'user', content: heard }]);
+    const answer = cleanAnswer(question, heard);
+    if (answer) {
+      iv.answers[question.key] = answer;
+      api.addMemory(question.fact(answer)).catch(() => toast("Couldn't save that to memory", 'error'));
+    }
+    iv.index += 1;
+    iv.silent = 0;
+    const next = iv.questions[iv.index];
+    if (!next) {
+      const name = iv.answers.name;
+      return stopInterview(
+        `Thank you${name ? `, ${name}` : ''}. I've saved all of that, and you can change it any time in Memory. What can I do for you now?`,
+      );
+    }
+    setInterviewStep({ index: iv.index, total: iv.questions.length });
+    jarvisSays(next.ask(iv.answers));
+  }
+  function stopInterview(closing) {
+    interviewRef.current = null;
+    setInterviewStep(null);
+    markOnboarded(userId);
+    jarvisSays(closing);
+  }
+
+  // Hands-free loop: the mic stays open; each pause sends, the reply is spoken as it streams in.
   function listenSoon() {
     setTimeout(() => {
-      if (handsFreeRef.current && mountedRef.current) speech.start();
+      if (handsFreeRef.current && mountedRef.current) speech.start({ keepOpen: true });
     }, 350);
   }
-  /** wake: wait for "Jarvis" before acting. greeting: say this first, then listen. */
-  function startHandsFree({ wake: useWake = false, greeting = '' } = {}) {
+  /**
+   * wake: wait for "Jarvis" before acting. greeting: say this first.
+   * interview: questions to ask one by one. question: the greeting ends with this question.
+   */
+  function startHandsFree({ wake: useWake = false, greeting = '', interview = null, question = '' } = {}) {
     handsFreeRef.current = true;
     wakeRef.current = useWake;
     silentRounds.current = 0;
+    queuedRef.current = '';
     setVoiceNote('');
     setHandsFree(true);
     setWake(useWake);
-    if (greeting) {
-      speech.cancel();
-      speech.speak(greeting, () => {
-        followUntil.current = Date.now() + FOLLOW_UP_MS; // they can answer the greeting directly
-        listenSoon();
-      });
-    } else speech.start();
+    speech.start({ keepOpen: true });
+    if (interview?.length) beginInterview(greeting, interview);
+    else if (greeting) {
+      contextRef.current = question;
+      jarvisSays(greeting);
+    }
   }
   function endHandsFree() {
     handsFreeRef.current = false;
     wakeRef.current = false;
+    queuedRef.current = '';
+    contextRef.current = '';
+    if (interviewRef.current) {
+      interviewRef.current = null;
+      setInterviewStep(null);
+      markOnboarded(userId);
+    }
     setHandsFree(false);
     setWake(false);
     speech.cancel();
@@ -143,12 +235,10 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
 
   // Hands-free watchdog: if the browser failed to restart the mic (it happens after errors or
   // when Chrome's speech service hiccups), start listening again instead of hanging on "Getting ready…".
-  const busyRef = useRef(false);
-  busyRef.current = busy;
   useEffect(() => {
     if (!handsFree) return;
     const t = setInterval(() => {
-      if (handsFreeRef.current && mountedRef.current && !busyRef.current && speech.isIdle()) speech.start();
+      if (handsFreeRef.current && mountedRef.current && speech.isIdle()) speech.start({ keepOpen: true });
     }, 2500);
     return () => clearInterval(t);
   }, [handsFree]);
@@ -158,7 +248,9 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
   useEffect(() => {
     if (!prompt || usedPrompt.current === prompt.id) return; // StrictMode runs effects twice in dev
     usedPrompt.current = prompt.id;
-    if (prompt.handsFree) startHandsFree({ wake: prompt.wake, greeting: prompt.greeting });
+    if (prompt.handsFree) {
+      startHandsFree({ wake: prompt.wake, greeting: prompt.greeting, interview: prompt.interview, question: prompt.question });
+    }
     else if (prompt.send) send(prompt.text);
     else setInput(prompt.text);
     onPromptUsed?.();
@@ -180,10 +272,12 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
 
   const patchLast = (fn) => setMessages((ms) => [...ms.slice(0, -1), fn(ms[ms.length - 1])]);
 
-  async function send(text, { voice = false } = {}) {
+  /** context: extra words for the AI only (e.g. the question this answers); the chat shows `text`. */
+  async function send(text, { voice = false, context = '' } = {}) {
     const message = (text ?? input).trim();
-    if (!message || busy) return;
+    if (!message || busyRef.current) return;
     setInput('');
+    const speakReply = handsFreeRef.current || voiceReplies;
 
     // "open YouTube", "play X on YouTube": done right here, no AI round trip.
     const cmd = quickCommand(message);
@@ -212,7 +306,9 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
       if (cmd.url) result.links = [{ label: cmd.label, url: cmd.url }];
       patchLast((m) => ({ ...m, ...result, pending: false }));
       setBusy(false);
-      finishTurn(result.error ? `Sorry, that didn't work. ${result.error}` : cmd.say);
+      const said = result.error ? `Sorry, that didn't work. ${result.error}` : cmd.say;
+      if (speakReply) speech.speak(said, afterReply);
+      else afterReply();
       return;
     }
 
@@ -222,9 +318,13 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
     abortRef.current = new AbortController();
     let reply = '';
     let failure = '';
+    // Spoken while it streams: Jarvis starts talking after the first sentence, not the last.
+    const out = speakReply ? speech.speakStream() : null;
+    const filler =
+      out && voice && setTimeout(() => !reply && out.push(`${FILLERS[Math.floor(Math.random() * FILLERS.length)]} `), FILLER_AFTER_MS);
     try {
       await streamChat(
-        message,
+        context ? `${context}\n${message}` : message,
         currentIdRef.current,
         (ev) => {
           if (ev.type === 'conversation' && ev.id !== currentIdRef.current) {
@@ -236,6 +336,7 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
             patchLast((m) => ({ ...m, status: ev.message }));
           } else if (ev.type === 'text') {
             reply += ev.text;
+            out?.push(ev.text);
             patchLast((m) => ({ ...m, status: '', content: m.content + ev.text }));
           } else if (ev.type === 'tool') {
             patchLast((m) => ({ ...m, tools: [...(m.tools || []), { name: ev.name, ok: ev.ok !== false }] }));
@@ -257,20 +358,23 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
         patchLast((m) => ({ ...m, error: err.message }));
       }
     } finally {
+      clearTimeout(filler);
       patchLast((m) => ({ ...m, pending: false }));
       setBusy(false);
-      finishTurn(reply || (failure && `Sorry, that didn't work. ${failure}`));
+      if (out) {
+        if (!reply && failure) out.push(`Sorry, that didn't work. ${failure}`);
+        out.end(afterReply);
+      } else afterReply();
     }
   }
 
-  // Read the answer aloud when voice is on, then (hands-free) listen for the next request.
-  function finishTurn(spoken) {
-    if (handsFreeRef.current || voiceReplies) {
-      speech.speak(spoken, () => {
-        followUntil.current = Date.now() + FOLLOW_UP_MS;
-        if (handsFreeRef.current) listenSoon();
-      });
-    }
+  // After an answer: open the follow-up window, then send anything said while Jarvis was busy.
+  function afterReply() {
+    followUntil.current = Date.now() + FOLLOW_UP_MS;
+    if (handsFreeRef.current) listenSoon();
+    const queued = queuedRef.current;
+    queuedRef.current = '';
+    if (queued && handsFreeRef.current) sendSpoken(queued);
   }
 
   const copyReply = (text) =>
@@ -341,19 +445,27 @@ export default function Chat({ conversationId, onConversation, prompt, onPromptU
       </div>
 
       {handsFree && (
-        <div className={`voice-bar ${speech.listening ? 'listening' : busy ? 'thinking' : speech.speaking ? 'speaking' : ''}`}>
+        <div className={`voice-bar ${speech.speaking ? 'speaking' : busy ? 'thinking' : speech.listening ? 'listening' : ''}`}>
           <span className="voice-wave" aria-hidden="true"><i /><i /><i /><i /><i /></span>
+          {interviewStep && (
+            <span className="voice-step" title="Getting to know you">
+              {interviewStep.index + 1}/{interviewStep.total}
+            </span>
+          )}
           <span className="voice-status" aria-live="polite">
-            {speech.listening
-              ? speech.interim ||
-                (wake && Date.now() > followUntil.current
-                  ? 'Always listening… start with “Jarvis”, e.g. “Jarvis, open Notepad”'
-                  : 'Listening… say several things at once, or “stop” to finish')
-              : busy
-                ? 'Working on it…'
-                : speech.speaking
-                  ? 'Speaking…'
-                  : 'Getting ready…'}
+            {speech.interim
+              ? speech.interim
+              : speech.speaking
+                ? 'Speaking… just talk to interrupt'
+                : busy
+                  ? 'Working on it… keep talking, I’m still listening'
+                  : speech.listening
+                    ? interviewStep
+                      ? 'Listening for your answer… or say “skip”'
+                      : wake && Date.now() > followUntil.current
+                        ? 'Always listening… start with “Jarvis”, e.g. “Jarvis, open Notepad”'
+                        : 'Listening… say several things at once, or “stop” to finish'
+                    : 'Getting ready…'}
           </span>
           {speech.speaking && <button type="button" className="btn" onClick={interrupt}>Interrupt</button>}
           <button type="button" className="btn danger" onClick={endHandsFree}>End voice mode</button>

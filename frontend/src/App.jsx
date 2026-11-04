@@ -8,7 +8,9 @@ import ThemeMenu from './components/ThemeMenu.jsx';
 import { Icon } from './icons.jsx';
 import { useTheme } from './theme.js';
 import { toast, Toaster } from './ui.jsx';
+import { sessionPlan } from './session.js';
 import { useRoomWatch } from './useRoomWatch.js';
+import WelcomePrompt from './components/WelcomePrompt.jsx';
 
 // Code splitting: Home and sign-in load first; every other tab is its own small file,
 // downloaded the first time it's opened (Chat is fetched early while the browser is idle).
@@ -52,23 +54,21 @@ const readRoomWatch = () => {
   }
 };
 
-/** What Jarvis says when someone walks in: a greeting plus today's open reminders. */
-async function arrivalGreeting(name) {
-  const hour = new Date().getHours();
-  const hello = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const first = (name || '').split(' ')[0];
-  let today = [];
+const readAutoStart = () => {
   try {
-    const endOfDay = new Date().setHours(23, 59, 59, 999);
-    today = (await api.tasks(false)).filter((t) => t.remind_at && new Date(t.remind_at).getTime() <= endOfDay);
-  } catch {}
-  const time = (iso) => new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-  const list = today.slice(0, 3).map((t) => `${t.title} at ${time(t.remind_at)}`).join(', ');
-  const tasks = today.length
-    ? ` You have ${today.length} reminder${today.length > 1 ? 's' : ''} today: ${list}.`
-    : '';
-  return `${hello}${first ? `, ${first}` : ''}. Welcome back.${tasks} What can I do for you?`;
-}
+    return localStorage.getItem('jarvis-autostart') !== 'off';
+  } catch {
+    return true;
+  }
+};
+// The welcome prompt shows once per browser tab session, not on every reload of the same tab.
+const welcomeShown = () => {
+  try {
+    return sessionStorage.getItem('jarvis-welcomed') === '1';
+  } catch {
+    return false;
+  }
+};
 
 // Sidebar groups by last activity.
 function groupConversations(list) {
@@ -96,18 +96,45 @@ export default function App() {
   const [contactQuery, setContactQuery] = useState('');
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [roomWatchOn, setRoomWatchOn] = useState(readRoomWatch);
+  const [autoStart, setAutoStart] = useState(readAutoStart);
+  const [welcome, setWelcome] = useState(false);
   const theme = useTheme();
+
+  /**
+   * Starts a spoken session: the first time Jarvis asks a few questions to get to know you,
+   * after that it greets you, reads today's reminders and asks how it can help.
+   * arrival: started by Room Watch (always-listening "Hey Jarvis" mode). interview: ask again.
+   */
+  const startSession = useCallback(
+    async ({ arrival = false, interview = false } = {}) => {
+      const plan = await sessionPlan(user, { arrival, interview });
+      setActiveId(null);
+      setPrompt({ id: Date.now(), handsFree: true, wake: arrival, ...plan });
+      setTab('chat');
+    },
+    [user],
+  );
 
   // Room Watch: when someone walks in, greet them and start always-listening voice mode.
   const roomWatch = useRoomWatch({
     enabled: Boolean(user) && roomWatchOn,
-    onArrival: async () => {
-      const greeting = await arrivalGreeting(user?.name);
-      setActiveId(null);
-      setPrompt({ id: Date.now(), handsFree: true, wake: true, greeting });
-      setTab('chat');
-    },
+    onArrival: () => startSession({ arrival: true }),
   });
+  useEffect(() => {
+    try {
+      localStorage.setItem('jarvis-autostart', autoStart ? 'on' : 'off');
+    } catch {}
+  }, [autoStart]);
+  // Browsers only let a page talk after a click, so starting Jarvis is one tap on this prompt.
+  useEffect(() => {
+    if (user && autoStart && !welcomeShown()) setWelcome(true);
+  }, [user]);
+  const closeWelcome = () => {
+    setWelcome(false);
+    try {
+      sessionStorage.setItem('jarvis-welcomed', '1');
+    } catch {}
+  };
   useEffect(() => {
     try {
       localStorage.setItem('jarvis-room-watch', roomWatchOn ? 'on' : 'off');
@@ -307,10 +334,12 @@ export default function App() {
                 onOpenTab={(t) => { if (t === 'chat') setActiveId(null); setTab(t); }}
                 onAsk={ask}
                 onOpenConversation={openConversation}
+                onStartSession={startSession}
               />
             )}
             {tab === 'chat' && (
               <Chat
+                userId={user.id}
                 conversationId={activeId}
                 prompt={prompt}
                 onPromptUsed={() => setPrompt(null)}
@@ -334,8 +363,20 @@ export default function App() {
         onClose={() => setPaletteOpen(false)}
         tabs={tabs}
         conversations={conversations}
-        actions={{ openTab: setTab, ask, newChat, openConversation, openContacts, toggleTheme: () => theme.setChoice(theme.mode === 'dark' ? 'light' : 'dark') }}
+        actions={{ openTab: setTab, ask, newChat, startSession, openConversation, openContacts, toggleTheme: () => theme.setChoice(theme.mode === 'dark' ? 'light' : 'dark') }}
       />
+      {welcome && (
+        <WelcomePrompt
+          name={user.name}
+          autoStart={autoStart}
+          onAutoStartChange={setAutoStart}
+          onStart={() => {
+            closeWelcome();
+            startSession();
+          }}
+          onClose={closeWelcome}
+        />
+      )}
       <Toaster />
     </div>
   );

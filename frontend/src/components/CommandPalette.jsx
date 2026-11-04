@@ -5,7 +5,9 @@ import { Icon } from '../icons.jsx';
 // Ctrl+K (⌘K on Mac) or the search bar: jump to a tab, run a quick action, find a chat,
 // contact, task or memory, or type anything and press Enter to send it straight to Jarvis.
 const ACTIONS = [
+  { icon: 'sparkles', label: 'Start Jarvis (greeting, reminders, voice)', run: (a) => a.startSession() },
   { icon: 'mic', label: 'Talk to Jarvis (hands-free voice)', run: (a) => a.ask('', false, true) },
+  { icon: 'user', label: 'Tell Jarvis about yourself (quick interview)', run: (a) => a.startSession({ interview: true }) },
   { icon: 'plus', label: 'New chat', run: (a) => a.newChat() },
   { icon: 'alarm', label: 'Set a reminder…', run: (a) => a.ask('Remind me to ', false) },
   { icon: 'weather', label: "Today's weather", run: (a) => a.ask("What's the weather today?", true) },

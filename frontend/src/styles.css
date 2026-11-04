@@ -433,6 +433,7 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
 .voice-bar.listening { border-color: var(--accent); box-shadow: 0 0 24px rgba(56, 225, 255, 0.25); }
 .voice-bar.speaking { border-color: var(--violet); box-shadow: 0 0 24px rgba(139, 92, 246, 0.3); }
 .voice-status { flex: 1; min-width: 160px; font-size: 14px; }
+.voice-step { font: 600 12px/1 'Rajdhani', sans-serif; letter-spacing: 0.08em; padding: 5px 9px; border-radius: 999px; background: rgba(56, 225, 255, 0.14); color: var(--accent); }
 .voice-wave { display: inline-flex; align-items: center; gap: 3px; height: 22px; }
 .voice-wave i { width: 3px; height: 6px; border-radius: 2px; background: var(--muted); }
 .voice-bar.listening .voice-wave i, .voice-bar.speaking .voice-wave i { background: var(--accent); animation: voice-wave 0.9s ease-in-out infinite; }

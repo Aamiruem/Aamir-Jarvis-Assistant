@@ -52,3 +52,13 @@ def test_parse_when():
     naive = parse_when("2026-11-02T17:00")                      # DEFAULT_TIMEZONE = Asia/Kolkata
     assert naive.tzinfo == timezone.utc and naive.hour == 11 and naive.minute == 30
     assert parse_when(None) is None
+
+
+def test_spoken_requests_get_the_conversational_style():
+    from app.agent.agent import SYSTEM_PROMPT, VOICE_STYLE, _user_context
+    from app.db.sql import init_db
+
+    init_db()
+    assert VOICE_STYLE in _user_context("unit", voice=True)
+    assert VOICE_STYLE not in _user_context("unit")
+    assert VOICE_STYLE not in SYSTEM_PROMPT  # the cached prompt stays identical for both

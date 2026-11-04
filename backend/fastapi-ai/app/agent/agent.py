@@ -53,11 +53,20 @@ can mishear words; interpret them sensibly from context. Keep answers short enou
 aloud comfortably unless the user asks for detail.
 Use Markdown only when it genuinely helps (lists, code)."""
 
+# Added to the per-request block (not the cached prompt) when the request was spoken.
+VOICE_STYLE = """This request was spoken and your reply will be read aloud right away, sentence by sentence.
+Talk like a person in conversation: lead with the answer in the first sentence, keep it to one to
+three short sentences, and use no Markdown, lists, tables, emoji or URLs. Say numbers, times and
+units the way people say them aloud. If you need a tool, call it straight away without announcing it.
+If the request is unclear, ask one short question back."""
 
-def _user_context(user_id: str) -> str:
+
+def _user_context(user_id: str, voice: bool = False) -> str:
     """Per-request context, kept separate from the static prompt so that one stays cacheable."""
     now = now_local()
     lines = [f"Current time: {now.isoformat(timespec='minutes')} ({now.strftime('%A')}, {settings.default_timezone})."]
+    if voice:
+        lines.append(VOICE_STYLE)
     memories = sql.list_memories(user_id, limit=50)
     if memories:
         lines.append("What you remember about the user (id: fact):")
@@ -86,7 +95,7 @@ async def run_agent(
 
     system = [
         {"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}},
-        {"type": "text", "text": await asyncio.to_thread(_user_context, user_id)},
+        {"type": "text", "text": await asyncio.to_thread(_user_context, user_id, fast)},
     ]
     params = {**base_params(max_tokens=32000), "system": system, "tools": tools}
     if fast:  # voice: a quick answer matters more than deep thinking
