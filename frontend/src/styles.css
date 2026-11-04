@@ -1,15 +1,15 @@
 /* Jarvis design system: one dark "HUD" theme for the whole app (Home adds its own extras in
    HomePanel.css). Accent colors per card come from --hue (set inline) through hsl(). */
 :root {
-  --bg: #0b1020;
-  --bg-2: #10172b;
-  --panel: rgba(22, 30, 54, 0.74);
-  --panel-solid: #151d34;
-  --panel-2: rgba(44, 56, 96, 0.5);
-  --border: rgba(148, 170, 230, 0.15);
+  --bg: #111722;
+  --bg-2: #151c29;
+  --panel: rgba(30, 38, 54, 0.78);
+  --panel-solid: #1a2232;
+  --panel-2: rgba(56, 68, 92, 0.45);
+  --border: rgba(170, 184, 212, 0.14);
   --border-hi: rgba(34, 211, 238, 0.55);
-  --text: #eef2ff;
-  --muted: #a3b0cf;
+  --text: #e6eaf1;
+  --muted: #a3adc1;
   --accent: #22d3ee;
   --accent-2: #0891b2;
   --violet: #a78bfa;
@@ -22,18 +22,18 @@
   --user-bubble: linear-gradient(135deg, #0e7490, #4f46e5);
   --radius: 14px;
   --shadow: 0 12px 32px rgba(2, 6, 23, 0.45);
-  --field: rgba(8, 13, 28, 0.6);
+  --field: rgba(12, 16, 26, 0.6);
   --sidebar-bg: rgba(15, 22, 43, 0.9);
   --topbar-bg: rgba(16, 23, 44, 0.9);
-  --float-bg: rgba(21, 29, 52, 0.94);
+  --float-bg: rgba(26, 34, 50, 0.96);
   --placeholder: #7e8bab;
   --mark-bg: rgba(251, 191, 36, 0.28);
   --mark-text: #fde68a;
   --user-text: #fff;
-  --glow-1: rgba(34, 211, 238, 0.16);
-  --glow-2: rgba(129, 140, 248, 0.2);
-  --glow-3: rgba(192, 132, 252, 0.13);
-  --dots: rgba(148, 170, 230, 0.07);
+  --glow-1: rgba(34, 211, 238, 0.07);
+  --glow-2: rgba(129, 140, 248, 0.09);
+  --glow-3: rgba(192, 132, 252, 0.06);
+  --dots: rgba(170, 184, 212, 0.04);
   color-scheme: dark;
 }
 
@@ -659,15 +659,15 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
 
 /* ---------- Sidebar: soft blue panel, big outlined icons, bold labels ---------- */
 :root {
-  --side-bg: linear-gradient(180deg, #121c3a, #0f1830);
-  --side-text: #c3cde6;
-  --side-icon: #9fb0d6;
+  --side-bg: linear-gradient(180deg, #161d2b, #131925);
+  --side-text: #c6cedb;
+  --side-icon: #9aa5ba;
   --side-hover: rgba(148, 170, 230, 0.08);
-  --side-active-bg: rgba(96, 165, 250, 0.16);
-  --side-active-text: #8fd0ff;
+  --side-active-bg: rgba(96, 165, 250, 0.13);
+  --side-active-text: #93c5fd;
   --side-card: rgba(255, 255, 255, 0.05);
   --side-line: rgba(148, 170, 230, 0.14);
-  --brand-text: #8fd0ff;
+  --brand-text: #93c5fd;
 }
 :root[data-theme='light'] {
   --side-bg: linear-gradient(180deg, #e6effd, #dde9fb);
@@ -742,7 +742,7 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
 @media (max-height: 700px) { .promo { display: none; } .side-links { margin-top: auto; } }
 
 /* ---------- Top bar: stronger background, bigger bold tabs ---------- */
-:root { --topbar-bg: linear-gradient(90deg, #15214a, #1b1d4f 60%, #20184a); --tab-text: #dbe3fa; }
+:root { --topbar-bg: linear-gradient(90deg, #161d2b, #181d30); --tab-text: #d8dee9; }
 :root[data-theme='light'] { --topbar-bg: #ffffff; --tab-text: #334160; }
 .topbar { padding: 8px 16px; box-shadow: 0 4px 20px rgba(2, 6, 23, 0.25); }
 :root[data-theme='light'] .topbar { box-shadow: 0 2px 14px rgba(30, 50, 100, 0.08); }
@@ -869,3 +869,75 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
 .ml-models { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .ml-models .card { margin: 0; }
 .ml-models p { margin: 2px 0 0; }
+
+/* ---------- PC watcher (Automate) ---------- */
+.watcher { margin-top: 16px; padding: 18px 20px; border-color: hsl(160 70% 50% / 0.3); background: linear-gradient(160deg, hsl(160 70% 50% / 0.1), var(--panel) 50%); }
+.watcher-head { display: flex; align-items: flex-start; gap: 14px; }
+.watcher-head h3 { margin: 2px 0 4px; font-size: 19px; }
+.watcher-head p { margin: 0; max-width: 72ch; line-height: 1.55; }
+.switch { flex: none; position: relative; width: 52px; height: 30px; border-radius: 999px; border: 1px solid var(--border); background: var(--panel-2); cursor: pointer; transition: background 0.2s; }
+.switch i { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); transition: transform 0.2s; }
+.switch.on { background: linear-gradient(90deg, #10b981, #06b6d4); border-color: transparent; }
+.switch.on i { transform: translateX(22px); }
+.switch:disabled { opacity: 0.4; cursor: default; }
+.watch-checks { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
+.watch-checks label { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); font-size: 13.5px; cursor: pointer; }
+.watch-checks label .icon { color: var(--accent); flex: none; }
+.watch-checks label.dim { opacity: 0.55; cursor: default; }
+.watcher-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+
+/* ---------- Layout fixes, chat history, phones, install ---------- */
+/* The sidebar scrolls as a whole; nothing in it may be squeezed on top of the next item. */
+.sidebar > * { flex-shrink: 0; }
+.bubble { font-size: 15.5px; }
+
+.chat-top {
+  position: relative; display: flex; align-items: center; gap: 10px; width: min(880px, calc(100% - 24px)); margin: 12px auto 0;
+  padding: 6px; border-radius: 14px; background: var(--panel); border: 1px solid var(--border);
+}
+.chat-top-title { flex: 1; min-width: 0; text-align: center; font-weight: 600; font-size: 14px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-top-btn {
+  display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: 10px; border: none; cursor: pointer;
+  font-size: 14px; font-weight: 600; color: var(--text); background: transparent; white-space: nowrap;
+}
+.chat-top-btn:hover, .chat-top-btn.on { background: var(--panel-2); }
+.chat-top-btn .icon { color: var(--accent); }
+.history-pop {
+  position: absolute; left: 0; top: calc(100% + 6px); z-index: 20; width: min(380px, calc(100vw - 24px)); max-height: min(70vh, 560px);
+  display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 16px;
+  background: var(--panel-solid); border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35); animation: pop-in 0.14s ease;
+}
+.history-list { overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+
+.topbar-brand { display: none; align-items: center; gap: 8px; font-weight: 800; font-size: 19px; color: var(--brand-text); }
+.bottom-nav { display: none; }
+
+.install-card .promo-ico { margin: 0 auto 14px; width: 54px; height: 54px; }
+.install-steps { text-align: left; margin: 0 auto 16px; padding-left: 22px; display: grid; gap: 8px; max-width: 36ch; line-height: 1.5; }
+
+@media (max-width: 760px) {
+  body { font-size: 16px; }
+  .topbar { padding: 8px 10px; gap: 6px; }
+  .topbar .tabs { display: none; }
+  .topbar-brand { display: inline-flex; flex: 1; }
+  .content { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+  .bottom-nav {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+    background: var(--panel-solid); border-top: 1px solid var(--border); box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.25);
+  }
+  .bottom-nav button {
+    --hue: 205;
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; border: none; border-radius: 12px;
+    background: none; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--muted);
+  }
+  .bottom-nav button .icon { color: hsl(var(--hue) 70% var(--icon-l)); }
+  .bottom-nav button:last-child .icon { color: var(--muted); }
+  .bottom-nav button.active { color: var(--text); background: hsl(var(--hue) 85% 60% / 0.14); }
+  /* The chat fills the space above the bottom bar; its composer must never hide behind it. */
+  .chat { height: 100%; }
+  .chat-top { margin-top: 8px; }
+  .chat-top-btn { padding: 8px 10px; }
+  .composer { margin-bottom: 10px; }
+  .sidebar { width: min(300px, 86vw); padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+  .promo { display: none; }
+}

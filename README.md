@@ -38,6 +38,7 @@ frontend/ (React)                backend/
 **Voice commands, "Hey Jarvis", Room Watch and Windows/Linux/macOS control:** see [docs/VOICE_AND_PC_CONTROL.md](docs/VOICE_AND_PC_CONTROL.md).
 **Every endpoint:** see [docs/API.md](docs/API.md).
 **SEO and Google Search Console:** see [docs/SEO.md](docs/SEO.md).
+**ML Lab (AutoML, house price prediction, train on your CSV):** see [docs/ML_LAB.md](docs/ML_LAB.md).
 
 ### Backend features
 
@@ -51,10 +52,11 @@ frontend/ (React)                backend/
 | Long-term memory (Jarvis remembers facts about you) | `remember`/`forget` tools, `/memories` |
 | Tasks with timed reminders + background scheduler + notifications | [backend/fastapi-ai/app/scheduler.py](backend/fastapi-ai/app/scheduler.py) |
 | RAG over your PDFs/notes (per-user index), classic vs agentic | [backend/fastapi-ai/app/rag/](backend/fastapi-ai/app/rag/) |
+| ML Lab: EDA, 7 algorithms with cross-validation, tuning, held-out testing, feature importance, PCA/K-means, model registry + experiment log; house price prediction (XGBoost, test R² 0.86) | [backend/fastapi-ai/app/mllab/](backend/fastapi-ai/app/mllab/), [docs/ML_LAB.md](docs/ML_LAB.md) |
 | NLP + ML intent model, computer vision | [backend/fastapi-ai/app/nlp/](backend/fastapi-ai/app/nlp/), [cv/](backend/fastapi-ai/app/cv/) |
 | Account deletion that erases data across MongoDB, SQL, vector store and S3 | `DELETE /api/auth/me` |
 | Request logging with request ids, graceful shutdown, JSON 404s | `app/main.py`, `backend/express-api/src/app.js` |
-| Tests: 50 Python, 38 Node, 33 frontend (voice and session start), 19 dashboard + 14 Playwright, CI on every push | [backend/fastapi-ai/tests/](backend/fastapi-ai/tests/), [backend/express-api/test/](backend/express-api/test/), [frontend/src/](frontend/src/) `*.test.js(x)`, [.github/workflows/ci.yml](.github/workflows/ci.yml) |
+| Tests: 63 Python, 39 Node, 38 frontend (voice, session start, alerts), 19 dashboard + 14 Playwright, CI on every push | [backend/fastapi-ai/tests/](backend/fastapi-ai/tests/), [backend/express-api/test/](backend/express-api/test/), [frontend/src/](frontend/src/) `*.test.js(x)`, [.github/workflows/ci.yml](.github/workflows/ci.yml) |
 
 ---
 
@@ -72,7 +74,7 @@ cd backend/fastapi-ai
 python -m venv .venv
 .venv\Scripts\activate             # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-pytest -q                          # 50 tests, no API key needed
+pytest -q                          # 63 tests, no API key needed
 uvicorn app.main:app --reload --port 8000
 ```
 Open http://localhost:8000/docs for the interactive API.
@@ -81,7 +83,7 @@ Open http://localhost:8000/docs for the interactive API.
 ```bash
 cd backend/express-api
 npm install
-npm test                           # 38 tests, no MongoDB needed
+npm test                           # 39 tests, no MongoDB needed
 npm run dev                        # http://localhost:4000 - OTP codes are printed here
 ```
 
@@ -89,7 +91,7 @@ npm run dev                        # http://localhost:4000 - OTP codes are print
 ```bash
 cd frontend
 npm install
-npm test                           # 33 tests: voice timing, echo, interruptions, session start
+npm test                           # 38 tests: voice timing, echo, interruptions, session start, alerts
 npm run dev                        # http://localhost:5173: register, enter the OTP, then "Start talking"
 ```
 
@@ -127,6 +129,9 @@ side: run the stack with **Docker** or inside **WSL** (Linux isn't affected).
 - "What's 18% GST on 74,999 and the weather in Jaipur?" (parallel tool calls).
 - **Vision** tab → start camera → "What's on my desk?"
 - Click **Start talking** when Jarvis opens: the first time it asks a few questions and remembers you.
+- **Install app** (sidebar or More on a phone) puts Jarvis on your desktop or home screen; **Share** sends Jarvis or any reply through the phone's share sheet. Past chats are under **History** in Chat.
+- **Automate → Jarvis watches this PC**: Jarvis tells you about low battery, a full disk, finished downloads, USB drives and internet drops.
+- Open **ML Lab**: try the house price model, or upload a CSV and pick a column to predict.
 - Open **Automate** for one-click automations (plan my day, social media plan, customer replies) and your apps.
 - On your phone: start with `npm run dev:phone`, then open the link it prints (same Wi-Fi). Away from home, use Tailscale; Automate shows the steps.
 - Click 🎙 and talk; tick 🔊 to hear replies. In **Voice mode**, talk over Jarvis to interrupt it.

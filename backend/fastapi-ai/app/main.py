@@ -27,7 +27,8 @@ from app.llm.claude import key_status
 from app.system_control import current_os
 from app.nlp.intent import get_classifier
 from app.rag.store import get_store
-from app.routers import chat, misc, mllab, rag, system
+from app.routers import chat, misc, mllab, pcwatch, rag, system
+from app.pc_watcher import watch_loop
 from app.scheduler import reminder_loop
 from app.security import require_internal_key
 
@@ -40,11 +41,12 @@ async def lifespan(app: FastAPI):
     init_db()
     get_classifier()  # trains the intent model on first run
     get_store()
-    reminders = asyncio.create_task(reminder_loop())
+    background = [asyncio.create_task(reminder_loop()), asyncio.create_task(watch_loop())]
     yield
-    reminders.cancel()
-    with contextlib.suppress(asyncio.CancelledError):
-        await reminders
+    for task in background:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
 
 
 app = FastAPI(title="Jarvis AI Service", version="2.0.0", lifespan=lifespan)
@@ -78,6 +80,7 @@ app.include_router(rag.router, dependencies=protected)
 app.include_router(misc.router, dependencies=protected)
 app.include_router(system.router, dependencies=protected)
 app.include_router(mllab.router, dependencies=protected)
+app.include_router(pcwatch.router, dependencies=protected)
 
 
 @app.get("/health")

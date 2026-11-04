@@ -18,7 +18,7 @@ const HOUSE_LABELS = {
   population: 'People in the area', occupancy: 'People per home', latitude: 'Latitude', longitude: 'Longitude',
 };
 
-const fmt = (v, d = 3) => (v == null ? '—' : Number(v).toLocaleString(undefined, { maximumFractionDigits: d }));
+const fmt = (v, d = 3) => (v == null ? '—' : (Math.abs(v) < 0.5 * 10 ** -d ? 0 : Number(v)).toLocaleString(undefined, { maximumFractionDigits: d }));
 const usd = (v) => (v == null ? '—' : `$${Math.round(v).toLocaleString()}`);
 const pct = (v) => (v == null ? '—' : `${Math.round(v * 100)}%`);
 
@@ -374,7 +374,7 @@ function PredictForm({ model }) {
           <small>Predicted {model.target}</small>
           <strong>{typeof result.prediction === 'number' ? fmt(result.prediction) : result.prediction}</strong>
           {result.likely_range && <span>Likely between {fmt(result.likely_range[0])} and {fmt(result.likely_range[1])}</span>}
-          {result.confidence != null && <span>Model confidence {pct(result.confidence)}</span>}
+          {result.confidence != null && <span>Model confidence {result.confidence >= 0.995 ? '>99%' : pct(result.confidence)}</span>}
           {result.notes?.map((n) => <p key={n} className="ml-note"><Icon name="alert" size="1em" /> {n}</p>)}
         </div>
       )}

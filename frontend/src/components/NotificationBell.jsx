@@ -1,16 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
+import { speakAlerts } from '../alerts.js';
+import { toast } from '../ui.jsx';
 
-const POLL_MS = 30_000;
+const POLL_MS = 15_000;
 
-// Polls for reminder notifications and shows them in a dropdown (plus a desktop
-// notification when the user has allowed it). Polling is the simplest real-time
-// technique; WebSockets or SSE are the next step up.
+// Polls for notifications (reminders, PC watcher alerts) and shows them in a dropdown, as a
+// desktop notification when allowed, and read aloud by Jarvis (see alerts.js). Alerts that
+// were already there when the page opened are shown, not announced. Polling is the simplest
+// real-time technique; WebSockets or SSE are the next step up.
 export default function NotificationBell() {
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
   const seen = useRef(new Set());
+  const firstPoll = useRef(true);
 
   useEffect(() => {
     let stopped = false;
@@ -18,12 +22,16 @@ export default function NotificationBell() {
       try {
         const list = await api.notifications(false);
         if (stopped) return;
-        for (const n of list) {
-          if (!n.read && !seen.current.has(n.id) && 'Notification' in window && Notification.permission === 'granted') {
-            new Notification(n.title, { body: n.body });
+        const fresh = list.filter((n) => !n.read && !seen.current.has(n.id));
+        list.forEach((n) => seen.current.add(n.id));
+        if (!firstPoll.current && fresh.length) {
+          for (const n of fresh) {
+            if ('Notification' in window && Notification.permission === 'granted') new Notification(n.title, { body: n.body });
           }
-          seen.current.add(n.id);
+          speakAlerts([...fresh].reverse()); // oldest first
+          toast(fresh.length === 1 ? fresh[0].title : `${fresh.length} new alerts`);
         }
+        firstPoll.current = false;
         setItems(list);
       } catch {}
     };

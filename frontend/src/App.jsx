@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { api, auth, onSessionExpired } from './api.js';
 import HomePanel from './components/HomePanel.jsx';
 import Login from './components/Login.jsx';
@@ -11,6 +11,8 @@ import { toast, Toaster } from './ui.jsx';
 import { sessionPlan } from './session.js';
 import { useRoomWatch } from './useRoomWatch.js';
 import WelcomePrompt from './components/WelcomePrompt.jsx';
+import InstallDialog from './components/InstallDialog.jsx';
+import { share, useInstall } from './pwa.js';
 
 // Code splitting: Home and sign-in load first; every other tab is its own small file,
 // downloaded the first time it's opened (Chat is fetched early while the browser is idle).
@@ -41,6 +43,13 @@ const TABS = [
   { id: 'admin', label: 'Admin', icon: 'shield', hue: 0, adminOnly: true },
 ].map((t, i) => ({ ...t, key: i + 1 })); // Alt+1 … Alt+9
 const SIDEBAR_TABS = ['home', 'chat', 'automate', 'mllab', 'tasks', 'memory', 'knowledge'];
+// Phones: the main tabs sit in a bar at the bottom, everything else is under "More" (the sidebar).
+const BOTTOM_TABS = ['home', 'chat', 'automate', 'mllab'];
+// A link like /?tab=mllab (the installed app's shortcuts) opens that tab.
+const startTab = () => {
+  const wanted = new URLSearchParams(window.location.search).get('tab');
+  return TABS.some((t) => t.id === wanted && !t.adminOnly) ? wanted : 'home';
+};
 
 // Desktop: the menu button collapses the sidebar (remembered per browser). Phone: it slides in.
 const readCollapsed = () => {
@@ -76,35 +85,24 @@ const welcomeShown = () => {
   }
 };
 
-// Sidebar groups by last activity.
-function groupConversations(list) {
-  const day = 86_400_000;
-  const startOfToday = new Date().setHours(0, 0, 0, 0);
-  const groups = { Today: [], 'This week': [], Older: [] };
-  for (const c of list) {
-    const t = new Date(c.updatedAt || 0).getTime();
-    groups[t >= startOfToday ? 'Today' : t >= startOfToday - 6 * day ? 'This week' : 'Older'].push(c);
-  }
-  return Object.entries(groups).filter(([, cs]) => cs.length);
-}
-
 export default function App() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
-  const [tab, setTab] = useState('home');
+  const [tab, setTab] = useState(startTab);
   const [prompt, setPrompt] = useState(null); // { id, text, send, handsFree } handed from Home to Chat
   const [conversations, setConversations] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteQuery, setPaletteQuery] = useState('');
-  const [convQuery, setConvQuery] = useState('');
+  const [installHelp, setInstallHelp] = useState(false);
   const [contactQuery, setContactQuery] = useState('');
   const [collapsed, setCollapsed] = useState(readCollapsed);
   const [roomWatchOn, setRoomWatchOn] = useState(readRoomWatch);
   const [autoStart, setAutoStart] = useState(readAutoStart);
   const [welcome, setWelcome] = useState(false);
   const theme = useTheme();
+  const installer = useInstall();
 
   /**
    * Starts a spoken session: the first time Jarvis asks a few questions to get to know you,
@@ -193,11 +191,6 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [user]);
 
-  const shownConversations = useMemo(() => {
-    const q = convQuery.trim().toLowerCase();
-    return groupConversations(q ? conversations.filter((c) => c.title.toLowerCase().includes(q)) : conversations);
-  }, [conversations, convQuery]);
-
   if (checking) return <div className="center-screen"><div className="orb pulse" /></div>;
   if (!user) return <Login onAuth={(u) => setUser(u)} />;
 
@@ -221,12 +214,18 @@ export default function App() {
     setTab('chat');
     setMenuOpen(false);
   };
-  // The desktop shortcut starts all of Jarvis and opens it (scripts/windows/install-shortcut.ps1).
-  const copyShortcutCommand = () =>
-    navigator.clipboard.writeText('npm run install-shortcut').then(
-      () => toast('Copied "npm run install-shortcut": run it once in the project folder for a desktop shortcut'),
-      () => toast('Run "npm run install-shortcut" in the project folder for a desktop shortcut'),
-    );
+  // The browser's own install prompt when it offers one, otherwise the steps to tap.
+  const installApp = async () => {
+    setMenuOpen(false);
+    const outcome = await installer.install();
+    if (outcome === 'manual') setInstallHelp(true);
+    else if (outcome === 'installed') toast('Jarvis is installed');
+  };
+  const shareJarvis = async () => {
+    setMenuOpen(false);
+    const result = await share({ title: 'Jarvis', text: 'Jarvis, my AI assistant:', url: window.location.origin }).catch(() => 'failed');
+    if (result === 'copied') toast('Link copied');
+  };
   const go = (id) => {
     setTab(id);
     setMenuOpen(false);
@@ -291,33 +290,6 @@ export default function App() {
               </button>
             ))}
         </nav>
-        <div className="side-chats">
-          <div className="side-section">Recent chats</div>
-          <label className="side-search">
-            <Icon name="search" size="1em" />
-            <input value={convQuery} onChange={(e) => setConvQuery(e.target.value)} placeholder="Search chats" aria-label="Search chats" />
-          </label>
-          <div className="conv-list">
-            {shownConversations.length === 0 && (
-              <p className="muted conv-empty">{convQuery ? 'No chats match.' : 'Your conversations will appear here.'}</p>
-            )}
-            {shownConversations.map(([group, list]) => (
-              <div key={group} className="conv-group">
-                <div className="conv-group-title">{group}</div>
-                {list.map((c) => (
-                  <div key={c._id} className={`conv ${c._id === activeId && tab === 'chat' ? 'active' : ''}`}>
-                    <button className="conv-title" onClick={() => openConversation(c._id)} title={c.title}>
-                      <Icon name="chat" size="1em" />
-                      <span>{c.title}</span>
-                    </button>
-                    <button className="icon-btn" title="Rename" aria-label="Rename" onClick={() => renameConversation(c)}><Icon name="edit" size="0.9em" /></button>
-                    <button className="icon-btn" title="Delete" aria-label="Delete" onClick={() => removeConversation(c)}><Icon name="trash" size="0.9em" /></button>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
         <div className="promo">
           <strong>Unlock Jarvis everywhere</strong>
           <p>Ask from your phone, automate emails and posts, plan your day, all from one place.</p>
@@ -326,11 +298,16 @@ export default function App() {
           </button>
         </div>
         <div className="side-links">
+          {!installer.installed && (
+            <button onClick={installApp}>
+              <Icon name="download" size="1.25em" /> Install app
+            </button>
+          )}
+          <button onClick={shareJarvis}>
+            <Icon name="share" size="1.25em" /> Share Jarvis
+          </button>
           <button onClick={() => go('automate')}>
             <Icon name="phone" size="1.25em" /> Jarvis on your phone
-          </button>
-          <button onClick={copyShortcutCommand}>
-            <Icon name="monitor" size="1.25em" /> Desktop shortcut
           </button>
         </div>
         <div className="side-foot">
@@ -346,6 +323,7 @@ export default function App() {
       <main className="main">
         <header className="topbar">
           <button className="icon-btn menu" onClick={toggleMenu} aria-label={collapsed ? 'Show sidebar' : 'Menu'} title="Menu"><Icon name="menu" /></button>
+          <span className="topbar-brand" aria-hidden="true"><span className="orb small" />Jarvis</span>
           <nav className="tabs">
             {tabs.map((t) => (
               <button key={t.id} className={`tab ${tab === t.id ? 'active' : ''}`} style={{ '--hue': t.hue }} onClick={() => setTab(t.id)} title={`${t.label} (Alt+${t.key})`} aria-label={t.label}>
@@ -390,6 +368,14 @@ export default function App() {
             {tab === 'chat' && (
               <Chat
                 userId={user.id}
+                history={{
+                  conversations,
+                  activeId,
+                  onOpen: openConversation,
+                  onRename: renameConversation,
+                  onDelete: removeConversation,
+                  onNew: newChat,
+                }}
                 conversationId={activeId}
                 prompt={prompt}
                 onPromptUsed={() => setPrompt(null)}
@@ -417,6 +403,19 @@ export default function App() {
         conversations={conversations}
         actions={{ openTab: setTab, ask, newChat, startSession, openConversation, openContacts, toggleTheme: () => theme.setChoice(theme.mode === 'dark' ? 'light' : 'dark') }}
       />
+      <nav className="bottom-nav" aria-label="Main (phone)">
+        {tabs.filter((t) => BOTTOM_TABS.includes(t.id)).map((t) => (
+          <button key={t.id} className={tab === t.id ? 'active' : ''} style={{ '--hue': t.hue }} onClick={() => go(t.id)} aria-current={tab === t.id ? 'page' : undefined}>
+            <Icon name={t.icon} size="1.4em" />
+            <span>{t.label}</span>
+          </button>
+        ))}
+        <button className={menuOpen || !BOTTOM_TABS.includes(tab) ? 'active' : ''} onClick={() => setMenuOpen(true)} aria-label="More: tasks, memory, settings">
+          <Icon name="menu" size="1.4em" />
+          <span>More</span>
+        </button>
+      </nav>
+      {installHelp && <InstallDialog onClose={() => setInstallHelp(false)} />}
       {welcome && (
         <WelcomePrompt
           name={user.name}

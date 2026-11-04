@@ -117,6 +117,10 @@ def profile(table: Table, target: str | None = None) -> dict:
     how strongly each numeric column moves with the target (Pearson correlation)."""
     target = target or suggest_target(table)
     y_num = as_float(table.column(target)) if table.kinds.get(target) == "numeric" else None
+    if table.kinds.get(target) == "categorical":
+        labels = sorted({str(v) for v in table.column(target) if v is not None})
+        if len(labels) == 2:  # yes/no style target: correlate with "is the second value"
+            y_num = np.array([np.nan if v is None else float(str(v) == labels[1]) for v in table.column(target)])
     cols = []
     for c in table.columns:
         values = table.column(c)

@@ -38,6 +38,17 @@ export function aiProblemOf(health) {
 /** "setup" for a missing/rejected key or credits, else "error". */
 export const isSetupError = (message) => /api[_ ]?key|anthropic|credit|billing/i.test(message || '');
 
+/** What Jarvis says out loud when a request fails: short, and never a URL read out letter by letter. */
+export function spokenFailure(message) {
+  if (/credit|billing/i.test(message || '')) {
+    return "I can't answer that right now, because the Anthropic account is out of credits. Quick commands like open YouTube still work.";
+  }
+  if (isSetupError(message)) {
+    return "I can't answer that right now, because my Claude API key was rejected. Quick commands like open YouTube still work, and the note on screen shows how to fix it.";
+  }
+  return `Sorry, that didn't work. ${String(message || '').replace(/https?:\/\/\S+/g, 'the link on screen')}`;
+}
+
 const copy = (text) =>
   navigator.clipboard.writeText(text).then(() => toast(`Copied: ${text}`), () => toast("Couldn't copy", 'error'));
 

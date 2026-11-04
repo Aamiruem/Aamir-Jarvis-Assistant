@@ -8,6 +8,7 @@ os.environ["DATA_DIR"] = tempfile.mkdtemp(prefix="jarvis-test-")
 os.environ["DATABASE_URL"] = ""
 os.environ["S3_BUCKET"] = ""
 os.environ["INTERNAL_API_KEY"] = "test-key"
+os.environ["PC_WATCH_INTERVAL_SECONDS"] = "86400"  # the real PC watcher must not alert during tests
 
 try:
     import anthropic  # noqa: F401

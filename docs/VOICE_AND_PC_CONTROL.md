@@ -44,6 +44,28 @@ Untick *Show this when I open Jarvis* to stop the prompt; the buttons still work
   Edge's "Online (Natural)" voices. To force one, run
   `localStorage.setItem('jarvis-voice', 'Exact voice name')` in the browser console.
 
+## PC watcher (Jarvis tells you what's happening)
+
+**Automate → Jarvis watches this PC**: switch it on and choose what to hear about. Every 30
+seconds the AI service ([app/pc_watcher.py](../backend/fastapi-ai/app/pc_watcher.py)) checks this
+computer and reports each *change* once, in the bell and read aloud:
+
+| Check | Alert |
+|---|---|
+| Battery | at 20% and 10% while not charging; "Battery full" while charging |
+| Disk | system drive under 10% or 5 GB free (again only after it recovers above 15%) |
+| Busy | processor or memory above 90% for about a minute, naming the app using the most (at most every 30 min) |
+| Downloads | a file finished downloading (partial `.crdownload`/`.part` files are ignored) |
+| Drives | a USB drive or memory card connected or removed |
+| Internet | lost (after two failed checks in a row) and back, with how long it was down |
+
+Reading aloud is per device (**Read alerts aloud on this device**). Open Jarvis on your phone
+(`npm run dev:phone`, see Automate) to get the alerts while you're away. It only runs where
+`SYSTEM_CONTROL=true`. Change the pace with `PC_WATCH_INTERVAL_SECONDS`.
+
+When Jarvis can't answer (for example a rejected Claude API key), it now says so out loud in one
+short sentence, also for a single request with the mic button.
+
 ## Room Watch (Jarvis notices you walk in)
 
 Click the **eye** button in the top bar. Jarvis watches the webcam for motion, and when someone

@@ -57,6 +57,8 @@ def test_profile_finds_correlations_and_target():
     assert p["suggested_target"] == "price"
     x1 = next(c for c in p["columns"] if c["name"] == "x1")
     assert x1["corr_with_target"] > 0.4 and x1["missing_pct"] == 0
+    yes_no = profile(classification_table(), "label")  # numeric 0/1 target
+    assert next(c for c in yes_no["columns"] if c["name"] == "a")["corr_with_target"] > 0.6
 
 
 def test_automl_regression_finds_the_signal():

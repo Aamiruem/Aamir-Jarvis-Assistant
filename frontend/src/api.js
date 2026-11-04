@@ -122,6 +122,9 @@ export const api = {
 
   memories: () => request('/ai/memories'),
   network: () => request('/system/network'),
+  pcWatcher: () => request('/ai/pc-watcher'),
+  setPcWatcher: (enabled, checks) => request('/ai/pc-watcher', { method: 'PUT', body: { enabled, checks } }),
+  testPcAlert: () => request('/ai/pc-watcher/test', { method: 'POST' }),
   // ML Lab (backend/fastapi-ai/app/routers/mllab.py)
   mlModels: () => request('/ai/mllab/models'),
   mlModel: (id) => request(`/ai/mllab/models/${id}`),

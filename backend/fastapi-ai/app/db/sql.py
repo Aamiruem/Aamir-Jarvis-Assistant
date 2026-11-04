@@ -208,6 +208,14 @@ def fire_due_reminders(now: datetime | None = None) -> int:
         return len(due)
 
 
+def add_notification(user_id: str, title: str, body: str = "") -> dict:
+    with SessionLocal.begin() as s:
+        n = Notification(user_id=user_id, title=title[:300], body=body[:1000])
+        s.add(n)
+        s.flush()
+        return n.to_dict()
+
+
 def list_notifications(user_id: str, unread_only: bool = False, limit: int = 30) -> list[dict]:
     with SessionLocal() as s:
         q = select(Notification).where(Notification.user_id == user_id)

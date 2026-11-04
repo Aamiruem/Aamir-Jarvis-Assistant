@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { openUrl } from '../quickCommands.js';
+import { readAlertsAloud, setReadAlertsAloud } from '../alerts.js';
 import { PageHeader, toast } from '../ui.jsx';
 
 // Automate: one-click automations, your apps, and using Jarvis from your phone.
@@ -68,6 +69,82 @@ function Copyable({ text }) {
   );
 }
 
+const CHECK_ICONS = { battery: 'zap', disk: 'folder', busy: 'cpu', downloads: 'upload', drives: 'monitor', network: 'wifi' };
+
+/** Jarvis watches this computer and tells you (bell + out loud) when something needs you. */
+function PcWatcherCard() {
+  const [s, setS] = useState(null);
+  const [aloud, setAloud] = useState(readAlertsAloud);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    api.pcWatcher().then(setS).catch((e) => setError(e.message));
+  }, []);
+  const save = async (enabled, checks) => {
+    try {
+      setS(await api.setPcWatcher(enabled, checks));
+      setError('');
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+  const on = s ? s.checks.filter((c) => c.on).map((c) => c.key) : [];
+  const toggleCheck = (key) => save(s.enabled, on.includes(key) ? on.filter((k) => k !== key) : [...on, key]);
+
+  return (
+    <section className="card watcher" aria-labelledby="watcher-title">
+      <div className="watcher-head">
+        <span className="badge-icon lg" style={{ '--hue': 160 }}><Icon name="eye" /></span>
+        <div className="grow">
+          <h3 id="watcher-title">Jarvis watches this PC</h3>
+          <p className="muted">
+            Low battery, a full disk, a busy processor, finished downloads, USB drives, internet drops: Jarvis tells you in the
+            bell and out loud, once per change. Open Jarvis on your phone to get them while you're away.
+          </p>
+        </div>
+        {s && (
+          <button
+            type="button"
+            className={`switch ${s.enabled ? 'on' : ''}`}
+            role="switch"
+            aria-checked={s.enabled}
+            aria-label="PC watcher"
+            disabled={!s.available}
+            onClick={() => save(!s.enabled, on)}
+          >
+            <i />
+          </button>
+        )}
+      </div>
+      {error && <p className="error">{error}</p>}
+      {s && !s.available && <p className="muted small">Off on this server: Jarvis can only watch the computer its AI service runs on (SYSTEM_CONTROL=true).</p>}
+      {s?.available && (
+        <>
+          <ul className="watch-checks">
+            {s.checks.map((c) => (
+              <li key={c.key}>
+                <label className={!s.enabled ? 'dim' : ''}>
+                  <input type="checkbox" checked={c.on} disabled={!s.enabled} onChange={() => toggleCheck(c.key)} />
+                  <Icon name={CHECK_ICONS[c.key] || 'bell'} size="1.05em" />
+                  {c.label}
+                </label>
+              </li>
+            ))}
+          </ul>
+          <div className="watcher-foot">
+            <label className="check-row">
+              <input type="checkbox" checked={aloud} onChange={(e) => { setAloud(e.target.checked); setReadAlertsAloud(e.target.checked); }} />
+              Read alerts aloud on this device
+            </label>
+            <button type="button" className="btn sm" disabled={!s.enabled} onClick={() => api.testPcAlert().then(() => toast('Test alert sent: it arrives in a few seconds'))}>
+              <Icon name="bell" size="1em" /> Send a test alert
+            </button>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 export default function AutomatePanel({ onAsk, onOpenTab }) {
   const [lan, setLan] = useState(null); // null = loading, [] = none found
   useEffect(() => {
@@ -98,6 +175,8 @@ export default function AutomatePanel({ onAsk, onOpenTab }) {
           <Icon name="phone" size="1em" /> Use Jarvis from your phone
         </a>
       </section>
+
+      <PcWatcherCard />
 
       <h3 className="section-title"><Icon name="zap" /> One-click automations</h3>
       <ul className="recipe-grid">

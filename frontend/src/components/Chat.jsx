@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { api, streamChat } from '../api.js';
 import { Icon } from '../icons.jsx';
-import { AiNotice, aiProblemOf, isSetupError } from './AiNotice.jsx';
+import { AiNotice, aiProblemOf, isSetupError, spokenFailure } from './AiNotice.jsx';
+import ChatHistory from './ChatHistory.jsx';
+import { share } from '../pwa.js';
 import { openUrl, quickCommand } from '../quickCommands.js';
 import { cleanAnswer, markOnboarded } from '../session.js';
 import { toast } from '../ui.jsx';
@@ -51,7 +53,8 @@ const FOLLOW_UP_MS = 8000; // after Jarvis answers, a follow-up within this time
 const FILLERS = ['One moment.', 'Let me check.', 'On it.', 'Sure, one second.'];
 const FILLER_AFTER_MS = 1600;
 
-export default function Chat({ userId, conversationId, onConversation, prompt, onPromptUsed }) {
+
+export default function Chat({ userId, history, conversationId, onConversation, prompt, onPromptUsed }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [busy, setBusyState] = useState(false);
@@ -126,7 +129,7 @@ export default function Chat({ userId, conversationId, onConversation, prompt, o
       silentRounds.current += 1;
       if (silentRounds.current >= MAX_SILENT_ROUNDS) {
         endHandsFree();
-        setVoiceNote("Voice mode paused: I didn't hear anything. Tap Voice mode to start again.");
+        setVoiceNote("Voice mode paused: I didn't hear anything for a while. If you were talking, check the microphone (lock icon in the address bar → Microphone).");
       }
     },
     // In "Hey Jarvis" mode, background chatter must not cut Jarvis off: only its name does.
@@ -275,7 +278,7 @@ export default function Chat({ userId, conversationId, onConversation, prompt, o
   // Block body on purpose: newer Chrome returns a Promise from scrollIntoView, and an effect
   // that returns a non-function crashes React ("destroy is not a function"), blanking the app.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length) bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); // an empty chat stays at the top
   }, [messages]);
 
   const patchLast = (fn) => setMessages((ms) => [...ms.slice(0, -1), fn(ms[ms.length - 1])]);
@@ -285,7 +288,8 @@ export default function Chat({ userId, conversationId, onConversation, prompt, o
     const message = (text ?? input).trim();
     if (!message || busyRef.current) return;
     setInput('');
-    const speakReply = handsFreeRef.current || voiceReplies;
+    // Spoken to, so answer out loud (the Speak button too, not only Voice mode or "Read aloud").
+    const speakReply = handsFreeRef.current || voiceReplies || voice;
 
     // "open YouTube", "play X on YouTube": done right here, no AI round trip.
     const cmd = quickCommand(message);
@@ -314,7 +318,7 @@ export default function Chat({ userId, conversationId, onConversation, prompt, o
       if (cmd.url) result.links = [{ label: cmd.label, url: cmd.url }];
       patchLast((m) => ({ ...m, ...result, pending: false }));
       setBusy(false);
-      const said = result.error ? `Sorry, that didn't work. ${result.error}` : cmd.say;
+      const said = result.error ? spokenFailure(result.error) : cmd.say;
       if (speakReply) speech.speak(said, afterReply);
       else afterReply();
       return;
@@ -371,7 +375,7 @@ export default function Chat({ userId, conversationId, onConversation, prompt, o
       setBusy(false);
       if (failure) checkAi();
       if (out) {
-        if (!reply && failure) out.push(`Sorry, that didn't work. ${failure}`);
+        if (!reply && failure) out.push(spokenFailure(failure));
         out.end(afterReply);
       } else afterReply();
     }
@@ -388,6 +392,8 @@ export default function Chat({ userId, conversationId, onConversation, prompt, o
 
   const copyReply = (text) =>
     navigator.clipboard.writeText(text).then(() => toast('Copied to clipboard'), () => toast("Couldn't copy", 'error'));
+  const shareReply = (text) =>
+    share({ title: 'From Jarvis', text }).then((r) => r === 'copied' && toast('Copied, ready to paste'), () => toast("Couldn't share", 'error'));
 
   // The user message a failed reply answered, so "Try again" can send it once more.
   const retry = (i) => {
@@ -398,6 +404,7 @@ export default function Chat({ userId, conversationId, onConversation, prompt, o
 
   return (
     <div className="chat">
+      {history && <ChatHistory {...history} />}
       <div className="messages">
         {aiProblem && !aiNoteHidden && <AiNotice problem={aiProblem} onDismiss={() => setAiNoteHidden(true)} className="chat-notice" />}
         {messages.length === 0 && (
@@ -467,6 +474,7 @@ export default function Chat({ userId, conversationId, onConversation, prompt, o
               <div className="msg-actions">
                 <button className="icon-btn" title="Copy" aria-label="Copy reply" onClick={() => copyReply(m.content)}><Icon name="copy" size="1em" /></button>
                 <button className="icon-btn" title="Read aloud" aria-label="Read reply aloud" onClick={() => speech.speak(m.content)}><Icon name="volume" size="1em" /></button>
+                <button className="icon-btn" title="Share" aria-label="Share reply" onClick={() => shareReply(m.content)}><Icon name="share" size="1em" /></button>
                 {m.intent && <span className="meta">intent: {m.intent}</span>}
               </div>
             )}

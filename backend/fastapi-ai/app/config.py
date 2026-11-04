@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     # Assistant behaviour
     default_timezone: str = "Asia/Kolkata"   # used when the user gives a time without a zone
     reminder_interval_seconds: int = 30      # how often the scheduler checks for due reminders
+    pc_watch_interval_seconds: int = 30      # how often the PC watcher looks at battery, disk, downloads…
     system_control: bool = True              # open apps/sites, volume, lock... on THIS PC (false on servers)
 
     # Data
