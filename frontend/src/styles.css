@@ -1225,3 +1225,12 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
   .app .topbar .search-bar { flex: 1 1 0; min-width: 0; width: auto; }
   .app .topbar .search-bar input { width: 100%; }
 }
+
+/* Password boxes: an eye button shows or hides the text; a mismatch turns the box red. */
+.login .field:has(.field-toggle) > input:not([type='checkbox']) { padding-right: 44px; }
+.field-toggle { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; display: grid; place-items: center; border: none; border-radius: 9px; background: transparent; color: var(--muted); cursor: pointer; transition: color 0.15s, background 0.15s; }
+.field-toggle:hover { color: var(--text); background: var(--panel-2); }
+.field-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.field-invalid > input:not([type='checkbox']) { border-color: #f87171; box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.14); }
+.field-invalid .field-icon { color: #f87171; }
+.field-error { margin: -2px 0 0; font-size: 12.5px; color: #f87171; text-align: left; }

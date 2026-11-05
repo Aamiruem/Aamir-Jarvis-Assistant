@@ -29,6 +29,35 @@ function Field({ icon, children }) {
   );
 }
 
+// A password input with a lock icon and an eye button that shows or hides the text.
+function PasswordField({ icon = 'key', value, onChange, placeholder, autoComplete, invalid = false }) {
+  const [shown, setShown] = useState(false);
+  return (
+    <div className={`field ${invalid ? 'field-invalid' : ''}`}>
+      <Icon name={icon} size="1.05em" className="field-icon" />
+      <input
+        type={shown ? 'text' : 'password'}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        autoComplete={autoComplete}
+        required
+        aria-invalid={invalid || undefined}
+      />
+      <button
+        type="button"
+        className="field-toggle"
+        onClick={() => setShown((s) => !s)}
+        aria-label={shown ? 'Hide password' : 'Show password'}
+        aria-pressed={shown}
+        title={shown ? 'Hide password' : 'Show password'}
+      >
+        <Icon name={shown ? 'eyeOff' : 'eye'} size="1.05em" />
+      </button>
+    </div>
+  );
+}
+
 function PasswordChecklist({ password, name, email }) {
   return (
     <ul className="hint pw-rules">
@@ -47,7 +76,14 @@ function PasswordChecklist({ password, name, email }) {
 //   forgot   -> otp(reset_password) + new password -> back to login
 export default function Login({ onAuth }) {
   const [step, setStep] = useState('login');
-  const [form, setForm] = useState({ name: '', email: '', password: '', code: '', newPassword: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '', code: '', newPassword: '', newConfirm: '' });
+  // Both password boxes must match before we send anything to the server.
+  const mismatch = (a, b) => b.length > 0 && a !== b;
+  const passwordsDiffer = (a, b) => {
+    if (a === b) return false;
+    setError("The two passwords don't match. Type the same password in both boxes.");
+    return true;
+  };
   const [challenge, setChallenge] = useState(null); // { challengeId, maskedDestination, purpose, resendAvailableAt }
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -98,6 +134,7 @@ export default function Login({ onAuth }) {
   };
   const submitRegister = (e) => {
     e.preventDefault();
+    if (passwordsDiffer(form.password, form.confirm)) return;
     run(async () => handle(await auth.register(form.name, form.email, form.password), 'verify_email'));
   };
   const submitForgot = (e) => {
@@ -116,6 +153,7 @@ export default function Login({ onAuth }) {
       if (purpose === 'verify_email') handle(await auth.verifyEmail(challengeId, form.code));
       else if (purpose === 'login') handle(await auth.verifyLogin(challengeId, form.code));
       else {
+        if (passwordsDiffer(form.newPassword, form.newConfirm)) return;
         const r = await auth.resetPassword(challengeId, form.code, form.newPassword);
         go('login');
         setInfo(r.message);
@@ -160,9 +198,7 @@ export default function Login({ onAuth }) {
             <Field icon="mail">
               <input type="email" placeholder="Email address" value={form.email} onChange={update('email')} autoComplete="username" required />
             </Field>
-            <Field icon="key">
-              <input type="password" placeholder="Password" value={form.password} onChange={update('password')} autoComplete="current-password" required />
-            </Field>
+            <PasswordField value={form.password} onChange={update('password')} placeholder="Password" autoComplete="current-password" />
             {error && <div className="error">{error}</div>}
             <button className="btn primary full" disabled={busy}>{busy ? 'Checking…' : 'Sign in'}</button>
             <button type="button" className="btn ghost full" onClick={() => go('forgot')}>Forgot password?</button>
@@ -180,10 +216,16 @@ export default function Login({ onAuth }) {
             <Field icon="mail">
               <input type="email" placeholder="Email address" value={form.email} onChange={update('email')} autoComplete="username" required />
             </Field>
-            <Field icon="key">
-              <input type="password" placeholder="Create a password" value={form.password} onChange={update('password')} autoComplete="new-password" required />
-            </Field>
+            <PasswordField value={form.password} onChange={update('password')} placeholder="Create a password" autoComplete="new-password" />
             <PasswordChecklist password={form.password} name={form.name} email={form.email} />
+            <PasswordField
+              value={form.confirm}
+              onChange={update('confirm')}
+              placeholder="Confirm password"
+              autoComplete="new-password"
+              invalid={mismatch(form.password, form.confirm)}
+            />
+            {mismatch(form.password, form.confirm) && <p className="field-error">Passwords don't match yet.</p>}
             {error && <div className="error">{error}</div>}
             <button className="btn primary full" disabled={busy}>{busy ? 'Creating…' : 'Create account'}</button>
             <p className="login-switch">
@@ -225,10 +267,16 @@ export default function Login({ onAuth }) {
             />
             {challenge.purpose === 'reset_password' && (
               <>
-                <Field icon="key">
-                  <input type="password" placeholder="New password" value={form.newPassword} onChange={update('newPassword')} autoComplete="new-password" required />
-                </Field>
+                <PasswordField value={form.newPassword} onChange={update('newPassword')} placeholder="New password" autoComplete="new-password" />
                 <PasswordChecklist password={form.newPassword} email={form.email} />
+                <PasswordField
+                  value={form.newConfirm}
+                  onChange={update('newConfirm')}
+                  placeholder="Confirm new password"
+                  autoComplete="new-password"
+                  invalid={mismatch(form.newPassword, form.newConfirm)}
+                />
+                {mismatch(form.newPassword, form.newConfirm) && <p className="field-error">Passwords don't match yet.</p>}
               </>
             )}
             {error && <div className="error">{error}</div>}
