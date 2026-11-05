@@ -15,6 +15,7 @@ import {
   slug,
 } from '../notes.js';
 import { EmptyState, PageHeader, toast } from '../ui.jsx';
+import CoursePanel from './CoursePanel.jsx';
 import MarkdownView from './MarkdownView.jsx';
 
 // Notes: your study notes, word for word and in syllabus order, to read and practice.
@@ -58,11 +59,13 @@ const writeUserSmartNotes = (notes) => {
 };
 const isAIML = (text = '') => /ai[- ]?ml|artificial intelligence|a\.i\./i.test(text);
 const isML = (text = '') => /machine learning|ml\b/i.test(text);
+const isCampusX = (text = '') => /campusx|campus x|campus-x/i.test(text);
 const categoryMatches = (entry, filter) => {
   if (filter === 'all') return true;
   const label = `${entry.title || ''} ${entry.slug || ''} ${entry.source || ''}`;
   if (filter === 'aiml') return entry.kind === 'aiml' || isAIML(label);
   if (filter === 'ml') return entry.kind === 'ml' || (isML(label) && !isAIML(label));
+  if (filter === 'campusx') return entry.kind === 'campusx' || isCampusX(label) || /campusx/i.test(`${entry.title || ''} ${entry.slug || ''}`);
   return true;
 };
 const createSmartBook = ({ title, kind = 'aiml', folder = 'Quick Notes', chapterTitle = 'New note', body = '' }) => ({
@@ -149,7 +152,7 @@ export default function NotesPanel({ target }) {
   const [text, setText] = useState('');
   const [mode, setMode] = useState('read');
   const [size, setSize] = useState(readSize);
-  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('aiml');
   const [done, setDone] = useState(new Set());
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState(null);
@@ -193,6 +196,7 @@ export default function NotesPanel({ target }) {
       .catch((e) => setError(e.message));
   }, [categoryFilter]);
   useEffect(() => {
+    if (target?.lecture) setCategoryFilter('campusx'); // a CampusX lecture from the search palette
     if (target?.chapter) {
       setChapterId(target.chapter);
       setMode('read');
@@ -202,7 +206,12 @@ export default function NotesPanel({ target }) {
 
   const openSmartNoteManager = (note = null) => {
     setSmartManagerOpen(true);
-    const nextDraft = note ? { ...note } : { id: null, title: '', category: categoryFilter === 'ml' ? 'ML' : 'AIML', content: '' };
+    const nextDraft = note ? { ...note } : {
+      id: null,
+      title: '',
+      category: categoryFilter === 'campusx' ? 'CampusX' : categoryFilter === 'ml' ? 'ML' : 'AIML',
+      content: '',
+    };
     setSmartDraft(nextDraft);
   };
 
@@ -241,7 +250,7 @@ export default function NotesPanel({ target }) {
       return updated;
     });
     setSmartManagerOpen(false);
-    setSmartDraft({ id: null, title: '', category: categoryFilter === 'ml' ? 'ML' : 'AIML', content: '' });
+    setSmartDraft({ id: null, title: '', category: categoryFilter === 'campusx' ? 'CampusX' : categoryFilter === 'ml' ? 'ML' : 'AIML', content: '' });
     setError('');
     toast('Smart note saved');
   };
@@ -253,7 +262,7 @@ export default function NotesPanel({ target }) {
       return updated;
     });
     if (smartDraft.id === noteId) {
-      setSmartDraft({ id: null, title: '', category: categoryFilter === 'ml' ? 'ML' : 'AIML', content: '' });
+      setSmartDraft({ id: null, title: '', category: categoryFilter === 'campusx' ? 'CampusX' : categoryFilter === 'ml' ? 'ML' : 'AIML', content: '' });
     }
     setSmartManagerOpen(false);
     toast('Smart note deleted');
@@ -377,6 +386,7 @@ export default function NotesPanel({ target }) {
               >
                 <option value="AIML">AIML</option>
                 <option value="ML">ML</option>
+                <option value="CampusX">CampusX</option>
                 <option value="General">General</option>
               </select>
             </div>
@@ -411,7 +421,8 @@ export default function NotesPanel({ target }) {
 
   if (error && !book) return <div className="panel"><p className="error">{error}</p></div>;
   if (!library) return <div className="panel"><p className="muted">Loading notes…</p></div>;
-  if (!filteredLibrary.length) {
+  const courseView = categoryFilter === 'campusx'; // the CampusX course needs no notebook
+  if (!filteredLibrary.length && !courseView) {
     return (
       <div className="panel">
         <EmptyState icon="notes" title="No notes in this track">Switch to a different category or create a smart note.</EmptyState>
@@ -425,7 +436,7 @@ export default function NotesPanel({ target }) {
       </div>
     );
   }
-  if (!book) {
+  if (!book && !courseView) {
     return (
       <div className="panel">
         <p className="muted">Loading AIML notes…</p>
@@ -435,7 +446,7 @@ export default function NotesPanel({ target }) {
 
   return (
     <div className="panel notes-panel">
-      <PageHeader icon="notes" hue={45} title="Notes" subtitle={book ? `${book.title} · ${book.chapters} chapters · ${done.size} read` : ''}>
+      <PageHeader icon="notes" hue={45} title="Notes" subtitle={courseView ? 'CampusX course: every lecture, its code, chapters and your notes' : book ? `${book.title} · ${book.chapters} chapters · ${done.size} read` : ''}>
         <button className="btn sm" onClick={teach} disabled={Boolean(teaching) || !book || book.custom} title="Add these notes to Jarvis's knowledge base">
           <Icon name="brain" size="1em" /> {teaching ? `Teaching Jarvis… ${teaching.done}/${teaching.total}` : 'Teach Jarvis these notes'}
         </button>
@@ -447,6 +458,7 @@ export default function NotesPanel({ target }) {
           <button className={categoryFilter === 'all' ? 'active' : ''} onClick={() => setCategoryFilter('all')} role="tab" aria-selected={categoryFilter === 'all'}>All</button>
           <button className={categoryFilter === 'aiml' ? 'active' : ''} onClick={() => setCategoryFilter('aiml')} role="tab" aria-selected={categoryFilter === 'aiml'}>AIML</button>
           <button className={categoryFilter === 'ml' ? 'active' : ''} onClick={() => setCategoryFilter('ml')} role="tab" aria-selected={categoryFilter === 'ml'}>ML</button>
+          <button className={categoryFilter === 'campusx' ? 'active' : ''} onClick={() => setCategoryFilter('campusx')} role="tab" aria-selected={categoryFilter === 'campusx'}>CampusX</button>
         </div>
         <div className="smart-actions">
           <button className="btn sm ghost" onClick={() => openSmartNoteManager()}><Icon name="file" size="1em" /> New Note</button>
@@ -459,7 +471,7 @@ export default function NotesPanel({ target }) {
               if (!file) return;
               const nextBook = createSmartBook({
                 title: `${file.name} notes`,
-                kind: categoryFilter === 'ml' ? 'ml' : 'aiml',
+                kind: categoryFilter === 'campusx' ? 'campusx' : categoryFilter === 'ml' ? 'ml' : 'aiml',
                 folder: 'PDFs',
                 chapterTitle: file.name,
                 body: `# ${file.name}\n\nImported document: ${file.name}\n\nUse this section to keep notes, references, and summary points for the document.`,
@@ -490,7 +502,7 @@ export default function NotesPanel({ target }) {
               setBook(nextBook);
               toast(`Folder “${name}” added to your smart notes.`);
             } else {
-              const nextBook = createSmartBook({ title: 'My Smart Notes', kind: categoryFilter === 'ml' ? 'ml' : 'aiml', folder: name, chapterTitle: 'New folder note' });
+              const nextBook = createSmartBook({ title: 'My Smart Notes', kind: categoryFilter === 'campusx' ? 'campusx' : categoryFilter === 'ml' ? 'ml' : 'aiml', folder: name, chapterTitle: 'New folder note' });
               const updated = [...smartBooks(), nextBook];
               writeSmartBooks(updated);
               setLibrary((prev) => [...(prev || []), nextBook]);
@@ -500,6 +512,10 @@ export default function NotesPanel({ target }) {
         </div>
       </div>
 
+      {categoryFilter === 'campusx' ? (
+        <CoursePanel target={target} />
+      ) : (
+      <>
       <div className="notes-bar">
         <form className="search-box" onSubmit={runSearch}>
           <Icon name="search" size="1em" />
@@ -580,6 +596,8 @@ export default function NotesPanel({ target }) {
           )}
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }

@@ -44,7 +44,8 @@ const TABS = [
   { id: 'account', label: 'Account', icon: 'user', hue: 220 },
   { id: 'admin', label: 'Admin', icon: 'shield', hue: 0, adminOnly: true },
 ].map((t, i) => ({ ...t, key: i + 1 })); // Alt+1 … Alt+9
-const SIDEBAR_TABS = ['home', 'chat', 'automate', 'mllab', 'notes', 'tasks', 'memory', 'knowledge'];
+// The sidebar is the one place to switch screens (Account is the avatar at its bottom).
+const SIDEBAR_TABS = TABS.map((t) => t.id).filter((id) => id !== 'account');
 // Phones: the main tabs sit in a bar at the bottom, everything else is under "More" (the sidebar).
 const BOTTOM_TABS = ['home', 'chat', 'notes', 'mllab'];
 // A link like /?tab=mllab (the installed app's shortcuts) opens that tab.
@@ -287,7 +288,7 @@ export default function App() {
             .filter((t) => SIDEBAR_TABS.includes(t.id))
             .map((t) => (
               <button key={t.id} className={`side-link ${tab === t.id ? 'active' : ''}`} style={{ '--hue': t.hue }} onClick={() => go(t.id)} aria-current={tab === t.id ? 'page' : undefined}>
-                <Icon name={t.icon} size="1.45em" />
+                <span className="side-ico"><Icon name={t.icon} size="1.2em" /></span>
                 <span className="grow">{t.label}</span>
                 {t.isNew && <span className="new-pill">New</span>}
               </button>
@@ -327,14 +328,16 @@ export default function App() {
         <header className="topbar">
           <button className="icon-btn menu" onClick={toggleMenu} aria-label={collapsed ? 'Show sidebar' : 'Menu'} title="Menu"><Icon name="menu" /></button>
           <span className="topbar-brand" aria-hidden="true"><span className="orb small" />Jarvis</span>
-          <nav className="tabs">
-            {tabs.map((t) => (
-              <button key={t.id} className={`tab ${tab === t.id ? 'active' : ''}`} style={{ '--hue': t.hue }} onClick={() => setTab(t.id)} title={`${t.label} (Alt+${t.key})`} aria-label={t.label}>
-                <Icon name={t.icon} size="1.05em" />
-                <span>{t.label}</span>
-              </button>
-            ))}
-          </nav>
+          {/* Where you are (the sidebar is where you switch); not a second menu. */}
+          {(() => {
+            const current = TABS.find((t) => t.id === tab);
+            return current ? (
+              <h1 className="topbar-title" style={{ '--hue': current.hue }}>
+                <span className="side-ico"><Icon name={current.icon} size="1.1em" /></span>
+                {current.label}
+              </h1>
+            ) : null;
+          })()}
           <button className="search-bar" onClick={() => openSearch('')} title="Search (Ctrl+K)" aria-label="Search chats, contacts, tasks and commands">
             <Icon name="search" size="1em" />
             <span className="grow">Search everything…</span>

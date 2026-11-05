@@ -1,0 +1,127 @@
+{
+  "slug": "campusx-ml-244-lecture",
+  "title": "CampusX ML 244 Lecture Notes",
+  "source": "CampusX 244 lecture playlist and concept notes",
+  "imported": "2026-11-05",
+  "chapters": 8,
+  "chars": 35200,
+  "parts": [
+    {
+      "name": "CampusX ML Foundation",
+      "chapters": [
+        {
+          "id": "01",
+          "file": "01-campuxx-python-foundations.md",
+          "title": "Lecture 01: Python Foundations for ML",
+          "version": 1,
+          "headings": [
+            "Python Foundations for ML",
+            "Why Python matters",
+            "Variables and data types",
+            "Loops and functions",
+            "Python for data work"
+          ],
+          "chars": 4200
+        },
+        {
+          "id": "02",
+          "file": "02-campuxx-ml-core-concepts.md",
+          "title": "Lecture 02: ML Core Concepts and Workflow",
+          "version": 1,
+          "headings": [
+            "ML Core Concepts and Workflow",
+            "Supervised vs unsupervised learning",
+            "Train-test split",
+            "Loss function",
+            "Model evaluation"
+          ],
+          "chars": 4300
+        },
+        {
+          "id": "03",
+          "file": "03-campuxx-data-prep-and-eda.md",
+          "title": "Lecture 03: Data Preparation and EDA",
+          "version": 1,
+          "headings": [
+            "Data Preparation and EDA",
+            "Missing values",
+            "Feature engineering",
+            "Correlation and distributions",
+            "Outliers"
+          ],
+          "chars": 4400
+        },
+        {
+          "id": "04",
+          "file": "04-campuxx-supervised-learning.md",
+          "title": "Lecture 04: Supervised Learning Algorithms",
+          "version": 1,
+          "headings": [
+            "Supervised Learning Algorithms",
+            "Linear regression",
+            "Logistic regression",
+            "Decision trees",
+            "Random forest"
+          ],
+          "chars": 4800
+        },
+        {
+          "id": "05",
+          "file": "05-campuxx-unsupervised-and-ensembles.md",
+          "title": "Lecture 05: Unsupervised Learning and Ensembles",
+          "version": 1,
+          "headings": [
+            "Unsupervised Learning and Ensembles",
+            "K-means clustering",
+            "PCA",
+            "Bagging and boosting",
+            "XGBoost and model tuning"
+          ],
+          "chars": 4700
+        },
+        {
+          "id": "06",
+          "file": "06-campuxx-deep-learning-and-cnn.md",
+          "title": "Lecture 06: Deep Learning and CNNs",
+          "version": 1,
+          "headings": [
+            "Deep Learning and CNNs",
+            "Neural networks",
+            "Activation functions",
+            "Backpropagation",
+            "Image processing"
+          ],
+          "chars": 4700
+        },
+        {
+          "id": "07",
+          "file": "07-campuxx-nlp-and-transformers.md",
+          "title": "Lecture 07: NLP and Transformers",
+          "version": 1,
+          "headings": [
+            "NLP and Transformers",
+            "Tokenization",
+            "Embeddings",
+            "Sequence models",
+            "LLM basics"
+          ],
+          "chars": 5000
+        },
+        {
+          "id": "08",
+          "file": "08-campuxx-deployment-and-projects.md",
+          "title": "Lecture 08: Deployment, MLOps and Projects",
+          "version": 1,
+          "headings": [
+            "Deployment, MLOps and Projects",
+            "Model deployment",
+            "FastAPI and Flask APIs",
+            "Monitoring and drift",
+            "Project roadmap"
+          ],
+          "chars": 5200
+        }
+      ]
+    }
+  ]
+}

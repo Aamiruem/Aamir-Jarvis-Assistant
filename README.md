@@ -131,7 +131,8 @@ side: run the stack with **Docker** or inside **WSL** (Linux isn't affected).
 - "What's 18% GST on 74,999 and the weather in Jaipur?" (parallel tool calls).
 - **Vision** tab → start camera → "What's on my desk?"
 - Click **Start talking** when Jarvis opens: the first time it asks a few questions and remembers you.
-- **Notes**: your *AIML Basics to Advanced* and *AIML 244 Lecture* notes (read, search and practice as flashcards); **Teach Jarvis these notes** lets Jarvis answer from them. Import another ChatGPT share with `python scripts/import_notes.py <link>`.- **Knowledge → Add a web page** (e.g. your portfolio) and Jarvis answers from it; Jarvis also searches the web and reads links you give it.
+- **Notes**: your *AIML Basics to Advanced* and *AIML 244 Lecture* notes (read, search and practice as flashcards); **Teach Jarvis these notes** lets Jarvis answer from them. Import another ChatGPT share with `python scripts/import_notes.py <link>`.- **Notes → CampusX**: all 244 lectures of the CampusX Data Science Mentorship Program 2022-23 in order and by section, with the video, chapter timestamps, code links, your own notes per lecture, and **Make notes with Jarvis** (complete notes with the master prompt in `backend/fastapi-ai/app/study_notes.py`). Re-import or add a playlist with `python scripts/import_youtube_course.py <playlist link> <slug>` (needs `pip install yt-dlp`).
+- **Knowledge → Add a web page** (e.g. your portfolio) and Jarvis answers from it; Jarvis also searches the web and reads links you give it.
 - **Install app** (sidebar or More on a phone) puts Jarvis on your desktop or home screen; **Share** sends Jarvis or any reply through the phone's share sheet. Past chats are under **History** in Chat.
 - **Automate → Jarvis watches this PC**: Jarvis tells you about low battery, a full disk, finished downloads, USB drives and internet drops.
 - Open **ML Lab**: try the house price model, or upload a CSV and pick a column to predict.

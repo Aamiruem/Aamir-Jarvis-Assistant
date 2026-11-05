@@ -153,6 +153,13 @@ export const api = {
   unlockUser: (userId) => post(`/admin/users/${userId}/unlock`),
 
   documents: () => request('/ai/rag/documents'),
+  // Personal notes (Express /api/user-notes, also shown in the dashboard)
+  userNotes: () => request('/user-notes'),
+  addUserNote: (title, content, category = 'General') => request('/user-notes', { method: 'POST', body: { title, content, category } }),
+  updateUserNote: (id, patch) => request(`/user-notes/${id}`, { method: 'PUT', body: patch }),
+  // Notes written by Jarvis with the master prompt (AI service, background job)
+  makeStudyNotes: (body) => request('/ai/study-notes/generate', { method: 'POST', body }),
+  studyNotesJob: (id) => request(`/ai/study-notes/jobs/${id}`),
   addTextDocument: (title, text) => request('/ai/rag/text', { method: 'POST', body: { title, text } }),
   addWebPage: (url) => request('/ai/rag/url', { method: 'POST', body: { url } }),
   uploadDocument: (file) => {

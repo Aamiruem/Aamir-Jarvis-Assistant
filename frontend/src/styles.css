@@ -1046,3 +1046,107 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
   .notes-select { display: block; }
   .notes-article { padding: 16px; }
 }
+
+/* ---------- One navigation: the sidebar (colorful tiles); the top bar shows where you are ---------- */
+:root {
+  --side-bg: linear-gradient(180deg, #18173a 0%, #131a35 55%, #101629 100%);
+  --side-line: rgba(160, 150, 255, 0.14);
+  --side-hover: rgba(167, 139, 250, 0.1);
+  --side-active-bg: rgba(129, 140, 248, 0.18);
+  --side-active-text: #e0e7ff;
+}
+:root[data-theme='light'] {
+  --side-bg: linear-gradient(180deg, #eef0ff 0%, #e6ecff 55%, #e2e9fb 100%);
+  --side-line: rgba(79, 70, 229, 0.12);
+  --side-hover: rgba(255, 255, 255, 0.6);
+  --side-active-bg: #ffffff;
+  --side-active-text: #312e81;
+}
+.side-nav { gap: 3px; }
+.side-link { --hue: 205; padding: 7px 12px 7px 7px; gap: 12px; font-size: 15px; }
+.side-link .side-ico, .topbar-title .side-ico {
+  flex: none; width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center;
+  color: hsl(var(--hue) 90% var(--icon-l)); background: hsl(var(--hue) 85% 60% / 0.16); border: 1px solid hsl(var(--hue) 85% 62% / 0.28);
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.side-link .side-ico .icon { color: inherit; stroke-width: 1.9; }
+.side-link:hover .side-ico { background: hsl(var(--hue) 85% 60% / 0.24); }
+.side-link.active { color: var(--side-active-text); }
+.side-link.active .side-ico { color: #fff; background: hsl(var(--hue) 75% 52%); border-color: transparent; box-shadow: 0 4px 14px hsl(var(--hue) 85% 50% / 0.45); }
+.side-link.active .side-ico .icon { color: #fff; }
+
+.topbar .tabs { display: none; }
+.topbar-title { display: flex; align-items: center; gap: 10px; margin: 0; font: 700 18px/1.2 Inter, system-ui, sans-serif; letter-spacing: 0; flex: 1; min-width: 0; }
+.topbar-title .side-ico { width: 32px; height: 32px; }
+.topbar .search-bar { width: clamp(220px, 32vw, 460px); }
+@media (max-width: 1500px) {
+  .app:not(.collapsed) .search-bar { width: clamp(200px, 30vw, 420px); padding: 8px 8px 8px 12px; }
+  .app:not(.collapsed) .search-bar span, .app:not(.collapsed) .search-bar kbd { display: inline; }
+}
+@media (max-height: 920px) {
+  .side-link { padding-top: 5px; padding-bottom: 5px; }
+  .side-link .side-ico { width: 30px; height: 30px; }
+  .promo { display: none; }
+}
+@media (max-width: 760px) {
+  .topbar-title { display: none; }
+  .topbar .search-bar { width: auto; }
+  .topbar .search-bar span, .topbar .search-bar kbd { display: none; }
+}
+
+/* ---------- CampusX course (Notes → CampusX) ---------- */
+.course { display: grid; gap: 14px; }
+.course-head { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 18px; background: linear-gradient(135deg, hsl(0 80% 55% / 0.1), var(--panel) 60%); border: 1px solid hsl(0 80% 60% / 0.25); }
+.course-head h3 { margin: 0 0 2px; font-size: 19px; }
+.course-head p { margin: 0 0 8px; font-size: 13.5px; }
+.course-layout { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 16px; align-items: start; }
+.course-list { position: sticky; top: 0; display: grid; gap: 8px; max-height: calc(100vh - 230px); padding: 10px; border-radius: 16px; background: var(--panel); border: 1px solid var(--border); }
+.course-list select { width: 100%; }
+.course-items { overflow-y: auto; display: grid; gap: 2px; align-content: start; }
+.course-item { width: 100%; display: flex; gap: 10px; align-items: flex-start; padding: 7px 8px; border: none; border-radius: 10px; background: none; cursor: pointer; text-align: left; font-size: 13.5px; line-height: 1.35; color: var(--text); }
+.course-item:hover { background: var(--panel-2); }
+.course-item.active { background: hsl(0 80% 60% / 0.14); font-weight: 600; }
+.course-item small { display: block; font-size: 11.5px; font-weight: 400; margin-top: 2px; }
+.course-num { flex: none; min-width: 28px; font: 600 12px/1.6 Rajdhani, Inter, sans-serif; color: var(--muted); }
+.course-num .icon { color: var(--ok); }
+.lecture { display: grid; gap: 14px; min-width: 0; scroll-margin-top: 10px; }
+.video { position: relative; aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; background: #000; border: 1px solid var(--border); }
+.video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.lecture-head { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+.lecture-head h3 { margin: 2px 0 0; font-size: 20px; line-height: 1.3; }
+.lecture h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 15px; }
+.lecture h4 .icon { color: var(--accent); }
+.lecture-chapters { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; max-height: 340px; overflow-y: auto; border-radius: 12px; border: 1px solid var(--border); background: var(--panel); }
+.lecture-chapters button { width: 100%; display: flex; gap: 10px; text-align: left; padding: 7px 12px; border: none; background: none; cursor: pointer; font-size: 13.5px; color: var(--text); }
+.lecture-chapters button:hover { background: var(--panel-2); }
+.lecture-chapters time { flex: none; min-width: 58px; font-variant-numeric: tabular-nums; color: var(--accent); }
+.lecture-code ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13.5px; }
+.lecture-description { white-space: pre-wrap; font: 13px/1.6 Inter, system-ui, sans-serif; padding: 12px 14px; margin: 8px 0 0; border-radius: 12px; background: var(--panel); border: 1px solid var(--border); max-height: 360px; overflow: auto; }
+.lecture-notes { display: grid; gap: 16px; padding: 16px; border-radius: 16px; background: var(--panel); border: 1px solid var(--border); }
+.lecture-notes textarea { width: 100%; resize: vertical; margin-bottom: 8px; }
+.lecture-notes p { margin: 0 0 10px; }
+.lecture-ai-notes { margin-top: 12px; font-size: 15px; line-height: 1.7; }
+@media (max-width: 1000px) {
+  .course-layout { grid-template-columns: 1fr; }
+  .course-list { position: static; max-height: 360px; }
+}
+
+/* Phones: the compact search icon must win over the wide desktop search box; the course fits the screen. */
+.course { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 1000px) { .course-layout { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 760px) {
+  .app .topbar .search-bar { width: auto; flex: none; padding: 8px 10px; }
+  .app .topbar .search-bar span, .app .topbar .search-bar kbd { display: none; }
+  .lecture-head h3 { font-size: 17px; }
+}
+/* The lecture list scrolls inside its card instead of running past it. */
+.course-list { grid-template-rows: auto auto minmax(0, 1fr); }
+.course-items { min-height: 0; }
+
+/* Members-only lectures: a clear card instead of YouTube's black "Members-only" box. */
+.video.locked { display: grid; place-items: center; background: linear-gradient(135deg, hsl(38 80% 50% / 0.12), var(--panel)); }
+.locked-card { max-width: 560px; padding: 24px; text-align: center; display: grid; justify-items: center; gap: 8px; }
+.locked-card h4 { margin: 6px 0 0; font-size: 18px; }
+.locked-card p { margin: 0; line-height: 1.55; }
+.locked-card .row { justify-content: center; margin-top: 6px; }
+.course-free { font-size: 13px; color: var(--muted); }

@@ -46,6 +46,21 @@ const COURSE_LIBRARY = [
       { id: "03", title: "Lecture 3: ML and model thinking", summary: "Model evaluation, training loop, and the reason behind machine learning decisions.", concepts: ["Training", "Evaluation", "Model thinking"] },
     ],
   },
+  {
+    slug: "campusx-ml-244-lecture",
+    title: "CampusX ML 244 lecture notes",
+    description: "Lecture-wise ML notes with Python foundations, supervised learning, deep learning, NLP, deployment, and project-ready code snippets.",
+    chapters: [
+      { id: "01", title: "Lecture 1: Python foundations", summary: "Python basics, loops, functions, and building blocks for ML workflows.", concepts: ["Python", "Variables", "Functions"] },
+      { id: "02", title: "Lecture 2: ML core concepts", summary: "Supervised vs unsupervised learning and the model training workflow.", concepts: ["ML workflow", "Loss function", "Evaluation"] },
+      { id: "03", title: "Lecture 3: Data preparation and EDA", summary: "Cleaning, missing values, outliers, feature engineering, and exploring data quality.", concepts: ["EDA", "Cleaning", "Feature engineering"] },
+      { id: "04", title: "Lecture 4: Supervised models", summary: "Regression, classification, decision trees, and random forest basics.", concepts: ["Regression", "Trees", "Random forest"] },
+      { id: "05", title: "Lecture 5: Clustering and ensembles", summary: "K-means, PCA, bagging, boosting, and modern ensemble techniques.", concepts: ["Clustering", "PCA", "XGBoost"] },
+      { id: "06", title: "Lecture 6: Deep learning", summary: "Neural networks, activation functions, backpropagation, and CNNs.", concepts: ["Neural nets", "CNN", "Backprop"] },
+      { id: "07", title: "Lecture 7: NLP and transformers", summary: "Tokenization, embeddings, transformers, and LLM basics.", concepts: ["NLP", "Transformers", "LLM"] },
+      { id: "08", title: "Lecture 8: Deployment and projects", summary: "Deployment patterns, monitoring, MLOps, and real-world ML project structure.", concepts: ["Deployment", "MLOps", "Projects"] },
+    ],
+  },
 ] as const;
 
 export function NotesView() {
