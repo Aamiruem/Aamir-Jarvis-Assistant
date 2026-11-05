@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Rajdhani } from "next/font/google";
+import Script from "next/script";
 
 import { Providers } from "@/components/providers";
 import { themeBootScript } from "@/context/theme-context";
@@ -53,6 +54,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-dvh">
         <Providers>{children}</Providers>
+        {SITE.gaId && (
+          <>
+            <Script src={`https://www.googletagmanager.com/gtag/js?id=${SITE.gaId}`} strategy="afterInteractive" />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${SITE.gaId}');`}
+            </Script>
+          </>
+        )}
       </body>
     </html>
   );

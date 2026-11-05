@@ -8,7 +8,7 @@ describe('AI status wording', () => {
     expect(aiProblemOf({ ai: 'up', claude: 'ok' })).toBeNull();
   });
   it('says a rejected key out loud in one short, URL-free sentence', () => {
-    const msg = 'Jarvis can\'t reach Claude: the ANTHROPIC_API_KEY in .env was rejected. Create a new key at https://console.anthropic.com/settings/keys';
+    const msg = 'Azarvis can\'t reach Claude: the ANTHROPIC_API_KEY in .env was rejected. Create a new key at https://console.anthropic.com/settings/keys';
     expect(isSetupError(msg)).toBe(true);
     const said = spokenFailure(msg);
     expect(said).toMatch(/API key was rejected/);

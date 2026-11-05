@@ -30,7 +30,7 @@ def client():
 
 @pytest.fixture
 def pc(monkeypatch):
-    """A fake Windows PC that records what Jarvis tried to do."""
+    """A fake Windows PC that records what Azarvis tried to do."""
     done = []
     monkeypatch.setattr(sc.sys, "platform", "win32")
     monkeypatch.setattr(settings, "system_control", True)

@@ -9,7 +9,7 @@ export default function NotFound() {
       <div className="flex flex-col items-center gap-4">
         <JarvisOrb className="[--orb-size:7rem]" />
         <h1 className="text-3xl font-bold">Page not found</h1>
-        <p className="text-muted-foreground">Even Jarvis couldn&apos;t find that one.</p>
+        <p className="text-muted-foreground">Even Azarvis couldn&apos;t find that one.</p>
         <Button asChild>
           <Link href="/">Go home</Link>
         </Button>

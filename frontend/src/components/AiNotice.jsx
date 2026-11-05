@@ -6,16 +6,16 @@ import { toast } from '../ui.jsx';
 export const AI_PROBLEMS = {
   ai_down: {
     title: 'The AI service is not running',
-    body: 'Chat, tasks and documents need it. Start everything with "npm run dev" in the main project folder, or double-click the Jarvis shortcut.',
+    body: 'Chat, tasks and documents need it. Start everything with "npm run dev" in the main project folder, or double-click the Azarvis shortcut.',
   },
   no_key: {
     title: 'Add a Claude API key to turn on AI answers',
-    body: 'Until then Jarvis can only run quick commands like “open YouTube” or “volume up”.',
+    body: 'Until then Azarvis can only run quick commands like “open YouTube” or “volume up”.',
     fixKey: true,
   },
   invalid_key: {
     title: 'Your Claude API key was rejected',
-    body: 'It is invalid or was revoked, so for now Jarvis can only run quick commands like “open YouTube” or “volume up”.',
+    body: 'It is invalid or was revoked, so for now Azarvis can only run quick commands like “open YouTube” or “volume up”.',
     fixKey: true,
   },
   no_credits: {
@@ -38,7 +38,7 @@ export function aiProblemOf(health) {
 /** "setup" for a missing/rejected key or credits, else "error". */
 export const isSetupError = (message) => /api[_ ]?key|anthropic|credit|billing/i.test(message || '');
 
-/** What Jarvis says out loud when a request fails: short, and never a URL read out letter by letter. */
+/** What Azarvis says out loud when a request fails: short, and never a URL read out letter by letter. */
 export function spokenFailure(message) {
   if (/credit|billing/i.test(message || '')) {
     return "I can't answer that right now, because the Anthropic account is out of credits. Quick commands like open YouTube still work.";

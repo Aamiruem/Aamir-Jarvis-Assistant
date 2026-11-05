@@ -1,4 +1,4 @@
-// Shapes returned by the Jarvis backend (see docs/API.md in the project root).
+// Shapes returned by the Azarvis backend (see docs/API.md in the project root).
 
 export type Role = "user" | "admin";
 

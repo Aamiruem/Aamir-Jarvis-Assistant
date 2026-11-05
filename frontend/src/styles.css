@@ -1,4 +1,4 @@
-/* Jarvis design system: one dark "HUD" theme for the whole app (Home adds its own extras in
+/* Azarvis design system: one dark "HUD" theme for the whole app (Home adds its own extras in
    HomePanel.css). Accent colors per card come from --hue (set inline) through hsl(). */
 :root {
   --bg: #111722;
@@ -213,6 +213,7 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
 }
 .brand { display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 700; padding: 2px 4px; }
 .brand span { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.brand-logo { flex-shrink: 0; border-radius: 8px; filter: drop-shadow(0 0 8px rgba(129, 140, 248, 0.45)); }
 .side-search { display: flex; align-items: center; gap: 8px; padding: 0 10px; border-radius: 11px; border: 1px solid var(--border); background: var(--field); color: var(--muted); }
 .side-search:focus-within { border-color: var(--border-hi); }
 .side-search input:not([type='checkbox']) { flex: 1; border: none; background: none; padding: 8px 0; box-shadow: none; }
@@ -421,7 +422,7 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
 .tool-chip.ok { color: var(--ok); border-color: rgba(52, 211, 153, 0.4); }
 .tool-chip.failed { color: var(--danger); border-color: rgba(251, 113, 133, 0.5); }
 .meta { font-size: 12px; color: var(--muted); margin-left: 6px; }
-/* "Jarvis is thinking" dots while the first words are on their way. */
+/* "Azarvis is thinking" dots while the first words are on their way. */
 .typing { display: inline-flex; align-items: center; gap: 5px; min-height: 22px; }
 .typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); opacity: 0.4; animation: typing 1.2s ease-in-out infinite; }
 .typing i:nth-child(2) { animation-delay: 0.15s; }

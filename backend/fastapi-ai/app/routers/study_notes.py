@@ -1,4 +1,4 @@
-"""Notes written by Jarvis with the master prompt: start a job, then poll it."""
+"""Notes written by Azarvis with the master prompt: start a job, then poll it."""
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 

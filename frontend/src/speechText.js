@@ -1,5 +1,5 @@
 // Pure text helpers for voice mode: what to read aloud, when the speaker has finished,
-// and whether the microphone is just hearing Jarvis's own voice. No browser APIs here,
+// and whether the microphone is just hearing Azarvis's own voice. No browser APIs here,
 // so they are unit-tested in speechText.test.js.
 
 /** Markdown and links turned into something that sounds right when read aloud. */
@@ -17,7 +17,7 @@ export function cleanForSpeech(text) {
 }
 
 /**
- * Splits streamed text into chunks that can be spoken now, so Jarvis starts talking after the
+ * Splits streamed text into chunks that can be spoken now, so Azarvis starts talking after the
  * first sentence instead of waiting for the whole answer. A decimal point ("3.5") is not a
  * sentence end: the punctuation must be followed by whitespace. `final` flushes the rest.
  */
@@ -62,7 +62,7 @@ export function pauseFor(text, settled) {
 const words = (s) => (s || '').toLowerCase().match(/[a-z0-9ऀ-ॿ']+/g) || [];
 
 /**
- * True when what the microphone heard is (mostly) Jarvis's own voice coming out of the
+ * True when what the microphone heard is (mostly) Azarvis's own voice coming out of the
  * speakers, so it must not be treated as the user talking.
  */
 export function isEcho(heard, spoken) {
@@ -74,7 +74,7 @@ export function isEcho(heard, spoken) {
   return overlap >= 0.6;
 }
 
-/** At least two words Jarvis isn't saying: the user is talking over Jarvis (barge-in). */
+/** At least two words Azarvis isn't saying: the user is talking over Azarvis (barge-in). */
 export function isBargeIn(heard, spoken) {
   const said = new Set(words(spoken));
   const fresh = words(heard).filter((w) => !said.has(w));

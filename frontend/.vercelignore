@@ -1,0 +1,6 @@
+# Uploaded by `vercel deploy`: only the source; Vercel installs and builds itself.
+node_modules
+dist
+coverage
+.env*
+!.env.example

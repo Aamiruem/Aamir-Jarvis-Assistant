@@ -13,7 +13,7 @@ const MIC_ERRORS = {
 };
 
 const NO_SPEECH_MS = 8000; // this long with nothing said = a "silent round"
-const ECHO_TAIL_MS = 1200; // the mic can still pick up Jarvis's voice just after it stops talking
+const ECHO_TAIL_MS = 1200; // the mic can still pick up Azarvis's voice just after it stops talking
 
 // Most confident of the alternatives the recognizer offers for one phrase.
 const best = (result) => Array.from(result).reduce((a, b) => ((b.confidence || 0) > (a.confidence || 0) ? b : a)).transcript;
@@ -30,14 +30,14 @@ const readVoicePreference = () => {
  * Two ways to listen:
  *   start()                  - one request: stops at the first real pause.
  *   start({ keepOpen: true }) - conversation: the mic stays open, every pause hands over what
- *                              was said, and nothing is lost while Jarvis thinks or talks.
- * While Jarvis talks, the mic's own echo of Jarvis is ignored; real words from the user
+ *                              was said, and nothing is lost while Azarvis thinks or talks.
+ * While Azarvis talks, the mic's own echo of Azarvis is ignored; real words from the user
  * interrupt it (barge-in), as in a conversation between people.
  *
  * onFinal(text)      - what was said up to a pause
  * onSilence()        - nothing was said for a while
- * shouldBargeIn(heard) - optional filter: return false to let Jarvis keep talking
- * onBargeIn()        - the user started talking over Jarvis (Jarvis has already gone quiet)
+ * shouldBargeIn(heard) - optional filter: return false to let Azarvis keep talking
+ * onBargeIn()        - the user started talking over Azarvis (Azarvis has already gone quiet)
  */
 export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang = 'en-IN' }) {
   const [listening, setListening] = useState(false);
@@ -53,12 +53,12 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang =
   callbacks.current = { onFinal, onSilence, shouldBargeIn, onBargeIn };
 
   const speakingRef = useRef(false);
-  const spokenRef = useRef(''); // everything Jarvis is saying right now, for the echo check
+  const spokenRef = useRef(''); // everything Azarvis is saying right now, for the echo check
   const activeStream = useRef(null);
   const utterances = useRef([]); // kept on purpose: Chrome can drop onend for garbage-collected utterances
   const voiceRef = useRef(null);
 
-  // Stops Jarvis talking. An unfinished spoken reply still runs its "finished" callback.
+  // Stops Azarvis talking. An unfinished spoken reply still runs its "finished" callback.
   const quiet = () => {
     const s = activeStream.current;
     activeStream.current = null;
@@ -139,7 +139,7 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang =
 
       const echoing = speakingRef.current || Date.now() < s.echoUntil;
       if (echoing && isEcho(heard, spokenRef.current)) {
-        // Jarvis's own voice through the speakers: skip the parts the recognizer has settled on.
+        // Azarvis's own voice through the speakers: skip the parts the recognizer has settled on.
         while (s.base < e.results.length && e.results[s.base].isFinal) s.base += 1;
         return;
       }
@@ -288,7 +288,7 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang =
         activeStream.current = null;
         speakingRef.current = false;
         setSpeaking(false);
-        // Whatever the mic picked up while Jarvis talked was Jarvis: drop it.
+        // Whatever the mic picked up while Azarvis talked was Azarvis: drop it.
         const s = session.current;
         s.echoUntil = Date.now() + ECHO_TAIL_MS;
         if (s.active) {

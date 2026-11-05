@@ -109,9 +109,9 @@ export default function App() {
   const installer = useInstall();
 
   /**
-   * Starts a spoken session: the first time Jarvis asks a few questions to get to know you,
+   * Starts a spoken session: the first time Azarvis asks a few questions to get to know you,
    * after that it greets you, reads today's reminders and asks how it can help.
-   * arrival: started by Room Watch (always-listening "Hey Jarvis" mode). interview: ask again.
+   * arrival: started by Room Watch (always-listening "Hey Azarvis" mode). interview: ask again.
    */
   const startSession = useCallback(
     async ({ arrival = false, interview = false } = {}) => {
@@ -133,7 +133,7 @@ export default function App() {
       localStorage.setItem('jarvis-autostart', autoStart ? 'on' : 'off');
     } catch {}
   }, [autoStart]);
-  // Browsers only let a page talk after a click, so starting Jarvis is one tap on this prompt.
+  // Browsers only let a page talk after a click, so starting Azarvis is one tap on this prompt.
   useEffect(() => {
     if (user && autoStart && !welcomeShown()) setWelcome(true);
   }, [user]);
@@ -172,7 +172,7 @@ export default function App() {
     if (!user) return;
     refreshConversations();
     const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 1500));
-    idle(() => loadChat()); // so the first "Talk to Jarvis" opens instantly
+    idle(() => loadChat()); // so the first "Talk to Azarvis" opens instantly
   }, [user, refreshConversations]);
 
   // Keyboard: Ctrl/⌘+K command palette, Alt+1…9 switch tabs.
@@ -223,11 +223,11 @@ export default function App() {
     setMenuOpen(false);
     const outcome = await installer.install();
     if (outcome === 'manual') setInstallHelp(true);
-    else if (outcome === 'installed') toast('Jarvis is installed');
+    else if (outcome === 'installed') toast('Azarvis is installed');
   };
   const shareJarvis = async () => {
     setMenuOpen(false);
-    const result = await share({ title: 'Jarvis', text: 'Jarvis, my AI assistant:', url: window.location.origin }).catch(() => 'failed');
+    const result = await share({ title: 'Azarvis', text: 'Azarvis, my AI assistant:', url: window.location.origin }).catch(() => 'failed');
     if (result === 'copied') toast('Link copied');
   };
   const go = (id) => {
@@ -273,8 +273,8 @@ export default function App() {
       <aside className={`sidebar ${menuOpen ? 'open' : ''}`}>
         <div className="side-head">
           <div className="brand">
-            <div className="orb small" />
-            <span>Jarvis</span>
+            <img className="brand-logo" src="/icon.svg" alt="" width="30" height="30" />
+            <span>Azarvis</span>
           </div>
           <button className="icon-btn side-collapse" onClick={toggleMenu} title="Hide the sidebar" aria-label="Hide the sidebar">
             <Icon name="collapse" size="1.15em" />
@@ -295,7 +295,7 @@ export default function App() {
             ))}
         </nav>
         <div className="promo">
-          <strong>Unlock Jarvis everywhere</strong>
+          <strong>Unlock Azarvis everywhere</strong>
           <p>Ask from your phone, automate emails and posts, plan your day, all from one place.</p>
           <button className="promo-btn" onClick={() => go('automate')}>
             <Icon name="rocket" size="1.1em" /> Explore Automate
@@ -308,10 +308,10 @@ export default function App() {
             </button>
           )}
           <button onClick={shareJarvis}>
-            <Icon name="share" size="1.25em" /> Share Jarvis
+            <Icon name="share" size="1.25em" /> Share Azarvis
           </button>
           <button onClick={() => go('automate')}>
-            <Icon name="phone" size="1.25em" /> Jarvis on your phone
+            <Icon name="phone" size="1.25em" /> Azarvis on your phone
           </button>
         </div>
         <div className="side-foot">
@@ -327,7 +327,7 @@ export default function App() {
       <main className="main">
         <header className="topbar">
           <button className="icon-btn menu" onClick={toggleMenu} aria-label={collapsed ? 'Show sidebar' : 'Menu'} title="Menu"><Icon name="menu" /></button>
-          <span className="topbar-brand" aria-hidden="true"><span className="orb small" />Jarvis</span>
+          <span className="topbar-brand" aria-hidden="true"><img className="brand-logo" src="/icon.svg" alt="" width="26" height="26" />Azarvis</span>
           {/* Where you are (the sidebar is where you switch); not a second menu. */}
           {(() => {
             const current = TABS.find((t) => t.id === tab);
@@ -350,8 +350,8 @@ export default function App() {
             aria-label="Room Watch"
             title={
               roomWatchOn
-                ? `Room Watch is on (${roomWatch.status}): Jarvis greets you when you walk in. Click to turn off.`
-                : 'Room Watch: Jarvis notices when you walk into the room, greets you and starts listening'
+                ? `Room Watch is on (${roomWatch.status}): Azarvis greets you when you walk in. Click to turn off.`
+                : 'Room Watch: Azarvis notices when you walk into the room, greets you and starts listening'
             }
           >
             <Icon name="eye" />

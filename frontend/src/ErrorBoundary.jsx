@@ -10,7 +10,7 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    console.error('Jarvis UI crashed:', error, info.componentStack);
+    console.error('Azarvis UI crashed:', error, info.componentStack);
     this.setState({ where: info.componentStack });
   }
 

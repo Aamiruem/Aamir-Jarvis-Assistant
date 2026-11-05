@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 import { SITE } from "@/lib/site";
 
-// /manifest.webmanifest: lets browsers install Jarvis like an app.
+// /manifest.webmanifest: lets browsers install Azarvis like an app.
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: SITE.name,
@@ -15,6 +15,7 @@ export default function manifest(): MetadataRoute.Manifest {
     icons: [
       { src: "/favicon.ico", sizes: "any", type: "image/x-icon" },
       { src: "/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
+      { src: "/apple-icon.png", sizes: "180x180", type: "image/png", purpose: "maskable" },
     ],
   };
 }

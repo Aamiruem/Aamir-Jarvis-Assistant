@@ -1,4 +1,4 @@
-"""Tools Jarvis's agent can call.
+"""Tools Azarvis's agent can call.
 
 Each tool = a Pydantic input model (gives us the JSON schema for Claude AND
 validation of what Claude sends back) + a plain Python function that receives

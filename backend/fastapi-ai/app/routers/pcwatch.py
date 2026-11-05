@@ -1,4 +1,4 @@
-"""PC watcher settings: which changes on this computer Jarvis tells you about (see app/pc_watcher.py)."""
+"""PC watcher settings: which changes on this computer Azarvis tells you about (see app/pc_watcher.py)."""
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
@@ -30,4 +30,4 @@ async def put_settings(body: WatcherSettings, caller: Caller = Depends(get_calle
 @router.post("/test")
 async def test_alert(caller: Caller = Depends(get_caller)):
     """Sends one sample alert, so you can hear and see what an alert looks like."""
-    return sql.add_notification(caller.user_id, "PC watcher is on", "Jarvis will tell you when something on this computer needs you.")
+    return sql.add_notification(caller.user_id, "PC watcher is on", "Azarvis will tell you when something on this computer needs you.")

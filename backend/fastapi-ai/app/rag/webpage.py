@@ -1,7 +1,7 @@
 """Read a public web page into plain text, for the knowledge base ("Add a web page").
 
 Safety: only http(s), never an address on this computer or the local network (so a link can't be
-used to reach the router, other PCs or Jarvis's own services), every redirect is checked the same
+used to reach the router, other PCs or Azarvis's own services), every redirect is checked the same
 way, and pages are size- and time-limited.
 """
 import html as htmllib

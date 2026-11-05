@@ -84,7 +84,7 @@ class Memory(Base):
 
 
 class Contact(Base):
-    """Someone in the user's address book (Jarvis looks people up here to email or call them)."""
+    """Someone in the user's address book (Azarvis looks people up here to email or call them)."""
 
     __tablename__ = "contacts"
 

@@ -19,7 +19,7 @@ describe('cleanAnswer', () => {
     expect(cleanAnswer(q('city'), 'skip')).toBe('');
     expect(cleanAnswer(q('city'), "I don't know.")).toBe('');
   });
-  it('builds facts Jarvis can use later', () => {
+  it('builds facts Azarvis can use later', () => {
     expect(q('name').fact('Aamir')).toBe('The user wants to be called Aamir.');
     expect(nameFromMemories([{ fact: 'The user wants to be called Aamir.' }])).toBe('Aamir');
   });
@@ -55,7 +55,7 @@ describe('sessionPlan', () => {
     api.memories.mockResolvedValue([]);
     const plan = await sessionPlan({ id: 'u1', name: 'Aamir Hussain' });
     expect(plan.interview).toBe(ONBOARDING_QUESTIONS);
-    expect(plan.greeting).toMatch(/Aamir! I'm Jarvis/);
+    expect(plan.greeting).toMatch(/Aamir! I'm Azarvis/);
   });
   it('greets a returning user with a question instead', async () => {
     api.memories.mockResolvedValue([{ fact: 'The user wants to be called Boss.' }]);

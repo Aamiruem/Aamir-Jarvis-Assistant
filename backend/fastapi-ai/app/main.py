@@ -1,4 +1,4 @@
-"""Jarvis AI service (FastAPI).
+"""Azarvis AI service (FastAPI).
 
 Run:  uvicorn app.main:app --reload --port 8001   (from backend/fastapi-ai)
   or: python main.py                               (from backend/fastapi-ai/app)
@@ -49,7 +49,7 @@ async def lifespan(app: FastAPI):
             await task
 
 
-app = FastAPI(title="Jarvis AI Service", version="2.0.0", lifespan=lifespan)
+app = FastAPI(title="Azarvis AI Service", version="2.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

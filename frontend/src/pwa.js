@@ -1,4 +1,4 @@
-// Install Jarvis as an app (Progressive Web App) and share things through the device's share sheet.
+// Install Azarvis as an app (Progressive Web App) and share things through the device's share sheet.
 // Imported first in main.jsx: the browser's install offer (beforeinstallprompt) fires early.
 import { useEffect, useState } from 'react';
 
@@ -52,13 +52,13 @@ export function useInstall() {
 
 /** Where to tap when the browser can't show its own install prompt. */
 export function installSteps(kind = platform()) {
-  if (kind === 'ios') return ['Open Jarvis in Safari.', 'Tap the Share button (the square with an arrow).', 'Choose “Add to Home Screen”, then “Add”.'];
-  if (kind === 'android') return ['Open Jarvis in Chrome.', 'Tap the ⋮ menu at the top right.', 'Choose “Install app” or “Add to Home screen”.'];
-  return ['Open Jarvis in Chrome or Edge.', 'Click the install icon at the right end of the address bar (or menu ⋮ → “Install Jarvis”).', 'Jarvis opens in its own window, with an icon on your desktop and taskbar.'];
+  if (kind === 'ios') return ['Open Azarvis in Safari.', 'Tap the Share button (the square with an arrow).', 'Choose “Add to Home Screen”, then “Add”.'];
+  if (kind === 'android') return ['Open Azarvis in Chrome.', 'Tap the ⋮ menu at the top right.', 'Choose “Install app” or “Add to Home screen”.'];
+  return ['Open Azarvis in Chrome or Edge.', 'Click the install icon at the right end of the address bar (or menu ⋮ → “Install Azarvis”).', 'Azarvis opens in its own window, with an icon on your desktop and taskbar.'];
 }
 
 /** Shares through the device's share sheet, or copies the link. Returns "shared", "copied" or "cancelled". */
-export async function share({ title = 'Jarvis', text = '', url = '' }) {
+export async function share({ title = 'Azarvis', text = '', url = '' }) {
   if (navigator.share) {
     try {
       await navigator.share({ title, text, ...(url && { url }) });

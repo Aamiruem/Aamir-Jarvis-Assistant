@@ -4,10 +4,10 @@ import { test } from 'node:test';
 import { ChannelRouter, ConsoleSender, SmtpEmailSender, TwilioSmsSender, createNotifier } from '../src/auth/notifiers.js';
 
 test('smtp provider: email over SMTP as the app name, SMS falls back to the terminal without Twilio', () => {
-  const n = createNotifier({ provider: 'smtp', appName: 'Aamir Jarvis Assistant', smtp: { host: 'smtp.gmail.com', port: 465, user: 'me@gmail.com', pass: 'x' } });
+  const n = createNotifier({ provider: 'smtp', appName: 'Azarvis', smtp: { host: 'smtp.gmail.com', port: 465, user: 'me@gmail.com', pass: 'x' } });
   assert.ok(n instanceof ChannelRouter);
   assert.ok(n.byChannel.email instanceof SmtpEmailSender);
-  assert.deepEqual(n.byChannel.email.from, { name: 'Aamir Jarvis Assistant', address: 'me@gmail.com' });
+  assert.deepEqual(n.byChannel.email.from, { name: 'Azarvis', address: 'me@gmail.com' });
   assert.equal(n.byChannel.email.options.secure, true);
   assert.ok(n.byChannel.sms instanceof ConsoleSender);
 });

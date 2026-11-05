@@ -59,10 +59,10 @@ http.interceptors.response.use(undefined, async (error: AxiosError<{ error?: str
 
 function toApiError(error: AxiosError<{ error?: string; detail?: string; code?: string }>) {
   const res = error.response;
-  if (!res) return new ApiError("Can't reach the server. Is the Jarvis backend running? (npm run dev in the project folder)");
+  if (!res) return new ApiError("Can't reach the server. Is the Azarvis backend running? (npm run dev in the project folder)");
   // A non-JSON 5xx comes from the proxy, not our API: the backend isn't reachable.
   const isJson = String(res.headers["content-type"] ?? "").includes("application/json");
-  if (!isJson && res.status >= 500) return new ApiError("Can't reach the Jarvis server. Make sure backend/express-api is running.", res.status);
+  if (!isJson && res.status >= 500) return new ApiError("Can't reach the Azarvis server. Make sure backend/express-api is running.", res.status);
   return new ApiError(res.data?.error ?? res.data?.detail ?? `Request failed (${res.status})`, res.status, res.data?.code);
 }
 

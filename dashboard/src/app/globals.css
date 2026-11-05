@@ -4,7 +4,7 @@
 /* `dark:` utilities follow the .dark class that ThemeProvider puts on <html>. */
 @custom-variant dark (&:is(.dark *));
 
-/* shadcn/ui design tokens, tuned to the Jarvis palette (cyan on deep navy). */
+/* shadcn/ui design tokens, tuned to the Azarvis palette (cyan on deep navy). */
 :root {
   --radius: 0.75rem;
   --background: oklch(0.985 0.004 240);

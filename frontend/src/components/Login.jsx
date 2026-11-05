@@ -125,8 +125,8 @@ export default function Login({ onAuth }) {
     <div className="center-screen">
       <div className="card login">
         <div className="orb" />
-        <h1>J.A.R.V.I.S.</h1>
-        <p className="muted">Just A Rather Very Intelligent System</p>
+        <h1>AZARVIS</h1>
+        <p className="muted">AI voice assistant by Aamir Hussain Azad</p>
         {info && <div className="success">{info}</div>}
 
         {step === 'login' && (
@@ -197,7 +197,7 @@ export default function Login({ onAuth }) {
               </button>
             )}
             <button type="button" className="btn ghost full" onClick={() => go('login')}>Cancel</button>
-            <p className="hint">Never share this code. Jarvis staff will never ask for it.</p>
+            <p className="hint">Never share this code. Azarvis staff will never ask for it.</p>
           </form>
         )}
       </div>

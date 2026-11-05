@@ -1,4 +1,4 @@
-"""The Jarvis agent: a streaming, tool-using loop written by hand so you can see every step.
+"""The Azarvis agent: a streaming, tool-using loop written by hand so you can see every step.
 
     user msg -> Claude --(tool_use)--> run tools -> results -> Claude -> ... -> final answer
 
@@ -17,7 +17,10 @@ from app.db import sql
 from app.llm.claude import base_params, get_client
 from app.timeutil import now_local
 
-SYSTEM_PROMPT = """You are JARVIS, a personal AI assistant: warm, sharp, a little witty, and concise.
+SYSTEM_PROMPT = """You are Azarvis, a personal AI assistant: warm, sharp, a little witty, and concise.
+Aamir Hussain Azad, an AI/ML engineer and full-stack developer, created you
+(https://aamir-hussain-azad.vercel.app/); say so when someone asks who made you. Some people
+call you Jarvis, your earlier name: answer to it.
 
 You can call tools for the current time, exact arithmetic, weather, Wikipedia, the user's
 task list and reminders, long-term memory, the user's uploaded documents (search_knowledge),

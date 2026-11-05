@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jarvis – AI Voice Assistant for Tasks, Reminders &amp; Your PC</title>
-    <meta name="description" content="Jarvis is a personal AI voice assistant powered by Claude: reminders, tasks, study notes, answers from your documents and hands-free control of your PC." />
-    <meta name="keywords" content="AI assistant, AI voice assistant, Jarvis AI, personal assistant, voice assistant for PC, hands-free, reminders, task manager, Claude" />
+    <title>Azarvis – AI Voice Assistant by Aamir Hussain Azad</title>
+    <meta name="description" content="Azarvis by Aamir Hussain Azad is a personal AI voice assistant powered by Claude: reminders, tasks, study notes, documents and hands-free control of your PC." />
+    <meta name="keywords" content="Azarvis, Azarvis AI, Aamir Hussain Azad, Jarvis by Aamir Hussain Azad, AI assistant, AI voice assistant, personal assistant, voice assistant for PC, hands-free, reminders, task manager, Claude" />
     <meta name="author" content="Aamir Hussain Azad" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta name="theme-color" content="#050816" />
@@ -13,15 +13,17 @@
     <!-- Link previews (WhatsApp, LinkedIn, X, Slack). og:url, og:image and the canonical link are
          made absolute at build time from VITE_SITE_URL (see the seo plugin in vite.config.js). -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Jarvis AI Assistant" />
-    <meta property="og:title" content="Jarvis – AI Voice Assistant for Tasks, Reminders &amp; Your PC" />
-    <meta property="og:description" content="Talk naturally. Jarvis handles reminders, tasks, documents and your PC, hands-free." />
+    <meta property="og:site_name" content="Azarvis AI Assistant" />
+    <meta property="og:title" content="Azarvis – AI Voice Assistant by Aamir Hussain Azad" />
+    <meta property="og:description" content="Talk naturally. Azarvis handles reminders, tasks, documents and your PC, hands-free." />
     <meta property="og:locale" content="en_IN" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Azarvis, AI voice assistant by Aamir Hussain Azad" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Jarvis – AI Voice Assistant" />
-    <meta name="twitter:description" content="Talk naturally. Jarvis handles reminders, tasks, documents and your PC, hands-free." />
+    <meta name="twitter:title" content="Azarvis – AI Voice Assistant by Aamir Hussain Azad" />
+    <meta name="twitter:description" content="Talk naturally. Azarvis handles reminders, tasks, documents and your PC, hands-free." />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
@@ -36,13 +38,40 @@
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "Jarvis AI Assistant",
-        "applicationCategory": "ProductivityApplication",
-        "operatingSystem": "Windows, macOS, Linux, Web",
-        "browserRequirements": "Voice needs Google Chrome or Microsoft Edge",
-        "description": "A personal AI voice assistant powered by Claude: reminders, tasks, long-term memory, chat with your documents and control of your computer, hands-free.",
-        "author": { "@type": "Person", "name": "Aamir Hussain Azad", "url": "https://aamir-hussain-azad.vercel.app/", "sameAs": ["https://github.com/Aamiruem", "https://www.linkedin.com/in/aamir-hussain-azad-62623924b"] }
+        "@graph": [
+          {
+            "@type": "Person",
+            "@id": "#author",
+            "name": "Aamir Hussain Azad",
+            "jobTitle": "AI/ML Engineer & Full-Stack Developer",
+            "url": "https://aamir-hussain-azad.vercel.app/",
+            "sameAs": [
+              "https://aamir-hussain-azad.vercel.app/",
+              "https://github.com/Aamiruem",
+              "https://www.linkedin.com/in/aamir-hussain-azad-62623924b",
+              "https://leetcode.com/u/Aamiruem/"
+            ]
+          },
+          {
+            "@type": "WebApplication",
+            "name": "Azarvis",
+            "alternateName": [
+              "Azarvis AI Assistant",
+              "Azarvis by Aamir Hussain Azad",
+              "Jarvis by Aamir Hussain Azad"
+            ],
+            "applicationCategory": "ProductivityApplication",
+            "operatingSystem": "Windows, macOS, Linux, Web",
+            "browserRequirements": "Voice needs Google Chrome or Microsoft Edge",
+            "description": "A personal AI voice assistant powered by Claude: reminders, tasks, long-term memory, chat with your documents and control of your computer, hands-free.",
+            "author": {
+              "@id": "#author"
+            },
+            "creator": {
+              "@id": "#author"
+            }
+          }
+        ]
       }
     </script>
     <!-- Fonts load without blocking the first paint; the system font shows until they arrive. -->
@@ -54,20 +83,22 @@
       /* Splash shown the instant the HTML arrives, before any JavaScript; React replaces it. */
       .boot { min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 14px; padding: 24px; text-align: center; background: #050816; color: #e3ecff; font-family: Inter, system-ui, sans-serif; }
       [data-theme='light'] .boot { background: #f4f7fd; color: #0f1b33; }
-      .boot-orb { width: 72px; height: 72px; border-radius: 50%; background: radial-gradient(circle at 38% 34%, #a5f3fc, #38e1ff 45%, #6d28d9); box-shadow: 0 0 40px rgba(56, 225, 255, 0.55); animation: boot 1.4s ease-in-out infinite; }
+      .boot-logo { filter: drop-shadow(0 0 22px rgba(129, 140, 248, 0.55)); animation: boot 1.4s ease-in-out infinite; }
+      .boot .boot-by { font-size: 13px; letter-spacing: 0.04em; opacity: 0.6; }
       .boot h1 { margin: 6px 0 0; font: 700 26px/1.2 Rajdhani, system-ui, sans-serif; letter-spacing: 0.3em; }
       .boot p { margin: 0; max-width: 34ch; opacity: 0.7; font-size: 14px; line-height: 1.5; }
       @keyframes boot { 50% { transform: scale(1.08); } }
-      @media (prefers-reduced-motion: reduce) { .boot-orb { animation: none; } }
+      @media (prefers-reduced-motion: reduce) { .boot-logo { animation: none; } }
     </style>
   </head>
   <body>
     <div id="root">
       <main class="boot">
-        <div class="boot-orb" aria-hidden="true"></div>
-        <h1>J.A.R.V.I.S.</h1>
+        <img class="boot-logo" src="/icon.svg" alt="" width="80" height="80" />
+        <h1>AZARVIS</h1>
         <p>Your personal AI voice assistant for reminders, tasks, documents and your computer.</p>
-        <noscript><p>Jarvis needs JavaScript. Please enable it to continue.</p></noscript>
+        <p class="boot-by">by Aamir Hussain Azad</p>
+        <noscript><p>Azarvis needs JavaScript. Please enable it to continue.</p></noscript>
       </main>
     </div>
     <script type="module" src="/src/main.jsx"></script>

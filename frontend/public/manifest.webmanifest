@@ -1,7 +1,7 @@
 {
-  "name": "Jarvis AI Assistant",
-  "short_name": "Jarvis",
-  "description": "Your personal AI voice assistant for reminders, tasks, documents and your computer.",
+  "name": "Azarvis AI Assistant",
+  "short_name": "Azarvis",
+  "description": "Your personal AI voice assistant for reminders, tasks, documents and your computer, by Aamir Hussain Azad.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#050816",
@@ -23,7 +23,7 @@
       "type": "image/png"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -39,7 +39,7 @@
   ],
   "shortcuts": [
     {
-      "name": "Chat with Jarvis",
+      "name": "Chat with Azarvis",
       "short_name": "Chat",
       "url": "/?tab=chat",
       "icons": [

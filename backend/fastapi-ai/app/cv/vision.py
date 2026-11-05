@@ -50,4 +50,4 @@ async def describe_image(image_bytes: bytes, media_type: str, question: str | No
         },
         {"type": "text", "text": question or "Describe what you see in this image in 2-3 sentences."},
     ]
-    return await complete(content, system="You are JARVIS's vision module. Be concise and specific.", max_tokens=4000)
+    return await complete(content, system="You are AZARVIS's vision module. Be concise and specific.", max_tokens=4000)

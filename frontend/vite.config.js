@@ -3,12 +3,13 @@ import { defineConfig, loadEnv } from 'vite';
 
 /**
  * SEO files that depend on where the app is deployed (VITE_SITE_URL, see .env.example):
- * absolute canonical / Open Graph links, the Google Search Console verification tag,
- * robots.txt and sitemap.xml. Without VITE_SITE_URL the links stay relative and there is no sitemap.
+ * absolute canonical / Open Graph links, the Google Search Console verification tag, Google
+ * Analytics (VITE_GA_ID), robots.txt and sitemap.xml. Without VITE_SITE_URL the links stay relative and there is no sitemap.
  */
 function seo(env) {
   const site = (env.VITE_SITE_URL || '').replace(/\/$/, '');
   const verification = env.VITE_GOOGLE_SITE_VERIFICATION || '';
+  const gaId = /^G-[A-Z0-9]+$/.test((env.VITE_GA_ID || '').trim()) ? env.VITE_GA_ID.trim() : '';
   return {
     name: 'jarvis-seo',
     transformIndexHtml() {
@@ -20,6 +21,15 @@ function seo(env) {
         tags.push(meta({ name: 'twitter:image', content: `${site}/og-image.png` }));
       }
       if (verification) tags.push(meta({ name: 'google-site-verification', content: verification }));
+      if (gaId) {
+        // Google Analytics 4. The ID was checked against /^G-[A-Z0-9]+$/, so it is safe inside the script.
+        tags.push({ tag: 'script', attrs: { async: true, src: `https://www.googletagmanager.com/gtag/js?id=${gaId}` }, injectTo: 'head' });
+        tags.push({
+          tag: 'script',
+          children: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${gaId}');`,
+          injectTo: 'head',
+        });
+      }
       return tags;
     },
     generateBundle() {

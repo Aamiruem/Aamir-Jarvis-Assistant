@@ -87,7 +87,7 @@ export default function KnowledgePanel() {
 
   return (
     <div className="panel">
-      <PageHeader icon="book" hue={205} title="Knowledge base" subtitle="Upload your documents and Jarvis answers questions from them in chat.">
+      <PageHeader icon="book" hue={205} title="Knowledge base" subtitle="Upload your documents and Azarvis answers questions from them in chat.">
         <span className="stat-pill"><strong>{docs.length}</strong> {docs.length === 1 ? 'document' : 'documents'}</span>
       </PageHeader>
 
@@ -129,7 +129,7 @@ export default function KnowledgePanel() {
       {error && <div className="error">{error}</div>}
 
       {loaded && docs.length === 0 ? (
-        <EmptyState icon="file" title="No documents yet">Upload a policy, notes or a manual, then ask Jarvis about it.</EmptyState>
+        <EmptyState icon="file" title="No documents yet">Upload a policy, notes or a manual, then ask Azarvis about it.</EmptyState>
       ) : (
         <ul className="card-grid">
           {docs.map((d) => (

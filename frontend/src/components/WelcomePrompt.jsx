@@ -3,8 +3,8 @@ import { Icon } from '../icons.jsx';
 import { speechSupported } from '../useSpeech.js';
 
 /**
- * Shown when Jarvis opens. Browsers only allow a page to talk and listen after a click,
- * so "Start talking" is that click: Jarvis then greets you and asks its questions.
+ * Shown when Azarvis opens. Browsers only allow a page to talk and listen after a click,
+ * so "Start talking" is that click: Azarvis then greets you and asks its questions.
  */
 export default function WelcomePrompt({ name, autoStart, onAutoStartChange, onStart, onClose }) {
   const startRef = useRef(null);
@@ -21,12 +21,12 @@ export default function WelcomePrompt({ name, autoStart, onAutoStartChange, onSt
       <div className="welcome-card" role="dialog" aria-modal="true" aria-labelledby="welcome-title" onClick={(e) => e.stopPropagation()}>
         <div className="orb big pulse" aria-hidden="true" />
         <h2 id="welcome-title">
-          Hello{first ? `, ${first}` : ''}. <span className="grad-text">Jarvis is online.</span>
+          Hello{first ? `, ${first}` : ''}. <span className="grad-text">Azarvis is online.</span>
         </h2>
         <p className="muted">
           {speechSupported
-            ? 'Start talking and Jarvis will greet you, read your reminders and ask a question or two. Just speak naturally; you can interrupt it any time.'
-            : 'Voice needs Chrome or Edge. You can still type to Jarvis in Chat.'}
+            ? 'Start talking and Azarvis will greet you, read your reminders and ask a question or two. Just speak naturally; you can interrupt it any time.'
+            : 'Voice needs Chrome or Edge. You can still type to Azarvis in Chat.'}
         </p>
         <div className="welcome-actions">
           {speechSupported && (
@@ -38,7 +38,7 @@ export default function WelcomePrompt({ name, autoStart, onAutoStartChange, onSt
         </div>
         <label className="welcome-auto">
           <input type="checkbox" checked={autoStart} onChange={(e) => onAutoStartChange(e.target.checked)} />
-          Show this when I open Jarvis
+          Show this when I open Azarvis
         </label>
       </div>
     </div>

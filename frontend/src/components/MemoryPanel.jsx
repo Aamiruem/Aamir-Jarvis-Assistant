@@ -23,7 +23,7 @@ export default function MemoryPanel() {
     if (!text.trim()) return;
     try {
       await api.addMemory(text.trim());
-      toast('Jarvis will remember that');
+      toast('Azarvis will remember that');
       setFact('');
       load();
     } catch (err) {
@@ -43,14 +43,14 @@ export default function MemoryPanel() {
         icon="brain"
         hue={330}
         title="Long-term memory"
-        subtitle="Facts Jarvis remembers about you in every conversation. Jarvis adds them itself when you share something worth keeping."
+        subtitle="Facts Azarvis remembers about you in every conversation. Azarvis adds them itself when you share something worth keeping."
       >
         <span className="stat-pill"><strong>{memories.length}</strong> {memories.length === 1 ? 'fact' : 'facts'}</span>
       </PageHeader>
 
       <form className="composer-card" onSubmit={(e) => { e.preventDefault(); remember(fact); }}>
         <Icon name="sparkles" className="accent-icon" />
-        <input className="grow" value={fact} onChange={(e) => setFact(e.target.value)} placeholder="Teach Jarvis something… e.g. I'm vegetarian" maxLength={500} aria-label="New fact" />
+        <input className="grow" value={fact} onChange={(e) => setFact(e.target.value)} placeholder="Teach Azarvis something… e.g. I'm vegetarian" maxLength={500} aria-label="New fact" />
         <button className="btn primary" disabled={!fact.trim()}>Remember</button>
       </form>
       {error && <div className="error">{error}</div>}
@@ -66,7 +66,7 @@ export default function MemoryPanel() {
 
       {loaded && memories.length === 0 ? (
         <EmptyState icon="brain" title="Nothing remembered yet">
-          Try one of these, or just tell Jarvis in chat “Remember that…”.
+          Try one of these, or just tell Azarvis in chat “Remember that…”.
           <span className="chips left">
             {EXAMPLES.map((x) => <button key={x} className="chip" onClick={() => remember(x)}>+ {x}</button>)}
           </span>

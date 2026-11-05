@@ -80,8 +80,8 @@ export function createApp(container) {
     });
   });
 
-  // This computer's addresses on the home network, so the app can show the link to open Jarvis
-  // on a phone ("Use Jarvis from your phone"). Signed-in users only.
+  // This computer's addresses on the home network, so the app can show the link to open Azarvis
+  // on a phone ("Use Azarvis from your phone"). Signed-in users only.
   app.get('/api/system/network', requireAuth, (_req, res) => {
     const lanAddresses = Object.values(os.networkInterfaces())
       .flat()

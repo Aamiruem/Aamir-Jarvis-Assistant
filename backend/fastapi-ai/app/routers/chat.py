@@ -46,7 +46,7 @@ def _log(caller: Caller, req: ChatRequest, nlp: dict, started: float, done_event
 def _friendly_error(e: Exception) -> str:
     """Plain-language message for the chat window; the full error still goes to the server log."""
     if isinstance(e, anthropic.AuthenticationError):
-        return ("Jarvis can't reach Claude: the ANTHROPIC_API_KEY in .env was rejected (invalid or revoked). "
+        return ("Azarvis can't reach Claude: the ANTHROPIC_API_KEY in .env was rejected (invalid or revoked). "
                 "Create a new key at console.anthropic.com/settings/keys, then run \"npm run set-key\" in the "
                 "project folder and paste it. It works right away, no restart needed.")
     if isinstance(e, anthropic.PermissionDeniedError):

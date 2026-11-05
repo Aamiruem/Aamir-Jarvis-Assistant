@@ -1,0 +1,3 @@
+# The API isn't a website: keep it out of search results.
+User-agent: *
+Disallow: /

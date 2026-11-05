@@ -13,16 +13,21 @@ function siteUrl(raw = process.env.NEXT_PUBLIC_SITE_URL?.trim()) {
 }
 
 export const SITE = {
-  name: "Jarvis AI Assistant",
-  shortName: "Jarvis",
+  name: "Azarvis AI Assistant",
+  shortName: "Azarvis",
   url: siteUrl(),
-  title: "Jarvis – AI Voice Assistant for Tasks, Reminders & Your PC",
+  // Other names people may search for; Google uses alternateName when it picks the site name.
+  alternateNames: ["Azarvis AI", "Azarvis by Aamir Hussain Azad", "Jarvis by Aamir Hussain Azad"],
+  title: "Azarvis – AI Voice Assistant by Aamir Hussain Azad",
   description:
-    "Jarvis is a personal AI voice assistant powered by Claude: reminders, tasks, study notes, answers from your documents and hands-free control of your PC.",
+    "Azarvis by Aamir Hussain Azad is a personal AI voice assistant powered by Claude: reminders, tasks, study notes, documents and hands-free control of your PC.",
   keywords: [
+    "Azarvis",
+    "Azarvis AI",
+    "Aamir Hussain Azad",
+    "Jarvis by Aamir Hussain Azad",
     "AI assistant",
     "AI voice assistant",
-    "Jarvis AI",
     "personal assistant",
     "voice assistant for PC",
     "hands-free assistant",
@@ -32,6 +37,7 @@ export const SITE = {
     "productivity app",
   ],
   author: "Aamir Hussain Azad",
+  authorJobTitle: "AI/ML Engineer & Full-Stack Developer",
   authorUrl: "https://aamir-hussain-azad.vercel.app/",
   authorProfiles: [
     "https://github.com/Aamiruem",
@@ -41,6 +47,8 @@ export const SITE = {
   locale: "en_IN",
   // Google Search Console > Settings > Ownership verification > HTML tag: the content="…" value.
   googleVerification: process.env.GOOGLE_SITE_VERIFICATION || process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "",
+  // Google Analytics 4 > Admin > Data streams > Web: the "G-…" measurement ID. Unset = no analytics.
+  gaId: /^G-[A-Z0-9]+$/.test(process.env.NEXT_PUBLIC_GA_ID?.trim() ?? "") ? process.env.NEXT_PUBLIC_GA_ID!.trim() : "",
 } as const;
 
 /** Public pages, for the sitemap. Everything under /dashboard is private (noindex). */

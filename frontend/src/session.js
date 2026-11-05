@@ -1,4 +1,4 @@
-// What Jarvis says and asks when a session starts.
+// What Azarvis says and asks when a session starts.
 //   First time:   a short spoken interview (name, city, work, what to help with), saved to memory.
 //   Every time after: a greeting, today's reminders and one question to get the day going.
 import { api } from './api.js';
@@ -11,7 +11,7 @@ const tidy = (a) =>
     .trim();
 
 /**
- * The interview. `ask` may use earlier answers (so Jarvis can say your name back);
+ * The interview. `ask` may use earlier answers (so Azarvis can say your name back);
  * `clean` keeps the useful part of a spoken answer ("call me Aamir" -> "Aamir").
  */
 export const ONBOARDING_QUESTIONS = [
@@ -98,7 +98,7 @@ function wasOnboarded(userId) {
   }
 }
 
-/** The name Jarvis was told to use, from memory ("The user wants to be called Aamir."). */
+/** The name Azarvis was told to use, from memory ("The user wants to be called Aamir."). */
 export function nameFromMemories(memories) {
   for (const m of memories) {
     const hit = /wants to be called (.+?)\.?$/i.exec(m.fact || '');
@@ -120,7 +120,7 @@ export async function sessionPlan(user, { arrival = false, interview = false } =
   const name = nameFromMemories(memories) || (user?.name || '').split(' ')[0];
   if (interview || (!wasOnboarded(user?.id) && memories.length < 2)) {
     return {
-      greeting: `${hello()}${name ? `, ${name}` : ''}! I'm Jarvis, your personal assistant. Let me ask you a few quick questions so I can help you better. You can say "skip" at any time.`,
+      greeting: `${hello()}${name ? `, ${name}` : ''}! I'm Azarvis, your personal assistant. Let me ask you a few quick questions so I can help you better. You can say "skip" at any time.`,
       interview: ONBOARDING_QUESTIONS,
     };
   }

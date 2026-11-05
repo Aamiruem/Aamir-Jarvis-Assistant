@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+import { AzarvisLogo } from "@/components/azarvis-logo";
 import { SessionSplash } from "@/components/dashboard/session-splash";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -36,8 +37,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-dvh flex-col md:flex-row">
       <aside className="border-b bg-sidebar md:sticky md:top-0 md:h-dvh md:w-60 md:shrink-0 md:border-r md:border-b-0">
         <div className="flex items-center justify-between px-4 py-4">
-          <Link href="/" className="font-display text-lg font-bold tracking-[0.3em] text-primary">
-            J.A.R.V.I.S.
+          <Link href="/" aria-label="Azarvis home">
+            <AzarvisLogo markClassName="size-7" />
           </Link>
           <div className="md:hidden">
             <ThemeToggle />

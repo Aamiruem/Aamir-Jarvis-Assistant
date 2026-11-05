@@ -1,6 +1,6 @@
 // Simple "open X" / "play X on YouTube" commands, handled instantly in the browser:
 // no AI call, so they work in a split second (and even when Claude is unreachable).
-// Anything more complex ("open YouTube and remind me…") still goes to Jarvis, who has an open_website tool.
+// Anything more complex ("open YouTube and remind me…") still goes to Azarvis, who has an open_website tool.
 
 const SITES = {
   youtube: ['YouTube', 'https://www.youtube.com'],
@@ -61,13 +61,13 @@ const SYSTEM_PHRASES = [
 ];
 const titleCase = (s) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 
-// Polite filler around a command: "hello Jarvis, please open the YouTube for me"
+// Polite filler around a command: "hello Azarvis, please open the YouTube for me"
 const FILLER = /^(?:(?:hello|hi|hey|ok|okay|yo)\b[\s,]*)?(?:jarvis\b[\s,]*)?(?:(?:please|can you|could you|will you|kindly)\s+)*/i;
 const TAIL = /[\s,]*(?:please|for me|now|right now|jarvis|thanks|thank you)?[\s.!?]*$/i;
 
 /**
  * Returns { label, url, say } for a website/search, { system: {action, target}, say } for a
- * Windows action, or null when Jarvis (Claude) should handle the request.
+ * Windows action, or null when Azarvis (Claude) should handle the request.
  */
 export function quickCommand(text) {
   const t = text.trim().replace(FILLER, '').replace(TAIL, '').trim();

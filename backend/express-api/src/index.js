@@ -25,7 +25,7 @@ async function chooseStorage() {
 
 const container = createContainer(await chooseStorage());
 const server = createApp(container).listen(config.port, () => {
-  console.log(`Jarvis Express API on http://localhost:${config.port}`);
+  console.log(`Azarvis Express API on http://localhost:${config.port}`);
   if (config.notifications.provider === 'console') console.log('OTP codes will be printed in this terminal (OTP_PROVIDER=console).');
 });
 

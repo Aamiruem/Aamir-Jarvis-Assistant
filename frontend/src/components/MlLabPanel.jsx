@@ -189,7 +189,7 @@ function HouseProject() {
       {state?.status === 'training' && (
         <>
           <Progress job={job || state.job} label="Training the house price model (first time only, a few minutes)" />
-          <p className="muted small">This happens once. You can use the rest of Jarvis meanwhile.</p>
+          <p className="muted small">This happens once. You can use the rest of Azarvis meanwhile.</p>
         </>
       )}
       {state?.status === 'ready' && (
@@ -284,7 +284,7 @@ function TrainOnYourData({ onTrained }) {
         <div className="grow">
           <h3>Train a model on your data</h3>
           <p className="muted">
-            Upload a CSV (sales, customers, leads, prices…) and pick the column to predict. Jarvis explores the data, compares
+            Upload a CSV (sales, customers, leads, prices…) and pick the column to predict. Azarvis explores the data, compares
             the algorithms, tunes the winner and tells you honestly how accurate it is.
           </p>
         </div>
@@ -457,7 +457,7 @@ export default function MlLabPanel() {
         <div className="notice-body">
           <strong>Honest accuracy, not 100%</strong>
           <p>
-            No model predicts real-world data perfectly. Jarvis holds back 20% of the rows, trains on the rest, and reports how
+            No model predicts real-world data perfectly. Azarvis holds back 20% of the rows, trains on the rest, and reports how
             well the model does on the held-back rows, next to a naive guess it has to beat. That is what to expect on new data.
           </p>
         </div>

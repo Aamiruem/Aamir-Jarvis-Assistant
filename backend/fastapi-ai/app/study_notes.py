@@ -1,4 +1,4 @@
-"""Study notes written by Claude with the user's master prompt (Notes → "Make notes with Jarvis").
+"""Study notes written by Claude with the user's master prompt (Notes → "Make notes with Azarvis").
 
 The prompt asks for long, structured notes (introduction, vocabulary, basic → advanced concepts,
 code with dry runs, mistakes, exercises, interview questions, cheat sheet, assessment), so the
@@ -111,7 +111,7 @@ def generate(topic: str, lecture: dict | None, context: str, progress) -> dict:
     if not key:
         raise ValueError("No Claude API key is set. Run \"npm run set-key\" in the project folder.")
     client = anthropic.Anthropic(api_key=key)
-    progress("Jarvis is writing your notes…", 3)
+    progress("Azarvis is writing your notes…", 3)
     chunks: list[str] = []
     try:
         with client.beta.messages.stream(

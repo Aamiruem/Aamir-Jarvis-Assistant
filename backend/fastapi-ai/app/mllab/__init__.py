@@ -1,4 +1,4 @@
-"""ML Lab: classic machine learning inside Jarvis.
+"""ML Lab: classic machine learning inside Azarvis.
 
     data.py      CSV -> typed table, and an exploratory profile (EDA)
     automl.py    preprocessing pipeline, model comparison with cross-validation, tuning,

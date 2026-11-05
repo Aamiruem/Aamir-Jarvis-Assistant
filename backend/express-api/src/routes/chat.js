@@ -21,7 +21,7 @@ function gatewayError(err) {
   const code = err.cause?.code || err.code;
   if (code === 'ECONNREFUSED' || err.message === 'fetch failed') return aiDownMessage();
   if (err.name === 'TimeoutError' || code === 'IDLE_TIMEOUT') {
-    return 'Jarvis stopped answering (nothing arrived for a while). Please try again.';
+    return 'Azarvis stopped answering (nothing arrived for a while). Please try again.';
   }
   return `Couldn't reach the AI service: ${err.message}`;
 }

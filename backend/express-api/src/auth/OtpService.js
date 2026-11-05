@@ -3,20 +3,20 @@ import { AuthenticationError, TooManyRequestsError } from './errors.js';
 
 const MESSAGES = {
   verify_email: (code, ttl) => ({
-    subject: 'Verify your Aamir Jarvis Assistant account',
-    text: `Aamir Jarvis Assistant: your verification code is ${code}. It expires in ${ttl} minutes.`,
+    subject: 'Verify your Azarvis account',
+    text: `Azarvis: your verification code is ${code}. It expires in ${ttl} minutes.`,
   }),
   login: (code, ttl) => ({
-    subject: 'Your Aamir Jarvis Assistant sign-in code',
-    text: `Aamir Jarvis Assistant: your sign-in code is ${code}. It expires in ${ttl} minutes. If you didn't try to sign in, change your password now.`,
+    subject: 'Your Azarvis sign-in code',
+    text: `Azarvis: your sign-in code is ${code}. It expires in ${ttl} minutes. If you didn't try to sign in, change your password now.`,
   }),
   reset_password: (code, ttl) => ({
-    subject: 'Reset your Aamir Jarvis Assistant password',
-    text: `Aamir Jarvis Assistant: your password reset code is ${code}. It expires in ${ttl} minutes. Never share this code with anyone.`,
+    subject: 'Reset your Azarvis password',
+    text: `Azarvis: your password reset code is ${code}. It expires in ${ttl} minutes. Never share this code with anyone.`,
   }),
   verify_phone: (code, ttl) => ({
-    subject: 'Verify your phone for Aamir Jarvis Assistant',
-    text: `Aamir Jarvis Assistant: your phone verification code is ${code}. It expires in ${ttl} minutes.`,
+    subject: 'Verify your phone for Azarvis',
+    text: `Azarvis: your phone verification code is ${code}. It expires in ${ttl} minutes.`,
   }),
 };
 

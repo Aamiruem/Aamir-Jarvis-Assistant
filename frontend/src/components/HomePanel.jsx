@@ -160,11 +160,11 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
         <div className="cc-hero-side">
           {speechSupported && (
             <div className="cc-start">
-              <button className="btn primary cc-start-btn" onClick={() => onStartSession()} title="Jarvis greets you, reads today's reminders and starts listening">
-                <Icon name="mic" size="1.1em" /> Start Jarvis
+              <button className="btn primary cc-start-btn" onClick={() => onStartSession()} title="Azarvis greets you, reads today's reminders and starts listening">
+                <Icon name="mic" size="1.1em" /> Start Azarvis
               </button>
               <button className="cc-start-link" onClick={() => onStartSession({ interview: true })}>
-                Tell Jarvis about you
+                Tell Azarvis about you
               </button>
             </div>
           )}
@@ -223,7 +223,7 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
             <div className="cc-orbit o2" />
             <div className="cc-orbit o3" />
             <div className="cc-core-text">
-              <strong>JARVIS</strong>
+              <strong>AZARVIS</strong>
               <small>AI CORE</small>
             </div>
           </div>
@@ -231,9 +231,9 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
             className="cc-talk"
             onClick={() => onAsk('', false, true)}
             disabled={!speechSupported}
-            title={speechSupported ? 'Hands-free: say several tasks at once, Jarvis answers out loud' : 'Voice needs Chrome or Edge'}
+            title={speechSupported ? 'Hands-free: say several tasks at once, Azarvis answers out loud' : 'Voice needs Chrome or Edge'}
           >
-            <Icon name="mic" /> Talk to Jarvis
+            <Icon name="mic" /> Talk to Azarvis
           </button>
           <small className="muted">Talk naturally. Interrupt any time, or say “stop” to finish.</small>
           <form className="cc-askbar" onSubmit={submitAsk}>
@@ -241,10 +241,10 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
             <input
               value={ask}
               onChange={(e) => setAsk(e.target.value)}
-              placeholder="Ask or tell Jarvis… “Remind me to pay rent on Friday at 10am”"
-              aria-label="Command for Jarvis"
+              placeholder="Ask or tell Azarvis… “Remind me to pay rent on Friday at 10am”"
+              aria-label="Command for Azarvis"
             />
-            <button className="cc-go" aria-label="Ask Jarvis">
+            <button className="cc-go" aria-label="Ask Azarvis">
               <Icon name="send" />
               <span>Ask</span>
             </button>
@@ -303,11 +303,11 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
           </ul>
         </Panel>
 
-        <Panel icon="brain" title="What Jarvis knows">
-          <div className="cc-big">{memories.length}<small>facts Jarvis knows about you</small></div>
+        <Panel icon="brain" title="What Azarvis knows">
+          <div className="cc-big">{memories.length}<small>facts Azarvis knows about you</small></div>
           <ul className="cc-mem">
             {memories.slice(0, 3).map((m) => <li key={m.id}><Icon name="sparkles" size="1em" />{m.fact}</li>)}
-            {memories.length === 0 && <li className="muted">Tell Jarvis “Remember that…” to add one.</li>}
+            {memories.length === 0 && <li className="muted">Tell Azarvis “Remember that…” to add one.</li>}
           </ul>
           <button className="cc-link" onClick={() => onOpenTab('memory')}>View memory <Icon name="chevron" size="1em" /></button>
         </Panel>
@@ -346,7 +346,7 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
 
         <Panel icon="chat" title="Recent Chats">
           <ul className="cc-chats">
-            {conversations.length === 0 && <li className="muted">No chats yet. Ask Jarvis anything.</li>}
+            {conversations.length === 0 && <li className="muted">No chats yet. Ask Azarvis anything.</li>}
             {conversations.slice(0, 5).map((c) => (
               <li key={c._id}>
                 <button onClick={() => onOpenConversation(c._id)}>

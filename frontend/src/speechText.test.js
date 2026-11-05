@@ -38,7 +38,7 @@ describe('pauseFor', () => {
 
 describe('echo and barge-in', () => {
   const spoken = 'The weather in Pune is sunny with a high of 31 degrees.';
-  it("recognizes Jarvis's own voice", () => {
+  it("recognizes Azarvis's own voice", () => {
     expect(isEcho('the weather in pune is sunny', spoken)).toBe(true);
     expect(isBargeIn('the weather in pune is sunny', spoken)).toBe(false);
   });

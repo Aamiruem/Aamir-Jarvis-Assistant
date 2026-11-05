@@ -57,7 +57,7 @@ export function LatencyLineChart({ points }: { points: Point[] }) {
   return (
     <ChartCard
       title="Response time"
-      description="How long Jarvis took to answer each of your recent messages"
+      description="How long Azarvis took to answer each of your recent messages"
       table={{ columns: ["Time", "Response (ms)"], rows: points.map((pt) => [fmtTime(pt.at), pt.latencyMs.toLocaleString()]) }}
     >
       <div ref={wrap} className="relative w-full min-w-0">

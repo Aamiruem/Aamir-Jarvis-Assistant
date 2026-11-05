@@ -1,4 +1,4 @@
-"""Actions Jarvis can do on the computer this service runs on: Windows, Linux or macOS.
+"""Actions Azarvis can do on the computer this service runs on: Windows, Linux or macOS.
 
 A browser page can't open apps or change the volume, but this service runs locally, so it can.
 Only the fixed actions below exist: Claude or the browser picks an action and a target from

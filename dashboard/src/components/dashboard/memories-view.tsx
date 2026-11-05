@@ -45,7 +45,7 @@ export function MemoriesView() {
 
   return (
     <>
-      <PageHeader title="Memories" description="Facts Jarvis remembers about you · stored in Zustand" />
+      <PageHeader title="Memories" description="Facts Azarvis remembers about you · stored in Zustand" />
 
       <form onSubmit={onSubmit} className="mb-2 flex gap-2" noValidate>
         <label htmlFor="new-memory" className="sr-only">
@@ -75,7 +75,7 @@ export function MemoriesView() {
           ))}
         </div>
       ) : shown.length === 0 ? (
-        <p className="py-10 text-center text-muted-foreground">{query ? "No memories match that search." : "Jarvis doesn't remember anything about you yet."}</p>
+        <p className="py-10 text-center text-muted-foreground">{query ? "No memories match that search." : "Azarvis doesn't remember anything about you yet."}</p>
       ) : (
         <motion.ul layout className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence initial={false}>

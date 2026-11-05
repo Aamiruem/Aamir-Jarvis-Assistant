@@ -6,11 +6,11 @@ import { openUrl } from '../quickCommands.js';
 
 // Ctrl+K (⌘K on Mac) or the search bar: one box for everything. Jump to a tab, run an action or an
 // automation, find a chat, contact, task, memory, note (any chapter or heading), ML model or
-// document, search Google or YouTube, or press Enter to ask Jarvis.
+// document, search Google or YouTube, or press Enter to ask Azarvis.
 const ACTIONS = [
-  { icon: 'sparkles', label: 'Start Jarvis (greeting, reminders, voice)', run: (a) => a.startSession() },
-  { icon: 'mic', label: 'Talk to Jarvis (hands-free voice)', run: (a) => a.ask('', false, true) },
-  { icon: 'user', label: 'Tell Jarvis about yourself (quick interview)', run: (a) => a.startSession({ interview: true }) },
+  { icon: 'sparkles', label: 'Start Azarvis (greeting, reminders, voice)', run: (a) => a.startSession() },
+  { icon: 'mic', label: 'Talk to Azarvis (hands-free voice)', run: (a) => a.ask('', false, true) },
+  { icon: 'user', label: 'Tell Azarvis about yourself (quick interview)', run: (a) => a.startSession({ interview: true }) },
   { icon: 'plus', label: 'New chat', run: (a) => a.newChat() },
   { icon: 'alarm', label: 'Set a reminder…', run: (a) => a.ask('Remind me to ', false) },
   { icon: 'weather', label: "Today's weather", run: (a) => a.ask("What's the weather today?", true) },
@@ -28,9 +28,9 @@ const ACTIONS = [
   { icon: 'house', label: 'Predict a house price', keywords: 'ml lab machine learning', run: (a) => a.openTab('mllab') },
   { icon: 'upload', label: 'Train a model on a CSV', keywords: 'ml lab machine learning automl', run: (a) => a.openTab('mllab') },
   { icon: 'notes', label: 'Practice my notes (flashcards)', keywords: 'study revise interview', run: (a) => a.openTab('notes') },
-  { icon: 'globe', label: 'Add a web page to Jarvis’s knowledge', keywords: 'portfolio url website learn', run: (a) => a.openTab('knowledge') },
-  { icon: 'download', label: 'Install Jarvis as an app', keywords: 'pwa desktop phone', run: (a) => a.install?.() },
-  { icon: 'share', label: 'Share Jarvis', keywords: 'link send', run: (a) => a.share?.() },
+  { icon: 'globe', label: 'Add a web page to Azarvis’s knowledge', keywords: 'portfolio url website learn', run: (a) => a.openTab('knowledge') },
+  { icon: 'download', label: 'Install Azarvis as an app', keywords: 'pwa desktop phone', run: (a) => a.install?.() },
+  { icon: 'share', label: 'Share Azarvis', keywords: 'link send', run: (a) => a.share?.() },
 ];
 
 export default function CommandPalette({ open, initialQuery = '', onClose, tabs, conversations, actions }) {
@@ -85,7 +85,7 @@ export default function CommandPalette({ open, initialQuery = '', onClose, tabs,
       })));
       const text = q.trim();
       list.push(
-        { group: 'Ask Jarvis', icon: 'sparkles', label: `“${text}”`, hint: 'Enter', run: () => actions.ask(text, true) },
+        { group: 'Ask Azarvis', icon: 'sparkles', label: `“${text}”`, hint: 'Enter', run: () => actions.ask(text, true) },
         { group: 'Search the web', icon: 'globe', label: `Google: ${text}`, run: () => openUrl(`https://www.google.com/search?q=${encodeURIComponent(text)}`) },
         { group: 'Search the web', icon: 'youtube', label: `YouTube: ${text}`, run: () => openUrl(`https://www.youtube.com/results?search_query=${encodeURIComponent(text)}`) },
       );
@@ -105,8 +105,8 @@ export default function CommandPalette({ open, initialQuery = '', onClose, tabs,
     else if (e.key === 'ArrowUp') { e.preventDefault(); setSel((s) => Math.max(s - 1, 0)); }
     else if (e.key === 'Enter') {
       e.preventDefault();
-      // With text typed and nothing better highlighted, Enter asks Jarvis.
-      choose(items[sel] ?? items.find((it) => it.group === 'Ask Jarvis'));
+      // With text typed and nothing better highlighted, Enter asks Azarvis.
+      choose(items[sel] ?? items.find((it) => it.group === 'Ask Azarvis'));
     }
   };
 
@@ -121,7 +121,7 @@ export default function CommandPalette({ open, initialQuery = '', onClose, tabs,
             value={q}
             onChange={(e) => { setQ(e.target.value); setSel(0); }}
             onKeyDown={onKey}
-            placeholder="Search everything: notes, chats, contacts, tasks, models… or ask Jarvis"
+            placeholder="Search everything: notes, chats, contacts, tasks, models… or ask Azarvis"
             aria-label="Search commands"
           />
           <kbd>Esc</kbd>

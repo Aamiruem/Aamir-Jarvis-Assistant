@@ -3,7 +3,7 @@ import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { EmptyState, PageHeader, toast } from '../ui.jsx';
 
-// Address book. Jarvis reads it too (find_contact tool), so "email Priya about tomorrow's
+// Address book. Azarvis reads it too (find_contact tool), so "email Priya about tomorrow's
 // leave" picks up Priya's address. Call / WhatsApp / email open the right app on this PC.
 const BLANK = { name: '', phone: '', email: '', company: '', notes: '', favorite: false };
 
@@ -118,7 +118,7 @@ export default function ContactsPanel({ initialQuery = '', onAsk }) {
 
   return (
     <div className="panel">
-      <PageHeader icon="contacts" hue={160} title="Contacts" subtitle="Your address book. Ask Jarvis “email Priya about tomorrow” and it uses these details.">
+      <PageHeader icon="contacts" hue={160} title="Contacts" subtitle="Your address book. Ask Azarvis “email Priya about tomorrow” and it uses these details.">
         <span className="stat-pill"><strong>{contacts.length}</strong> {contacts.length === 1 ? 'contact' : 'contacts'}</span>
         <button className="btn primary" onClick={() => setEditing(BLANK)}><Icon name="plus" /> Add contact</button>
       </PageHeader>
@@ -147,7 +147,7 @@ export default function ContactsPanel({ initialQuery = '', onAsk }) {
 
       {loaded && contacts.length === 0 ? (
         <EmptyState icon="contacts" title="No contacts yet">
-          Add the people you email or call most, then just ask Jarvis to write to them.
+          Add the people you email or call most, then just ask Azarvis to write to them.
           <span className="chips left"><button className="chip" onClick={() => setEditing(BLANK)}>+ Add your first contact</button></span>
         </EmptyState>
       ) : groups.length === 0 && loaded ? (
@@ -180,7 +180,7 @@ export default function ContactsPanel({ initialQuery = '', onAsk }) {
                     )}
                     {c.email && <a className="icon-btn" href={`mailto:${c.email}`} title={`Email ${c.name}`} aria-label={`Email ${c.name}`}><Icon name="mail" size="1em" /></a>}
                     {onAsk && (
-                      <button className="icon-btn" title="Ask Jarvis to write to them" aria-label={`Ask Jarvis to write to ${c.name}`} onClick={() => onAsk(`Write an email to ${c.name}${c.email ? ` (${c.email})` : ''} about `, false)}>
+                      <button className="icon-btn" title="Ask Azarvis to write to them" aria-label={`Ask Azarvis to write to ${c.name}`} onClick={() => onAsk(`Write an email to ${c.name}${c.email ? ` (${c.email})` : ''} about `, false)}>
                         <Icon name="sparkles" size="1em" />
                       </button>
                     )}

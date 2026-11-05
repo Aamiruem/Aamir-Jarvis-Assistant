@@ -13,6 +13,7 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { AzarvisLogo, AzarvisMark } from "@/components/azarvis-logo";
 import { JarvisOrb } from "@/components/jarvis-orb";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -21,20 +22,20 @@ import { SITE } from "@/lib/site";
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 const FEATURES = [
-  { icon: Mic, title: "Hands-free conversation", body: "Just talk. Jarvis keeps listening, answers out loud in a natural voice, and stops the moment you interrupt." },
-  { icon: CheckSquare, title: "Tasks & reminders", body: "“Remind me to call the bank at 11.” Jarvis sets it, and notifies you when it's due." },
-  { icon: Brain, title: "Long-term memory", body: "Tell Jarvis about yourself once. It remembers your name, city and preferences, and you can edit them any time." },
-  { icon: FileText, title: "Chat with your documents", body: "Upload PDFs and notes, then ask questions. Jarvis answers from your files and names its sources." },
+  { icon: Mic, title: "Hands-free conversation", body: "Just talk. Azarvis keeps listening, answers out loud in a natural voice, and stops the moment you interrupt." },
+  { icon: CheckSquare, title: "Tasks & reminders", body: "“Remind me to call the bank at 11.” Azarvis sets it, and notifies you when it's due." },
+  { icon: Brain, title: "Long-term memory", body: "Tell Azarvis about yourself once. It remembers your name, city and preferences, and you can edit them any time." },
+  { icon: FileText, title: "Chat with your documents", body: "Upload PDFs and notes, then ask questions. Azarvis answers from your files and names its sources." },
   { icon: Laptop, title: "Controls your computer", body: "Open apps and files, change the volume, take screenshots and lock the screen on Windows, macOS or Linux." },
-  { icon: Eye, title: "Vision", body: "Show Jarvis a photo or your screen and ask what's on it, or let it greet you when you walk into the room." },
-  { icon: BarChart3, title: "Usage analytics", body: "See what you ask about most, how you feel about it, and how fast Jarvis answers." },
+  { icon: Eye, title: "Vision", body: "Show Azarvis a photo or your screen and ask what's on it, or let it greet you when you walk into the room." },
+  { icon: BarChart3, title: "Usage analytics", body: "See what you ask about most, how you feel about it, and how fast Azarvis answers." },
   { icon: ShieldCheck, title: "Bank-grade sign-in", body: "One-time codes, account lockout, short-lived tokens and httpOnly refresh cookies keep your account yours." },
 ];
 
 const STEPS = [
-  { title: "Say hello", body: "Open Jarvis and tap Start talking. It greets you and reads today's reminders." },
-  { title: "Let Jarvis get to know you", body: "The first time, it asks a few quick questions (what to call you, your city, your work) and remembers the answers." },
-  { title: "Talk like you would to a person", body: "Ask several things at once, change your mind mid-sentence, or interrupt. Jarvis keeps up." },
+  { title: "Say hello", body: "Open Azarvis and tap Start talking. It greets you and reads today's reminders." },
+  { title: "Let Azarvis get to know you", body: "The first time, it asks a few quick questions (what to call you, your city, your work) and remembers the answers." },
+  { title: "Talk like you would to a person", body: "Ask several things at once, change your mind mid-sentence, or interrupt. Azarvis keeps up." },
 ];
 
 const EXAMPLES = [
@@ -50,46 +51,62 @@ const EXAMPLES = [
 
 const FAQ = [
   {
-    q: "What is Jarvis?",
-    a: "Jarvis is a personal AI voice assistant powered by Anthropic's Claude. You talk to it (or type), and it manages your tasks and reminders, remembers what matters to you, answers questions about your documents and controls your computer.",
+    q: "What is Azarvis?",
+    a: "Azarvis is a personal AI voice assistant powered by Anthropic's Claude. You talk to it (or type), and it manages your tasks and reminders, remembers what matters to you, answers questions about your documents and controls your computer.",
   },
   {
-    q: "Does Jarvis work hands-free?",
-    a: "Yes. In voice mode the microphone stays open, so you can just keep talking. Jarvis starts answering after your first pause, reads its reply aloud sentence by sentence, and stops as soon as you talk over it. “Hey Jarvis” mode only reacts when you say its name.",
+    q: "Does Azarvis work hands-free?",
+    a: "Yes. In voice mode the microphone stays open, so you can just keep talking. Azarvis starts answering after your first pause, reads its reply aloud sentence by sentence, and stops as soon as you talk over it. “Hey Azarvis” mode only reacts when you say its name.",
   },
   {
     q: "Which browsers and computers are supported?",
-    a: "Voice works best in Google Chrome and Microsoft Edge. Computer control works on Windows, macOS and Linux when the Jarvis AI service runs on that computer.",
+    a: "Voice works best in Google Chrome and Microsoft Edge. Computer control works on Windows, macOS and Linux when the Azarvis AI service runs on that computer.",
   },
   {
     q: "Is my data private?",
     a: "Your tasks, memories, documents and chats are stored per account and only you can see them. Room Watch measures motion in the browser and detects faces on your own PC; no camera image is sent anywhere for it. You can delete your account and all of its data at any time.",
   },
   {
-    q: "Can I run Jarvis on my own computer?",
-    a: "Yes. The whole stack (the React app, the Node.js API and the Python AI service) runs on your own computer or server with your own Claude API key. That is also what lets Jarvis open apps and files on your PC.",
+    q: "Can I run Azarvis on my own computer?",
+    a: "Yes. The whole stack (the React app, the Node.js API and the Python AI service) runs on your own computer or server with your own Claude API key. That is also what lets Azarvis open apps and files on your PC.",
   },
 ];
 
-// Structured data: tells Google this is a web application, with an FAQ it can show in results.
+// Structured data: tells Google this is a web application made by Aamir Hussain Azad (one Person,
+// linked to his portfolio and profiles), with an FAQ it can show in results.
+const AUTHOR_ID = `${SITE.url}/#author`;
 const JSON_LD = {
   "@context": "https://schema.org",
   "@graph": [
     {
+      "@type": "Person",
+      "@id": AUTHOR_ID,
+      name: SITE.author,
+      jobTitle: SITE.authorJobTitle,
+      url: SITE.authorUrl,
+      sameAs: [SITE.authorUrl, ...SITE.authorProfiles],
+    },
+    {
       "@type": "WebSite",
-      name: SITE.name,
-      url: SITE.url,
+      name: SITE.shortName,
+      alternateName: [SITE.name, ...SITE.alternateNames],
+      url: `${SITE.url}/`,
       description: SITE.description,
       inLanguage: "en",
+      creator: { "@id": AUTHOR_ID },
+      publisher: { "@id": AUTHOR_ID },
     },
     {
       "@type": "SoftwareApplication",
-      name: SITE.name,
-      url: SITE.url,
+      name: SITE.shortName,
+      alternateName: [...SITE.alternateNames],
+      url: `${SITE.url}/`,
+      image: `${SITE.url}/opengraph-image`,
       applicationCategory: "ProductivityApplication",
       operatingSystem: "Windows, macOS, Linux, Web",
       description: SITE.description,
-      author: { "@type": "Person", name: SITE.author, url: SITE.authorUrl, sameAs: [...SITE.authorProfiles] },
+      author: { "@id": AUTHOR_ID },
+      creator: { "@id": AUTHOR_ID },
       featureList: FEATURES.map((f) => f.title),
     },
     {
@@ -116,8 +133,8 @@ export default function LandingPage() {
       />
       <header className="sticky top-0 z-20 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 sm:px-6">
-          <Link href="/" className="font-display text-lg font-bold tracking-[0.2em] text-primary sm:text-xl sm:tracking-[0.3em]">
-            J.A.R.V.I.S.
+          <Link href="/" aria-label="Azarvis home">
+            <AzarvisLogo />
           </Link>
           <nav aria-label="Sections" className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
             {NAV.map((n) => (
@@ -150,7 +167,7 @@ export default function LandingPage() {
                 The AI voice assistant that <span className="text-gradient">gets things done.</span>
               </h1>
               <p className="mt-6 max-w-prose text-lg text-muted-foreground">
-                Talk to Jarvis like you would to a person. It sets your reminders, keeps your tasks, remembers what
+                Talk to Azarvis like you would to a person. It sets your reminders, keeps your tasks, remembers what
                 matters to you, reads your documents and runs your computer, all hands-free.
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
@@ -177,7 +194,7 @@ export default function LandingPage() {
                 “Remind me to call mom at 6, and what&apos;s the weather in Pune?”
               </figure>
               <figure className="absolute top-2 right-0 max-w-[15rem] rounded-2xl rounded-tr-sm border border-primary/30 bg-primary/10 px-4 py-3 text-sm shadow-lg backdrop-blur sm:right-2">
-                <figcaption className="sr-only">Jarvis replies</figcaption>
+                <figcaption className="sr-only">Azarvis replies</figcaption>
                 Done, I&apos;ll remind you at 6 PM. Pune is 31° and sunny.
               </figure>
             </div>
@@ -204,7 +221,7 @@ export default function LandingPage() {
         <section id="features" aria-labelledby="features-title" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6">
           <p className="text-sm font-medium tracking-widest text-primary uppercase">Features</p>
           <h2 id="features-title" className="reveal mt-2 text-3xl font-bold sm:text-4xl">
-            What you can do with Jarvis
+            What you can do with Azarvis
           </h2>
           <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {FEATURES.map(({ icon: Icon, title, body }) => (
@@ -252,7 +269,7 @@ export default function LandingPage() {
                 ))}
               </ul>
               <p className="mt-5 text-sm text-muted-foreground">
-                Several requests in one breath work too: Jarvis does them all and confirms each one.
+                Several requests in one breath work too: Azarvis does them all and confirms each one.
               </p>
             </div>
           </div>
@@ -284,7 +301,7 @@ export default function LandingPage() {
               Ready to meet your assistant?
             </h2>
             <p className="relative mx-auto mt-4 max-w-xl text-muted-foreground">
-              Create an account in a minute. Jarvis will greet you and ask a few questions to get to know you.
+              Create an account in a minute. Azarvis will greet you and ask a few questions to get to know you.
             </p>
             <Button size="lg" className="relative mt-8" asChild>
               <Link href="/register">
@@ -297,8 +314,9 @@ export default function LandingPage() {
 
       <footer className="border-t">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-8 text-sm text-muted-foreground sm:px-6">
-          <p>
-            <span className="font-display font-bold tracking-[0.2em] text-primary">J.A.R.V.I.S.</span> · {SITE.name} by{" "}
+          <p className="flex flex-wrap items-center gap-x-2">
+            <AzarvisMark className="size-6" />
+            <span className="font-display font-bold tracking-[0.2em] text-primary">AZARVIS</span> · {SITE.name} by{" "}
             <a href={SITE.authorUrl} target="_blank" rel="noopener author" className="font-medium text-foreground hover:underline">
               {SITE.author}
             </a>

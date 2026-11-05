@@ -6,7 +6,7 @@ import MarkdownView from './MarkdownView.jsx';
 
 // A YouTube course (frontend/public/courses, made by scripts/import_youtube_course.py): every
 // lecture in order with the video, its chapters, code links and description, your own notes
-// and notes written by Jarvis with the master prompt (saved to your account as user notes).
+// and notes written by Azarvis with the master prompt (saved to your account as user notes).
 
 const loadCourse = async (slug) => {
   const r = await fetch(`/courses/${slug}/course.json`);
@@ -28,11 +28,11 @@ const readWatched = (slug) => {
   }
 };
 const MINE = (id) => `campusx:${id}`; // user-note categories (≤ 40 characters)
-const JARVIS = (id) => `campusx-ai:${id}`;
+const AZARVIS = (id) => `campusx-ai:${id}`;
 
 function LectureNotes({ course, lecture, notes, onSaved }) {
   const mine = notes.find((n) => n.category === MINE(lecture.id));
-  const ai = notes.find((n) => n.category === JARVIS(lecture.id));
+  const ai = notes.find((n) => n.category === AZARVIS(lecture.id));
   const [draft, setDraft] = useState(mine?.content || '');
   const [saving, setSaving] = useState(false);
   const [job, setJob] = useState(null);
@@ -72,12 +72,12 @@ function LectureNotes({ course, lecture, notes, onSaved }) {
         await new Promise((r) => setTimeout(r, 2000));
         const j = await api.studyNotesJob(started.id);
         setJob(j);
-        if (j.status === 'failed') throw new Error(j.error || 'Jarvis could not write the notes.');
+        if (j.status === 'failed') throw new Error(j.error || 'Azarvis could not write the notes.');
         if (j.status === 'done') {
-          const title = `Jarvis notes · #${lecture.n} ${lecture.title}`.slice(0, 140);
+          const title = `Azarvis notes · #${lecture.n} ${lecture.title}`.slice(0, 140);
           if (ai) await api.updateUserNote(ai._id || ai.id, { content: j.result.markdown });
-          else await api.addUserNote(title, j.result.markdown, JARVIS(lecture.id));
-          toast('Jarvis wrote your notes');
+          else await api.addUserNote(title, j.result.markdown, AZARVIS(lecture.id));
+          toast('Azarvis wrote your notes');
           onSaved();
           setJob(null);
           return;
@@ -97,7 +97,7 @@ function LectureNotes({ course, lecture, notes, onSaved }) {
           rows={6}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="What you learned in this lecture, questions, code you want to remember… Jarvis uses these when it writes notes."
+          placeholder="What you learned in this lecture, questions, code you want to remember… Azarvis uses these when it writes notes."
           aria-label="My notes for this lecture"
         />
         <div className="row wrap">
@@ -106,10 +106,10 @@ function LectureNotes({ course, lecture, notes, onSaved }) {
         </div>
       </section>
       <section>
-        <h4><Icon name="sparkles" size="1em" /> Notes by Jarvis</h4>
+        <h4><Icon name="sparkles" size="1em" /> Notes by Azarvis</h4>
         <p className="muted small">
           Complete study notes for this lecture's topic with your master prompt: concepts basic → advanced, code with dry runs,
-          mistakes, exercises, interview questions, a cheat sheet and a quiz. Jarvis can't watch the video, so they're built from
+          mistakes, exercises, interview questions, a cheat sheet and a quiz. Azarvis can't watch the video, so they're built from
           the title, the description and your notes.
         </p>
         {job ? (
@@ -119,7 +119,7 @@ function LectureNotes({ course, lecture, notes, onSaved }) {
           </div>
         ) : (
           <button className="btn primary sm" onClick={makeNotes}>
-            <Icon name="sparkles" size="1em" /> {ai ? 'Write them again' : 'Make notes with Jarvis'}
+            <Icon name="sparkles" size="1em" /> {ai ? 'Write them again' : 'Make notes with Azarvis'}
           </button>
         )}
         {error && <p className="error">{error}</p>}
@@ -251,7 +251,7 @@ export default function CoursePanel({ slug = 'campusx-dsmp-2022-23', target }) {
                     <a className="btn sm" href="https://learnwith.campusx.in/" target="_blank" rel="noopener noreferrer"><Icon name="globe" size="1em" /> CampusX courses</a>
                     <button className="btn sm ghost" onClick={() => setTryPlayer(true)}>I'm a member: play here</button>
                   </div>
-                  <p className="muted small">Meanwhile, “Make notes with Jarvis” below writes complete notes on this lecture's topic.</p>
+                  <p className="muted small">Meanwhile, “Make notes with Azarvis” below writes complete notes on this lecture's topic.</p>
                 </div>
               </div>
             ) : (

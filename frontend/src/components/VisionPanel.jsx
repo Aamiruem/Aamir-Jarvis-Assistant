@@ -63,7 +63,7 @@ export default function VisionPanel() {
 
   return (
     <div className="panel">
-      <PageHeader icon="eye" hue={290} title="Vision" subtitle="Use your camera or a photo: faces are detected on your PC, and Jarvis describes the scene and answers your question." />
+      <PageHeader icon="eye" hue={290} title="Vision" subtitle="Use your camera or a photo: faces are detected on your PC, and Azarvis describes the scene and answers your question." />
 
       <div className="row wrap">
         {cameraOn ? (

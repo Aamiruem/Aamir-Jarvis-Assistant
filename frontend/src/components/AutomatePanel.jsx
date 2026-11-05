@@ -5,7 +5,7 @@ import { openUrl } from '../quickCommands.js';
 import { readAlertsAloud, setReadAlertsAloud } from '../alerts.js';
 import { PageHeader, toast } from '../ui.jsx';
 
-// Automate: one-click automations, your apps, and using Jarvis from your phone.
+// Automate: one-click automations, your apps, and using Azarvis from your phone.
 // Every button here does something real today. What needs an app connection first is labeled
 // "Needs connection" and never pretends to work.
 
@@ -19,7 +19,7 @@ const RECIPES = [
   { icon: 'copy', hue: 160, title: 'Summarize what I copied', body: 'Copy any text, article or email, then click.', prompt: 'Summarize what I copied in five short bullet points.', send: true },
 ];
 
-// Your apps. "now" works today through Jarvis's tools; "next" needs the app connected first.
+// Your apps. "now" works today through Azarvis's tools; "next" needs the app connected first.
 const APPS = [
   {
     name: 'Gmail', icon: 'mail', hue: 4,
@@ -71,7 +71,7 @@ function Copyable({ text }) {
 
 const CHECK_ICONS = { battery: 'zap', disk: 'folder', busy: 'cpu', downloads: 'upload', drives: 'monitor', network: 'wifi' };
 
-/** Jarvis watches this computer and tells you (bell + out loud) when something needs you. */
+/** Azarvis watches this computer and tells you (bell + out loud) when something needs you. */
 function PcWatcherCard() {
   const [s, setS] = useState(null);
   const [aloud, setAloud] = useState(readAlertsAloud);
@@ -95,10 +95,10 @@ function PcWatcherCard() {
       <div className="watcher-head">
         <span className="badge-icon lg" style={{ '--hue': 160 }}><Icon name="eye" /></span>
         <div className="grow">
-          <h3 id="watcher-title">Jarvis watches this PC</h3>
+          <h3 id="watcher-title">Azarvis watches this PC</h3>
           <p className="muted">
-            Low battery, a full disk, a busy processor, finished downloads, USB drives, internet drops: Jarvis tells you in the
-            bell and out loud, once per change. Open Jarvis on your phone to get them while you're away.
+            Low battery, a full disk, a busy processor, finished downloads, USB drives, internet drops: Azarvis tells you in the
+            bell and out loud, once per change. Open Azarvis on your phone to get them while you're away.
           </p>
         </div>
         {s && (
@@ -116,7 +116,7 @@ function PcWatcherCard() {
         )}
       </div>
       {error && <p className="error">{error}</p>}
-      {s && !s.available && <p className="muted small">Off on this server: Jarvis can only watch the computer its AI service runs on (SYSTEM_CONTROL=true).</p>}
+      {s && !s.available && <p className="muted small">Off on this server: Azarvis can only watch the computer its AI service runs on (SYSTEM_CONTROL=true).</p>}
       {s?.available && (
         <>
           <ul className="watch-checks">
@@ -161,18 +161,18 @@ export default function AutomatePanel({ onAsk, onOpenTab }) {
 
   return (
     <div className="panel automate">
-      <PageHeader icon="rocket" hue={300} title="Automate" subtitle="Hand your routine work to Jarvis: one click, or just say it." />
+      <PageHeader icon="rocket" hue={300} title="Automate" subtitle="Hand your routine work to Azarvis: one click, or just say it." />
 
       <section className="auto-hero">
         <div>
-          <h3>Tell Jarvis what you need, from anywhere.</h3>
+          <h3>Tell Azarvis what you need, from anywhere.</h3>
           <p className="muted">
-            Jarvis plans your day, writes your emails and posts, keeps your follow-ups and runs this PC. Open it on your phone
+            Azarvis plans your day, writes your emails and posts, keeps your follow-ups and runs this PC. Open it on your phone
             and everything you ask is done here, on your computer.
           </p>
         </div>
         <a className="btn primary" href="#remote">
-          <Icon name="phone" size="1em" /> Use Jarvis from your phone
+          <Icon name="phone" size="1em" /> Use Azarvis from your phone
         </a>
       </section>
 
@@ -221,22 +221,22 @@ export default function AutomatePanel({ onAsk, onOpenTab }) {
       <div className="notice auto-connect">
         <span className="notice-icon"><Icon name="key" /></span>
         <div className="notice-body">
-          <strong>Want Jarvis to read your inbox and post for you?</strong>
+          <strong>Want Azarvis to read your inbox and post for you?</strong>
           <p>
-            That needs each service to let Jarvis in: a Google Cloud app for Gmail, Drive and YouTube (free), a Meta developer app
+            That needs each service to let Azarvis in: a Google Cloud app for Gmail, Drive and YouTube (free), a Meta developer app
             with an Instagram business account, and a LinkedIn developer app. Each one asks you to sign in and approve exactly
-            what Jarvis may do. Until then Jarvis writes everything and opens the site, and you press Post or Send.
+            what Azarvis may do. Until then Azarvis writes everything and opens the site, and you press Post or Send.
           </p>
         </div>
       </div>
 
-      <h3 className="section-title" id="remote"><Icon name="phone" /> Use Jarvis from anywhere</h3>
+      <h3 className="section-title" id="remote"><Icon name="phone" /> Use Azarvis from anywhere</h3>
       <div className="remote-grid">
         <article className="card remote-card" style={{ '--hue': 190 }}>
           <span className="badge-icon"><Icon name="wifi" /></span>
           <h4>At home, on the same Wi-Fi</h4>
           <ol>
-            <li>On this PC, start Jarvis with <Copyable text="npm run dev:phone" /></li>
+            <li>On this PC, start Azarvis with <Copyable text="npm run dev:phone" /></li>
             <li>
               On your phone, open{' '}
               {lan === null ? (
@@ -247,9 +247,9 @@ export default function AutomatePanel({ onAsk, onOpenTab }) {
                 <span className="muted">this PC's address (no network found)</span>
               )}
             </li>
-            <li>Sign in, then choose <b>Add to Home screen</b>: Jarvis becomes an app on your phone.</li>
+            <li>Sign in, then choose <b>Add to Home screen</b>: Azarvis becomes an app on your phone.</li>
           </ol>
-          {!onThisPc && <p className="success"><Icon name="check" size="1em" /> You're already using Jarvis from another device.</p>}
+          {!onThisPc && <p className="success"><Icon name="check" size="1em" /> You're already using Azarvis from another device.</p>}
         </article>
         <article className="card remote-card" style={{ '--hue': 265 }}>
           <span className="badge-icon"><Icon name="globe" /></span>
@@ -259,11 +259,11 @@ export default function AutomatePanel({ onAsk, onOpenTab }) {
               Install <a href="https://tailscale.com/download" target="_blank" rel="noopener noreferrer">Tailscale</a> (free) on this PC
               and on your phone, and sign in to both with the same account.
             </li>
-            <li>Start Jarvis on this PC with <Copyable text="npm run dev:phone" /></li>
+            <li>Start Azarvis on this PC with <Copyable text="npm run dev:phone" /></li>
             <li>On your phone, open <code>http://&lt;this PC's Tailscale name&gt;:{port}</code> from anywhere.</li>
           </ol>
           <p className="muted small">
-            Only your own devices can reach it. Keep the PC switched on with Jarvis running. Never open a port on your router for Jarvis.
+            Only your own devices can reach it. Keep the PC switched on with Azarvis running. Never open a port on your router for Azarvis.
           </p>
         </article>
         <article className="card remote-card" style={{ '--hue': 150 }}>

@@ -18,7 +18,7 @@ export function onSessionExpired(fn) {
 
 // Starting only the web page (npm run dev inside frontend/) is the usual cause, so say where to run it.
 const SERVER_DOWN =
-  "Can't reach the Jarvis server. Start everything with \"npm run dev\" in the main project folder (not inside frontend), or double-click the Jarvis shortcut, then try again.";
+  "Can't reach the Azarvis server. Start everything with \"npm run dev\" in the main project folder (not inside frontend), or double-click the Azarvis shortcut, then try again.";
 
 export class ApiError extends Error {
   constructor(message, status, data) {
@@ -157,7 +157,7 @@ export const api = {
   userNotes: () => request('/user-notes'),
   addUserNote: (title, content, category = 'General') => request('/user-notes', { method: 'POST', body: { title, content, category } }),
   updateUserNote: (id, patch) => request(`/user-notes/${id}`, { method: 'PUT', body: patch }),
-  // Notes written by Jarvis with the master prompt (AI service, background job)
+  // Notes written by Azarvis with the master prompt (AI service, background job)
   makeStudyNotes: (body) => request('/ai/study-notes/generate', { method: 'POST', body }),
   studyNotesJob: (id) => request(`/ai/study-notes/jobs/${id}`),
   addTextDocument: (title, text) => request('/ai/rag/text', { method: 'POST', body: { title, text } }),

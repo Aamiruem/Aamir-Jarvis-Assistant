@@ -1,4 +1,4 @@
-"""PC watcher: Jarvis keeps an eye on this computer and tells you when something needs attention.
+"""PC watcher: Azarvis keeps an eye on this computer and tells you when something needs attention.
 
 Every 30 seconds it reads a few cheap signals and turns *changes* into notifications (the bell,
 read aloud by the app) for the users who switched it on. Each alert fires once per change, not on
@@ -12,7 +12,7 @@ every check:
     network    internet connection lost, and back
 
 Signals come from a Probe, so tests can feed in any situation without touching the real PC.
-Only runs where Jarvis may look at the computer (SYSTEM_CONTROL=true), never on a server.
+Only runs where Azarvis may look at the computer (SYSTEM_CONTROL=true), never on a server.
 """
 import asyncio
 import json
@@ -237,7 +237,7 @@ class Watcher:
         self._offline_count += 1
         if self._offline_count == OFFLINE_CHECKS and self._offline_since is None:
             self._offline_since = self.clock()
-            return [Alert("network", "Internet connection lost", "Jarvis's quick commands still work; AI answers need the internet.")]
+            return [Alert("network", "Internet connection lost", "Azarvis's quick commands still work; AI answers need the internet.")]
         return []
 
 

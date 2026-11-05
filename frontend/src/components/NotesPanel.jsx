@@ -314,13 +314,13 @@ export default function NotesPanel({ target }) {
     }
   };
 
-  // Puts every chapter into the knowledge base, so Jarvis can answer from these notes in chat.
+  // Puts every chapter into the knowledge base, so Azarvis can answer from these notes in chat.
   const teach = async () => {
     if (book.custom) {
-      toast('Smart notes are stored locally. Add the files to the project notes folder to teach Jarvis from them.');
+      toast('Smart notes are stored locally. Add the files to the project notes folder to teach Azarvis from them.');
       return;
     }
-    if (!window.confirm(`Add all ${chapters.length} chapters to Jarvis's knowledge base? Jarvis will then answer from your notes in chat.`)) return;
+    if (!window.confirm(`Add all ${chapters.length} chapters to Azarvis's knowledge base? Azarvis will then answer from your notes in chat.`)) return;
     setTeaching({ done: 0, total: chapters.length });
     try {
       for (const [i, c] of chapters.entries()) {
@@ -328,7 +328,7 @@ export default function NotesPanel({ target }) {
         await api.addTextDocument(`${book.title} · ${c.id}. ${c.title}`.slice(0, 200), body);
         setTeaching({ done: i + 1, total: chapters.length });
       }
-      toast('Jarvis has learned your notes: ask about them in Chat');
+      toast('Azarvis has learned your notes: ask about them in Chat');
     } catch (e) {
       setError(`Stopped at chapter ${teaching?.done ?? 0}: ${e.message}`);
     } finally {
@@ -447,8 +447,8 @@ export default function NotesPanel({ target }) {
   return (
     <div className="panel notes-panel">
       <PageHeader icon="notes" hue={45} title="Notes" subtitle={courseView ? 'CampusX course: every lecture, its code, chapters and your notes' : book ? `${book.title} · ${book.chapters} chapters · ${done.size} read` : ''}>
-        <button className="btn sm" onClick={teach} disabled={Boolean(teaching) || !book || book.custom} title="Add these notes to Jarvis's knowledge base">
-          <Icon name="brain" size="1em" /> {teaching ? `Teaching Jarvis… ${teaching.done}/${teaching.total}` : 'Teach Jarvis these notes'}
+        <button className="btn sm" onClick={teach} disabled={Boolean(teaching) || !book || book.custom} title="Add these notes to Azarvis's knowledge base">
+          <Icon name="brain" size="1em" /> {teaching ? `Teaching Azarvis… ${teaching.done}/${teaching.total}` : 'Teach Azarvis these notes'}
         </button>
       </PageHeader>
       {error && <p className="error">{error}</p>}

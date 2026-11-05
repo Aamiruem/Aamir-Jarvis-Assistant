@@ -92,7 +92,7 @@ def key_status() -> str:
 
 
 def base_params(max_tokens: int = 16000) -> dict:
-    """Parameters every Jarvis request shares. Use with client.beta.messages.*"""
+    """Parameters every Azarvis request shares. Use with client.beta.messages.*"""
     params: dict = {
         "model": settings.claude_model,
         "max_tokens": max_tokens,

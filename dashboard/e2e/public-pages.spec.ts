@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
 
-test("landing page introduces Jarvis and links to sign-in", async ({ page }) => {
+test("landing page introduces Azarvis and links to sign-in", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("AI voice assistant");
-  await expect(page.getByRole("heading", { name: "What you can do with Jarvis" })).toBeAttached();
+  await expect(page.getByRole("heading", { name: "What you can do with Azarvis" })).toBeAttached();
 
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Sign in" }).click();
   await expect(page).toHaveURL(/\/login$/, { timeout: 15_000 }); // a busy machine can take a moment to switch pages

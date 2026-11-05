@@ -79,7 +79,7 @@ export class SmtpEmailSender extends NotificationSender {
     super();
     if (!user || !pass) throw new Error('SMTP_USER and SMTP_PASS are required for OTP_PROVIDER=smtp');
     this.options = { host, port, secure: port === 465, auth: { user, pass } };
-    this.from = { name: fromName, address: user }; // inbox shows "Aamir Jarvis Assistant"
+    this.from = { name: fromName, address: user }; // inbox shows "Azarvis"
   }
 
   async send({ to, subject, text }) {

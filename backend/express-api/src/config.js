@@ -9,7 +9,8 @@ const bool = (value, fallback) => (value === undefined || value === '' ? fallbac
 export const config = {
   env: process.env.NODE_ENV || 'development',
   port: num(process.env.PORT, 4000),
-  mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/jarvis',
+  // MONGODB_URI is what Vercel's MongoDB Atlas integration sets.
+  mongoUri: process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/jarvis',
   aiServiceUrl: process.env.AI_SERVICE_URL || 'http://localhost:8001',
   aiWaitMs: num(process.env.AI_WAIT_MS, 20_000), // how long a request waits for a restarting AI service
   chatIdleMs: num(process.env.CHAT_IDLE_MS, 180_000), // give up on a chat reply that sends nothing for this long
@@ -41,7 +42,7 @@ export const config = {
     // smtp:    email via SMTP (e.g. Gmail App Password), SMS via Twilio if set (else terminal)
     // aws:     email via Amazon SES, SMS via Amazon SNS
     provider: process.env.OTP_PROVIDER || 'console',
-    appName: process.env.APP_NAME || 'Aamir Jarvis Assistant', // sender name people see
+    appName: process.env.APP_NAME || 'Azarvis', // sender name people see
     awsRegion: process.env.AWS_REGION || 'ap-south-1',
     sesFromEmail: process.env.SES_FROM_EMAIL || '',
     smtp: {

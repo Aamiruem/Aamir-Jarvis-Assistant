@@ -7,7 +7,7 @@ import { toast } from '../ui.jsx';
 const POLL_MS = 15_000;
 
 // Polls for notifications (reminders, PC watcher alerts) and shows them in a dropdown, as a
-// desktop notification when allowed, and read aloud by Jarvis (see alerts.js). Alerts that
+// desktop notification when allowed, and read aloud by Azarvis (see alerts.js). Alerts that
 // were already there when the page opened are shown, not announced. Polling is the simplest
 // real-time technique; WebSockets or SSE are the next step up.
 export default function NotificationBell() {
@@ -62,7 +62,7 @@ export default function NotificationBell() {
       </button>
       {open && (
         <div className="dropdown">
-          {items.length === 0 && <div className="muted pad">No notifications yet. Ask Jarvis to remind you of something.</div>}
+          {items.length === 0 && <div className="muted pad">No notifications yet. Ask Azarvis to remind you of something.</div>}
           {items.map((n) => (
             <div key={n.id} className={`note ${n.read ? '' : 'unread'}`}>
               <strong>{n.title}</strong>

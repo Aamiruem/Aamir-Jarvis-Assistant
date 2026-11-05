@@ -79,7 +79,7 @@ export function ChatView() {
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
             <JarvisOrb className="[--orb-size:8rem]" />
-            <p className="text-muted-foreground">Ask Jarvis anything: &ldquo;Remind me to call Mom at 6pm&rdquo; or &ldquo;What&apos;s the weather in Pune?&rdquo;</p>
+            <p className="text-muted-foreground">Ask Azarvis anything: &ldquo;Remind me to call Mom at 6pm&rdquo; or &ldquo;What&apos;s the weather in Pune?&rdquo;</p>
           </div>
         ) : (
           <ul className="grid gap-4 pb-4">
@@ -120,13 +120,13 @@ export function ChatView() {
       <FormError message={error} />
       <form onSubmit={send} className="mt-3 flex gap-2">
         <label htmlFor="chat-input" className="sr-only">
-          Message Jarvis
+          Message Azarvis
         </label>
         <Input
           id="chat-input"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Message Jarvis…"
+          placeholder="Message Azarvis…"
           autoComplete="off"
           className="h-11"
         />

@@ -1,0 +1,7 @@
+# Never upload local accounts/chats (data/), tests, or secrets.
+data
+test
+node_modules
+.env*
+Dockerfile
+LEARNING_PATH.html

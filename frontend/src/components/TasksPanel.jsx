@@ -96,7 +96,7 @@ export default function TasksPanel() {
 
   return (
     <div className="panel">
-      <PageHeader icon="tasks" hue={265} title="Tasks & reminders" subtitle="Jarvis can add and complete these for you from chat or voice.">
+      <PageHeader icon="tasks" hue={265} title="Tasks & reminders" subtitle="Azarvis can add and complete these for you from chat or voice.">
         {counts.done > 0 && <button className="btn ghost" onClick={clearDone}><Icon name="trash" /> Clear completed</button>}
       </PageHeader>
 

@@ -1,4 +1,4 @@
-// Jarvis service worker: makes Jarvis installable and lets the app open instantly (and show its
+// Azarvis service worker: makes Azarvis installable and lets the app open instantly (and show its
 // screen even offline). It never stores /api responses: those are private and always live.
 const CACHE = 'jarvis-shell-v1';
 const SHELL = ['/', '/manifest.webmanifest', '/icon.svg', '/icon-192.png'];

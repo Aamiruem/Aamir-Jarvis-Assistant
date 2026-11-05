@@ -16,7 +16,7 @@ export function ChartCard({ title, description, table, children }: ChartCardProp
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-3">
-        {table.rows.length ? children : <p className="py-10 text-center text-sm text-muted-foreground">No chats yet. Say hello to Jarvis first.</p>}
+        {table.rows.length ? children : <p className="py-10 text-center text-sm text-muted-foreground">No chats yet. Say hello to Azarvis first.</p>}
         {table.rows.length > 0 && (
           <details className="text-sm">
             <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Show as table</summary>

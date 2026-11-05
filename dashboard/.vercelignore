@@ -1,0 +1,9 @@
+# Uploaded by `vercel deploy`: only the source; Vercel installs and builds itself.
+node_modules
+.next
+out
+coverage
+test-results
+playwright-report
+.env*
+!.env.example

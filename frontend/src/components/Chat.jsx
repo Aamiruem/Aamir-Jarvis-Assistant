@@ -20,7 +20,7 @@ const SUGGESTIONS = [
   { icon: 'sparkles', hue: 150, text: 'Remind me to drink water at 4pm, add buy milk to my list, and tell me the weather in Pune' },
 ];
 
-// What each agent tool did, in plain words (shown under Jarvis's reply).
+// What each agent tool did, in plain words (shown under Azarvis's reply).
 const TOOL_LABELS = {
   create_task: 'Task added',
   complete_task: 'Task completed',
@@ -52,7 +52,7 @@ const TOOL_LABELS = {
 const STOP_WORDS = /^(stop|stop listening|that's all|that is all|goodbye|bye|bye jarvis|exit|go to sleep)[.!]?$/i;
 const LATER_WORDS = /^(stop|later|not now|cancel|maybe later|let's do this later|that's enough)[.!]?$/i;
 const MAX_SILENT_ROUNDS = 4; // hands-free pauses after this many ~8 s stretches with no speech
-const FOLLOW_UP_MS = 8000; // after Jarvis answers, a follow-up within this time needs no "Jarvis"
+const FOLLOW_UP_MS = 8000; // after Azarvis answers, a follow-up within this time needs no "Azarvis"
 // Said when the answer takes a moment (tools, web), the way a person says "let me check".
 const FILLERS = ['One moment.', 'Let me check.', 'On it.', 'Sure, one second.'];
 const FILLER_AFTER_MS = 1600;
@@ -75,12 +75,12 @@ export default function Chat({ userId, history, conversationId, onConversation, 
   const handsFreeRef = useRef(false);
   const silentRounds = useRef(0);
   const [voiceNote, setVoiceNote] = useState('');
-  // Wake-word mode: always listening, but only acts on speech addressed to "Jarvis".
+  // Wake-word mode: always listening, but only acts on speech addressed to "Azarvis".
   const [wake, setWake] = useState(false);
   const wakeRef = useRef(false);
   const followUntil = useRef(0);
-  const queuedRef = useRef(''); // said while Jarvis was still working: sent right after
-  const contextRef = useRef(''); // the question Jarvis just asked, so the answer makes sense to the AI
+  const queuedRef = useRef(''); // said while Azarvis was still working: sent right after
+  const contextRef = useRef(''); // the question Azarvis just asked, so the answer makes sense to the AI
   // Getting-to-know-you interview: { questions, index, answers, silent }
   const interviewRef = useRef(null);
   const [interviewStep, setInterviewStep] = useState(null); // { index, total } for the voice bar
@@ -99,7 +99,7 @@ export default function Chat({ userId, history, conversationId, onConversation, 
       let text = heard;
       if (handsFreeRef.current && wakeRef.current && Date.now() > followUntil.current) {
         const request = afterWakeWord(heard);
-        if (request === null) return; // not talking to Jarvis
+        if (request === null) return; // not talking to Azarvis
         if (!request) {
           speech.speak('Yes?', () => {
             followUntil.current = Date.now() + FOLLOW_UP_MS;
@@ -136,7 +136,7 @@ export default function Chat({ userId, history, conversationId, onConversation, 
         setVoiceNote("Voice mode paused: I didn't hear anything for a while. If you were talking, check the microphone (lock icon in the address bar → Microphone).");
       }
     },
-    // In "Hey Jarvis" mode, background chatter must not cut Jarvis off: only its name does.
+    // In "Hey Azarvis" mode, background chatter must not cut Azarvis off: only its name does.
     shouldBargeIn: (heard) => !wakeRef.current || afterWakeWord(heard) !== null,
     onBargeIn: () => {
       followUntil.current = Date.now() + FOLLOW_UP_MS;
@@ -150,11 +150,11 @@ export default function Chat({ userId, history, conversationId, onConversation, 
     send(text, { voice: true, context: asked ? `(You had just asked me: "${asked}")` : '' });
   }
 
-  /** Shows a line from Jarvis in the chat and says it. */
+  /** Shows a line from Azarvis in the chat and says it. */
   function jarvisSays(text, then) {
     setMessages((ms) => [...ms, { role: 'assistant', content: text }]);
     speech.speak(text, () => {
-      followUntil.current = Date.now() + FOLLOW_UP_MS; // they can answer without "Jarvis"
+      followUntil.current = Date.now() + FOLLOW_UP_MS; // they can answer without "Azarvis"
       then?.();
     });
   }
@@ -200,7 +200,7 @@ export default function Chat({ userId, history, conversationId, onConversation, 
     }, 350);
   }
   /**
-   * wake: wait for "Jarvis" before acting. greeting: say this first.
+   * wake: wait for "Azarvis" before acting. greeting: say this first.
    * interview: questions to ask one by one. question: the greeting ends with this question.
    */
   function startHandsFree({ wake: useWake = false, greeting = '', interview = null, question = '' } = {}) {
@@ -334,7 +334,7 @@ export default function Chat({ userId, history, conversationId, onConversation, 
     abortRef.current = new AbortController();
     let reply = '';
     let failure = '';
-    // Spoken while it streams: Jarvis starts talking after the first sentence, not the last.
+    // Spoken while it streams: Azarvis starts talking after the first sentence, not the last.
     const out = speakReply ? speech.speakStream() : null;
     const filler =
       out && voice && setTimeout(() => !reply && out.push(`${FILLERS[Math.floor(Math.random() * FILLERS.length)]} `), FILLER_AFTER_MS);
@@ -385,7 +385,7 @@ export default function Chat({ userId, history, conversationId, onConversation, 
     }
   }
 
-  // After an answer: open the follow-up window, then send anything said while Jarvis was busy.
+  // After an answer: open the follow-up window, then send anything said while Azarvis was busy.
   function afterReply() {
     followUntil.current = Date.now() + FOLLOW_UP_MS;
     if (handsFreeRef.current) listenSoon();
@@ -397,7 +397,7 @@ export default function Chat({ userId, history, conversationId, onConversation, 
   const copyReply = (text) =>
     navigator.clipboard.writeText(text).then(() => toast('Copied to clipboard'), () => toast("Couldn't copy", 'error'));
   const shareReply = (text) =>
-    share({ title: 'From Jarvis', text }).then((r) => r === 'copied' && toast('Copied, ready to paste'), () => toast("Couldn't share", 'error'));
+    share({ title: 'From Azarvis', text }).then((r) => r === 'copied' && toast('Copied, ready to paste'), () => toast("Couldn't share", 'error'));
 
   // The user message a failed reply answered, so "Try again" can send it once more.
   const retry = (i) => {
@@ -448,7 +448,7 @@ export default function Chat({ userId, history, conversationId, onConversation, 
               <div className="bubble">
                 {m.role === 'assistant' ? (
                   m.pending && !m.content ? (
-                    <span className="typing" aria-label="Jarvis is thinking">
+                    <span className="typing" aria-label="Azarvis is thinking">
                       <i /><i /><i />
                       {m.status && <small>{m.status}</small>}
                     </span>
@@ -468,7 +468,7 @@ export default function Chat({ userId, history, conversationId, onConversation, 
                 )}
                 {m.popupBlocked && (
                   <p className="hint popup-tip">
-                    To let Jarvis open sites by voice automatically: click the blocked pop-up icon at the right end of the
+                    To let Azarvis open sites by voice automatically: click the blocked pop-up icon at the right end of the
                     address bar → <b>Always allow pop-ups and redirects from {window.location.host}</b> → Done. You only need to do this once.
                   </p>
                 )}
@@ -507,7 +507,7 @@ export default function Chat({ userId, history, conversationId, onConversation, 
                     ? interviewStep
                       ? 'Listening for your answer… or say “skip”'
                       : wake && Date.now() > followUntil.current
-                        ? 'Always listening… start with “Jarvis”, e.g. “Jarvis, open Notepad”'
+                        ? 'Always listening… start with “Azarvis”, e.g. “Azarvis, open Notepad”'
                         : 'Listening… say several things at once, or “stop” to finish'
                     : 'Getting ready…'}
           </span>
@@ -533,8 +533,8 @@ export default function Chat({ userId, history, conversationId, onConversation, 
           <input
             value={speech.listening && !handsFree ? speech.interim || 'Listening…' : input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask Jarvis anything, or give it several tasks at once…"
-            aria-label="Message Jarvis"
+            placeholder="Ask Azarvis anything, or give it several tasks at once…"
+            aria-label="Message Azarvis"
             disabled={speech.listening && !handsFree}
           />
           {busy ? (
@@ -552,7 +552,7 @@ export default function Chat({ userId, history, conversationId, onConversation, 
               className={`tool-btn ${speech.listening && !handsFree ? 'live' : ''}`}
               onClick={speech.listening ? speech.stop : () => speech.start()}
               disabled={handsFree}
-              title="Say one thing, then Jarvis answers"
+              title="Say one thing, then Azarvis answers"
             >
               <Icon name="mic" size="1.05em" /> <span>{speech.listening && !handsFree ? 'Listening…' : 'Speak'}</span>
             </button>
@@ -563,9 +563,9 @@ export default function Chat({ userId, history, conversationId, onConversation, 
               className={`tool-btn ${handsFree ? 'on' : ''}`}
               onClick={handsFree ? endHandsFree : () => startHandsFree()}
               aria-pressed={handsFree}
-              title="Hands-free conversation: Jarvis keeps listening and answers out loud"
+              title="Hands-free conversation: Azarvis keeps listening and answers out loud"
             >
-              <Icon name="zap" size="1.05em" /> <span>{handsFree ? (wake ? 'Listening for “Jarvis”' : 'Voice mode on') : 'Voice mode'}</span>
+              <Icon name="zap" size="1.05em" /> <span>{handsFree ? (wake ? 'Listening for “Azarvis”' : 'Voice mode on') : 'Voice mode'}</span>
             </button>
           )}
           {speech.supported && !handsFree && (
@@ -573,9 +573,9 @@ export default function Chat({ userId, history, conversationId, onConversation, 
               type="button"
               className="tool-btn"
               onClick={() => startHandsFree({ wake: true })}
-              title="Always listening: Jarvis only answers when you say “Jarvis” first"
+              title="Always listening: Azarvis only answers when you say “Azarvis” first"
             >
-              <Icon name="sparkles" size="1.05em" /> <span>Hey Jarvis</span>
+              <Icon name="sparkles" size="1.05em" /> <span>Hey Azarvis</span>
             </button>
           )}
           <span className="grow" />
