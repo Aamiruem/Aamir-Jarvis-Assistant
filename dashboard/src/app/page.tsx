@@ -15,7 +15,8 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { AzarvisLogo, AzarvisMark } from "@/components/azarvis-logo";
+import { AzarvisLogo } from "@/components/azarvis-logo";
+import { SiteFooter } from "@/components/site-footer";
 import { JarvisOrb } from "@/components/jarvis-orb";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -335,27 +336,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-8 text-sm text-muted-foreground sm:px-6">
-          <p className="flex flex-wrap items-center gap-x-2">
-            <AzarvisMark className="size-6" />
-            <span className="font-display font-bold tracking-[0.2em] text-primary">AZARVIS</span> · {SITE.name} by{" "}
-            <a href={SITE.authorUrl} target="_blank" rel="noopener author" className="font-medium text-foreground hover:underline">
-              {SITE.author}
-            </a>
-          </p>
-          <nav aria-label="Footer" className="flex gap-5">
-            {NAV.map((n) => (
-              <a key={n.href} href={n.href} className="hover:text-foreground">
-                {n.label}
-              </a>
-            ))}
-            <Link href="/login" className="hover:text-foreground">
-              Sign in
-            </Link>
-          </nav>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

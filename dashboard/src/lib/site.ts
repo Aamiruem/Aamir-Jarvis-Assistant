@@ -45,6 +45,8 @@ export const SITE = {
     "https://leetcode.com/u/Aamiruem/",
   ],
   locale: "en_IN",
+  // Shown in the footer. Fixed on purpose: the pages are prerendered, and a clock call would fail the build.
+  copyrightYear: 2026,
   // Google Search Console > Settings > Ownership verification > HTML tag: the content="…" value.
   googleVerification: process.env.GOOGLE_SITE_VERIFICATION || process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || "",
   // Google Analytics 4 > Admin > Data streams > Web: the "G-…" measurement ID. Unset = no analytics.

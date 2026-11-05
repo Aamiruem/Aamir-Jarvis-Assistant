@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { AzarvisLogo } from "@/components/azarvis-logo";
 import { JarvisOrb } from "@/components/jarvis-orb";
+import { SiteFooter } from "@/components/site-footer";
 
 // Route group "(auth)": shares this centered layout without adding "/auth" to the URL.
 export default function AuthLayout({ children }: LayoutProps<"/">) {
@@ -43,6 +44,9 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
         </div>
 
         <div className="mt-7 rounded-2xl border border-slate-200/80 bg-white/50 p-4 shadow-sm sm:p-6">{children}</div>
+      </div>
+      <div className="mx-auto mt-8 w-full max-w-[760px]">
+        <SiteFooter />
       </div>
     </main>
   );
