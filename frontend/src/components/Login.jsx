@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { auth, setAccessToken } from '../api.js';
+import { Icon } from '../icons.jsx';
 
 // Mirrors backend/express-api/src/auth/PasswordPolicy.js so problems show while typing.
 // The server still has the final say.
@@ -16,6 +17,16 @@ function passwordRules(password, { name = '', email = '' } = {}) {
   if (firstName.length >= 4) rules.push([`Doesn't contain your name ("${firstName}")`, !lower.includes(firstName)]);
   if (localPart.length >= 4) rules.push(["Doesn't contain your email", !lower.includes(localPart)]);
   return rules;
+}
+
+// An input with a leading icon, so every field says what it is at a glance.
+function Field({ icon, children }) {
+  return (
+    <div className="field">
+      <Icon name={icon} size="1.05em" className="field-icon" />
+      {children}
+    </div>
+  );
 }
 
 function PasswordChecklist({ password, name, email }) {
@@ -120,42 +131,72 @@ export default function Login({ onAuth }) {
 
   const resendIn = challenge?.resendAvailableAt ? Math.ceil((new Date(challenge.resendAvailableAt) - now) / 1000) : 0;
   const otpTitle = { verify_email: 'Verify your email', login: 'Two-step verification', reset_password: 'Reset your password' };
+  const headings = {
+    login: ['Welcome back', 'Sign in to talk with Azarvis, your AI voice assistant.'],
+    register: ['Create your account', 'It takes a minute. Azarvis will ask a few quick questions to get to know you.'],
+    forgot: ['Forgot your password?', "Enter your email and we'll send you a one-time code."],
+    otp: ['Check your inbox', 'For your security, we check it is really you.'],
+  };
+  const [title, subtitle] = step === 'otp' && challenge ? [otpTitle[challenge.purpose], headings.otp[1]] : headings[step] ?? headings.login;
 
   return (
     <div className="center-screen">
       <div className="card login">
-        <div className="orb" />
-        <h1>AZARVIS</h1>
-        <p className="muted">AI voice assistant by Aamir Hussain Azad</p>
+        <header className="login-brand">
+          <img src="/icon.svg" alt="" width="56" height="56" className="login-logo" />
+          <span className="login-wordmark">Azarvis</span>
+          <span className="login-tagline">AI voice assistant by Aamir Hussain Azad</span>
+        </header>
+
+        <div className="login-heading">
+          <h1>{title}</h1>
+          <p className="muted">{subtitle}</p>
+        </div>
+
         {info && <div className="success">{info}</div>}
 
         {step === 'login' && (
           <form onSubmit={submitLogin} className="stack">
-            <input type="email" placeholder="Email" value={form.email} onChange={update('email')} autoComplete="username" required />
-            <input type="password" placeholder="Password" value={form.password} onChange={update('password')} autoComplete="current-password" required />
+            <Field icon="mail">
+              <input type="email" placeholder="Email address" value={form.email} onChange={update('email')} autoComplete="username" required />
+            </Field>
+            <Field icon="key">
+              <input type="password" placeholder="Password" value={form.password} onChange={update('password')} autoComplete="current-password" required />
+            </Field>
             {error && <div className="error">{error}</div>}
-            <button className="btn primary full" disabled={busy}>{busy ? 'Checking…' : 'Continue'}</button>
+            <button className="btn primary full" disabled={busy}>{busy ? 'Checking…' : 'Sign in'}</button>
             <button type="button" className="btn ghost full" onClick={() => go('forgot')}>Forgot password?</button>
-            <button type="button" className="btn ghost full" onClick={() => go('register')}>New here? Create an account</button>
+            <p className="login-switch">
+              New to Azarvis? <button type="button" className="link-btn" onClick={() => go('register')}>Create an account</button>
+            </p>
           </form>
         )}
 
         {step === 'register' && (
           <form onSubmit={submitRegister} className="stack">
-            <input placeholder="Full name" value={form.name} onChange={update('name')} autoComplete="name" required />
-            <input type="email" placeholder="Email" value={form.email} onChange={update('email')} autoComplete="username" required />
-            <input type="password" placeholder="Password" value={form.password} onChange={update('password')} autoComplete="new-password" required />
+            <Field icon="user">
+              <input placeholder="Full name" value={form.name} onChange={update('name')} autoComplete="name" required />
+            </Field>
+            <Field icon="mail">
+              <input type="email" placeholder="Email address" value={form.email} onChange={update('email')} autoComplete="username" required />
+            </Field>
+            <Field icon="key">
+              <input type="password" placeholder="Create a password" value={form.password} onChange={update('password')} autoComplete="new-password" required />
+            </Field>
             <PasswordChecklist password={form.password} name={form.name} email={form.email} />
             {error && <div className="error">{error}</div>}
             <button className="btn primary full" disabled={busy}>{busy ? 'Creating…' : 'Create account'}</button>
-            <button type="button" className="btn ghost full" onClick={() => go('login')}>Have an account? Sign in</button>
+            <p className="login-switch">
+              Already have an account? <button type="button" className="link-btn" onClick={() => go('login')}>Sign in</button>
+            </p>
           </form>
         )}
 
         {step === 'forgot' && (
           <form onSubmit={submitForgot} className="stack">
-            <p className="muted">Enter your email and we'll send a reset code.</p>
-            <input type="email" placeholder="Email" value={form.email} onChange={update('email')} required />
+            <Field icon="mail">
+              <input type="email" placeholder="Email address" value={form.email} onChange={update('email')} required />
+            </Field>
             {error && <div className="error">{error}</div>}
             <button className="btn primary full" disabled={busy}>Send code</button>
             <button type="button" className="btn ghost full" onClick={() => go('login')}>Back to sign in</button>
@@ -164,7 +205,6 @@ export default function Login({ onAuth }) {
 
         {step === 'otp' && challenge && (
           <form onSubmit={submitOtp} className="stack">
-            <h3>{otpTitle[challenge.purpose]}</h3>
             <p className="muted">
               Enter the 6-digit code sent to <strong>{challenge.maskedDestination}</strong>.
             </p>
@@ -185,7 +225,9 @@ export default function Login({ onAuth }) {
             />
             {challenge.purpose === 'reset_password' && (
               <>
-                <input type="password" placeholder="New password" value={form.newPassword} onChange={update('newPassword')} autoComplete="new-password" required />
+                <Field icon="key">
+                  <input type="password" placeholder="New password" value={form.newPassword} onChange={update('newPassword')} autoComplete="new-password" required />
+                </Field>
                 <PasswordChecklist password={form.newPassword} email={form.email} />
               </>
             )}
@@ -197,9 +239,13 @@ export default function Login({ onAuth }) {
               </button>
             )}
             <button type="button" className="btn ghost full" onClick={() => go('login')}>Cancel</button>
-            <p className="hint">Never share this code. Azarvis staff will never ask for it.</p>
+            <p className="hint login-secure">
+              <Icon name="shield" size="0.95em" /> Never share this code. Azarvis staff will never ask for it.
+            </p>
           </form>
         )}
+
+        <footer className="login-foot">Protected by one-time codes and short-lived sessions</footer>
       </div>
     </div>
   );

@@ -194,7 +194,24 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
   width: min(400px, 100%); display: flex; flex-direction: column; gap: 10px; text-align: center;
   padding: 32px 28px; border-radius: 22px; box-shadow: var(--shadow), 0 0 80px rgba(139, 92, 246, 0.12);
 }
-.login h1 { margin: 14px 0 0; font-size: 34px; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+/* Brand block: the logo mark, the wordmark and a tagline, then one clear heading per step. */
+.login-brand { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 6px; }
+.login-logo { width: 56px; height: 56px; border-radius: 16px; box-shadow: 0 10px 28px rgba(99, 102, 241, 0.35); }
+.login-wordmark { font: 700 22px/1 Rajdhani, Inter, sans-serif; letter-spacing: 0.22em; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; margin-top: 4px; }
+.login-tagline { font-size: 12.5px; color: var(--muted); }
+.login-heading { margin: 14px 0 6px; }
+.login-heading h1 { margin: 0; font: 700 24px/1.25 Rajdhani, Inter, sans-serif; letter-spacing: 0.01em; color: var(--text); }
+.login-heading p { margin: 6px 0 0; font-size: 14px; line-height: 1.5; }
+/* Fields with a leading icon. */
+.field { position: relative; display: flex; align-items: center; }
+.login .field > input:not([type='checkbox']) { width: 100%; padding-left: 42px; }
+.field-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.field:focus-within .field-icon { color: var(--accent); }
+.login-switch { margin: 6px 0 0; font-size: 13.5px; color: var(--muted); }
+.link-btn { background: none; border: none; padding: 0; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.login-secure { display: flex; align-items: flex-start; gap: 6px; margin: 4px 0 0; }
+.login-secure .icon { flex: none; margin-top: 2px; }
+.login-foot { margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 12px; color: var(--muted); }
 .login p { margin: 0 0 8px; }
 .login h3 { margin: 4px 0 0; }
 .login .btn { padding: 11px 16px; }
