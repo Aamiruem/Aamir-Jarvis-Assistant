@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { api, auth, onSessionExpired } from './api.js';
 import HomePanel from './components/HomePanel.jsx';
 import Login from './components/Login.jsx';
@@ -100,7 +100,7 @@ export default function App() {
   const [activeId, setActiveId] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const searchRef = useRef(null); // the navbar search bar: the palette opens right under it
+  const [navQuery, setNavQuery] = useState(''); // the navbar search box: Enter sends it to Chat
   const [paletteQuery, setPaletteQuery] = useState('');
   const [installHelp, setInstallHelp] = useState(false);
   const [notesTarget, setNotesTarget] = useState(null); // { chapter, heading } from search
@@ -342,11 +342,26 @@ export default function App() {
               </h1>
             ) : null;
           })()}
-          <button ref={searchRef} className="search-bar" onClick={() => openSearch('')} title="Search (Ctrl+K)" aria-label="Search chats, contacts, tasks and commands">
+          <form
+            className="search-bar"
+            role="search"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const text = navQuery.trim();
+              if (!text) return;
+              setNavQuery('');
+              ask(text, true);
+            }}
+          >
             <Icon name="search" size="1em" />
-            <span className="grow">Search everything…</span>
-            <kbd>Ctrl K</kbd>
-          </button>
+            <input
+              value={navQuery}
+              onChange={(e) => setNavQuery(e.target.value)}
+              placeholder="Search everything…"
+              aria-label="Search everything, then press Enter to ask Azarvis"
+              enterKeyHint="search"
+            />
+          </form>
           <div className="topbar-tools" role="toolbar" aria-label="Quick actions">
           <button
             className={`icon-btn room-watch ${roomWatchOn ? 'on' : ''}`}
@@ -437,7 +452,6 @@ export default function App() {
         open={paletteOpen}
         initialQuery={paletteQuery}
         onClose={() => setPaletteOpen(false)}
-        anchorRef={searchRef}
         tabs={tabs}
         conversations={conversations}
         actions={{ openTab: setTab, ask, newChat, startSession, install: installApp, share: shareJarvis, openPortfolio: () => window.open(PORTFOLIO_URL, '_blank', 'noopener,noreferrer'), openNotes: (chapter, heading) => { setNotesTarget({ chapter, heading, at: Date.now() }); setTab('notes'); }, openConversation, openContacts, toggleTheme: () => theme.setChoice(theme.mode === 'dark' ? 'light' : 'dark') }}

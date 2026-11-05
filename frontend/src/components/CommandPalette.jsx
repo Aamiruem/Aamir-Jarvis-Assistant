@@ -41,11 +41,9 @@ const ACTIONS = [
   { icon: 'share', label: 'Share Azarvis', keywords: 'link send', run: (a) => a.share?.() },
 ];
 
-export default function CommandPalette({ open, initialQuery = '', onClose, anchorRef, tabs, conversations, actions }) {
+export default function CommandPalette({ open, initialQuery = '', onClose, tabs, conversations, actions }) {
   const [q, setQ] = useState('');
   const [sel, setSel] = useState(0);
-  // Where the panel sits: directly under the navbar search bar on desktop; centered on phones.
-  const [anchor, setAnchor] = useState(null); // { top, left, width } | null
   const [data, setData] = useState({ contacts: [], tasks: [], memories: [], models: [], documents: [], notes: [] });
   // answer: the inline reply from Azarvis. null when the palette is in its normal "list" mode.
   const [answer, setAnswer] = useState(null); // { q, text, tools:[], loading, error }
@@ -101,15 +99,6 @@ export default function CommandPalette({ open, initialQuery = '', onClose, ancho
     }
     setQ(initialQuery);
     setSel(0);
-    const bar = anchorRef?.current;
-    if (bar && window.innerWidth > 760) {
-      // Same spot as the search bar: its top-left corner and its width (never narrower than 360px).
-      const r = bar.getBoundingClientRect();
-      const width = Math.min(Math.max(r.width, 360), window.innerWidth - r.left - 8);
-      setAnchor({ top: r.top, left: r.left, width });
-    } else {
-      setAnchor(null);
-    }
     setTimeout(() => inputRef.current?.focus(), 0);
     // Fresh copies each time it opens, so new contacts and tasks are searchable at once.
     const notes = loadLibrary().then((lib) => Promise.all(lib.map((b) => loadBook(b.slug)))).then((books) => books.flatMap(chaptersOf));
@@ -196,10 +185,9 @@ export default function CommandPalette({ open, initialQuery = '', onClose, ancho
 
   let lastGroup = '';
   return (
-    <div className={`palette-backdrop ${anchor ? 'anchored' : ''}`} onMouseDown={onClose}>
+    <div className="palette-backdrop" onMouseDown={onClose}>
       <div
-        className={`palette ${anchor ? 'anchored' : ''}`}
-        style={anchor ? { top: anchor.top, left: anchor.left, width: anchor.width } : undefined}
+        className="palette"
         role="dialog"
         aria-label="Command palette"
         onMouseDown={(e) => e.stopPropagation()}
