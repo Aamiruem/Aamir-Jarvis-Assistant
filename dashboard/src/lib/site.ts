@@ -1,10 +1,21 @@
 // One place for what search engines and link previews say about the site.
 // NEXT_PUBLIC_SITE_URL must be the public address (https://jarvis.example.com) in production:
 // canonical links, the sitemap and Open Graph images are built from it at BUILD time.
+function siteUrl(raw = process.env.NEXT_PUBLIC_SITE_URL?.trim()) {
+  const fallback = "http://localhost:3001";
+  if (!raw) return fallback; // unset or blank (Docker passes "" when .env leaves it empty)
+  try {
+    return new URL(raw).href.replace(/\/$/, "");
+  } catch {
+    console.warn(`NEXT_PUBLIC_SITE_URL is not a URL (${JSON.stringify(raw)}); using ${fallback}`);
+    return fallback;
+  }
+}
+
 export const SITE = {
   name: "Jarvis AI Assistant",
   shortName: "Jarvis",
-  url: (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001").replace(/\/$/, ""),
+  url: siteUrl(),
   title: "Jarvis – AI Voice Assistant for Tasks, Reminders & Your PC",
   description:
     "Jarvis is a personal AI voice assistant powered by Claude: reminders, tasks, study notes, answers from your documents and hands-free control of your PC.",
