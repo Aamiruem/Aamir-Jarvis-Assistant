@@ -623,6 +623,10 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
   border: 1px solid rgba(56, 225, 255, 0.3); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(139, 92, 246, 0.15);
   animation: pop-in 0.16s ease;
 }
+/* Opened from the navbar: a dropdown under the search bar, no dimmed page. Clicking outside still closes it. */
+.palette-backdrop.anchored { background: transparent; backdrop-filter: none; padding: 0; display: block; }
+.palette.anchored { position: fixed; border-radius: 14px; transform-origin: top center; }
+.palette.anchored .palette-list { max-height: min(60vh, 520px); }
 .palette-input { display: flex; align-items: center; gap: 10px; padding: 6px 14px; border-bottom: 1px solid var(--border); color: var(--accent); }
 .palette-input input:not([type='checkbox']) { flex: 1; background: none; border: none; box-shadow: none !important; font-size: 16px; padding: 12px 0; color: var(--text); }
 .palette-list { list-style: none; margin: 0; padding: 6px; max-height: 52vh; overflow-y: auto; }

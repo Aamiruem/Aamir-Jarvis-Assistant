@@ -41,9 +41,11 @@ const ACTIONS = [
   { icon: 'share', label: 'Share Azarvis', keywords: 'link send', run: (a) => a.share?.() },
 ];
 
-export default function CommandPalette({ open, initialQuery = '', onClose, tabs, conversations, actions }) {
+export default function CommandPalette({ open, initialQuery = '', onClose, anchorRef, tabs, conversations, actions }) {
   const [q, setQ] = useState('');
   const [sel, setSel] = useState(0);
+  // Where the panel sits: directly under the navbar search bar on desktop; centered on phones.
+  const [anchor, setAnchor] = useState(null); // { top, left, width } | null
   const [data, setData] = useState({ contacts: [], tasks: [], memories: [], models: [], documents: [], notes: [] });
   // answer: the inline reply from Azarvis. null when the palette is in its normal "list" mode.
   const [answer, setAnswer] = useState(null); // { q, text, tools:[], loading, error }
@@ -99,6 +101,14 @@ export default function CommandPalette({ open, initialQuery = '', onClose, tabs,
     }
     setQ(initialQuery);
     setSel(0);
+    const bar = anchorRef?.current;
+    if (bar && window.innerWidth > 760) {
+      const r = bar.getBoundingClientRect();
+      const width = Math.min(Math.max(r.width, 540), window.innerWidth - 16);
+      setAnchor({ top: r.bottom + 8, left: Math.max(8, Math.min(r.left, window.innerWidth - width - 8)), width });
+    } else {
+      setAnchor(null);
+    }
     setTimeout(() => inputRef.current?.focus(), 0);
     // Fresh copies each time it opens, so new contacts and tasks are searchable at once.
     const notes = loadLibrary().then((lib) => Promise.all(lib.map((b) => loadBook(b.slug)))).then((books) => books.flatMap(chaptersOf));
@@ -185,8 +195,14 @@ export default function CommandPalette({ open, initialQuery = '', onClose, tabs,
 
   let lastGroup = '';
   return (
-    <div className="palette-backdrop" onMouseDown={onClose}>
-      <div className="palette" role="dialog" aria-label="Command palette" onMouseDown={(e) => e.stopPropagation()}>
+    <div className={`palette-backdrop ${anchor ? 'anchored' : ''}`} onMouseDown={onClose}>
+      <div
+        className={`palette ${anchor ? 'anchored' : ''}`}
+        style={anchor ? { top: anchor.top, left: anchor.left, width: anchor.width } : undefined}
+        role="dialog"
+        aria-label="Command palette"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <div className="palette-input">
           <Icon name="search" />
           <input
@@ -194,7 +210,7 @@ export default function CommandPalette({ open, initialQuery = '', onClose, tabs,
             value={q}
             onChange={(e) => { setQ(e.target.value); setSel(0); }}
             onKeyDown={onKey}
-            placeholder="Search everything, or ask Azarvis anything — including Python, JS and JSX code"
+            placeholder="Search, or ask Azarvis anything"
             aria-label="Search commands or ask a question"
           />
           <kbd>Esc</kbd>

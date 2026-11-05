@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { api, auth, onSessionExpired } from './api.js';
 import HomePanel from './components/HomePanel.jsx';
 import Login from './components/Login.jsx';
@@ -100,6 +100,7 @@ export default function App() {
   const [activeId, setActiveId] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const searchRef = useRef(null); // the navbar search bar: the palette opens right under it
   const [paletteQuery, setPaletteQuery] = useState('');
   const [installHelp, setInstallHelp] = useState(false);
   const [notesTarget, setNotesTarget] = useState(null); // { chapter, heading } from search
@@ -341,7 +342,7 @@ export default function App() {
               </h1>
             ) : null;
           })()}
-          <button className="search-bar" onClick={() => openSearch('')} title="Search (Ctrl+K)" aria-label="Search chats, contacts, tasks and commands">
+          <button ref={searchRef} className="search-bar" onClick={() => openSearch('')} title="Search (Ctrl+K)" aria-label="Search chats, contacts, tasks and commands">
             <Icon name="search" size="1em" />
             <span className="grow">Search everything…</span>
             <kbd>Ctrl K</kbd>
@@ -436,6 +437,7 @@ export default function App() {
         open={paletteOpen}
         initialQuery={paletteQuery}
         onClose={() => setPaletteOpen(false)}
+        anchorRef={searchRef}
         tabs={tabs}
         conversations={conversations}
         actions={{ openTab: setTab, ask, newChat, startSession, install: installApp, share: shareJarvis, openPortfolio: () => window.open(PORTFOLIO_URL, '_blank', 'noopener,noreferrer'), openNotes: (chapter, heading) => { setNotesTarget({ chapter, heading, at: Date.now() }); setTab('notes'); }, openConversation, openContacts, toggleTheme: () => theme.setChoice(theme.mode === 'dark' ? 'light' : 'dark') }}
