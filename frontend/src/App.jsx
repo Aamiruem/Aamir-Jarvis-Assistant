@@ -346,6 +346,7 @@ export default function App() {
             <span className="grow">Search everything…</span>
             <kbd>Ctrl K</kbd>
           </button>
+          <div className="topbar-tools" role="toolbar" aria-label="Quick actions">
           <button
             className={`icon-btn room-watch ${roomWatchOn ? 'on' : ''}`}
             onClick={() => setRoomWatchOn((on) => !on)}
@@ -361,6 +362,7 @@ export default function App() {
           </button>
           <ThemeMenu theme={theme} />
           <NotificationBell />
+          </div>
           {/* Top-right: your portfolio, plus account and sign-out always within reach. */}
           <div className="topbar-right">
             <a
@@ -381,8 +383,9 @@ export default function App() {
             >
               {user.name.slice(0, 1).toUpperCase()}
             </button>
-            <button className="icon-btn" onClick={logout} title="Log out" aria-label="Log out">
-              <Icon name="logout" size="1.2em" />
+            <button className="topbar-signout" onClick={logout} title="Sign out of Azarvis" aria-label="Sign out">
+              <Icon name="logout" size="1.1em" />
+              <span>Sign out</span>
             </button>
           </div>
         </header>

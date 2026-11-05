@@ -258,23 +258,35 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
   background: var(--topbar-bg); backdrop-filter: blur(16px); position: relative; z-index: 5;
 }
 .menu { flex: none; }
-/* Top-right cluster: portfolio link, account avatar and sign-out. */
-.topbar-right { display: inline-flex; align-items: center; gap: 8px; flex: none; margin-left: 2px; }
+/* Top-right: one row of controls that share a 40px height, a radius and a border.
+   Quick actions (room watch, theme, notifications) sit together in a segmented control. */
+.topbar-tools {
+  display: inline-flex; align-items: center; gap: 2px; flex: none; height: 40px; padding: 3px;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--field);
+}
+.topbar-tools .icon-btn { width: 34px; height: 34px; display: inline-grid; place-items: center; border-radius: 9px; font-size: 18px; }
+.topbar-right { display: inline-flex; align-items: center; gap: 8px; flex: none; margin-left: 4px; }
 .portfolio-btn {
-  display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: 12px; text-decoration: none;
-  font-size: 13px; font-weight: 600; color: #fff; background: var(--grad-btn); border: 1px solid transparent;
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3); transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border-radius: 12px; text-decoration: none;
+  font-size: 13.5px; font-weight: 600; color: #fff; background: var(--grad-btn); border: 1px solid transparent;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.3); transition: transform 0.15s, box-shadow 0.15s; white-space: nowrap;
 }
 .portfolio-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(99, 102, 241, 0.4); }
-.portfolio-btn .icon { opacity: 0.95; }
+.portfolio-btn .icon { font-size: 16px; }
 .topbar-avatar {
-  width: 34px; height: 34px; flex: none; border-radius: 50%; border: none; cursor: pointer; font-weight: 800; font-size: 15px;
-  color: #fff; background: #1d5fd6; box-shadow: 0 4px 12px rgba(29, 95, 214, 0.35); transition: transform 0.15s;
+  width: 40px; height: 40px; flex: none; border-radius: 12px; border: none; cursor: pointer; font: 800 16px/1 Rajdhani, Inter, sans-serif;
+  color: #fff; background: var(--grad-btn); box-shadow: 0 0 0 2px var(--panel), 0 0 0 3px rgba(56, 225, 255, 0.35); transition: transform 0.15s;
 }
 .topbar-avatar:hover { transform: translateY(-1px); }
-/* Tight widths: drop the portfolio label, then the button and top-bar sign-out (both stay in the sidebar). */
-@media (max-width: 1100px) { .portfolio-btn span { display: none; } }
-@media (max-width: 760px) { .topbar-right .portfolio-btn, .topbar-right > .icon-btn { display: none; } }
+.topbar-signout {
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 12px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--field); color: var(--muted); font: 500 13.5px/1 Inter, system-ui, sans-serif;
+  transition: color 0.15s, border-color 0.15s, background 0.15s; white-space: nowrap;
+}
+.topbar-signout:hover { color: var(--text); border-color: var(--border-hi); background: var(--panel-2); }
+/* Tight widths: drop the portfolio and sign-out labels, then the controls (all stay in the sidebar). */
+@media (max-width: 1100px) { .portfolio-btn span, .topbar-signout span { display: none; } .topbar-signout { padding: 0 10px; } }
+@media (max-width: 760px) { .topbar-right .portfolio-btn, .topbar-right .topbar-signout { display: none; } }
 /* Narrower screens: every tab keeps its name, stacked in small type under the icon so all fit. */
 @media (max-width: 1600px) {
   .app:not(.collapsed) .tab { flex-direction: column; gap: 3px; padding: 6px 10px; font-size: 11.5px; line-height: 1.2; }
