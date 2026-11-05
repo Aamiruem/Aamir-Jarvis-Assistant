@@ -2,11 +2,13 @@ import {
   ArrowRight,
   BarChart3,
   Brain,
+  BriefcaseBusiness,
   CheckSquare,
   Eye,
   FileText,
   Laptop,
   Mic,
+  Search,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -120,6 +122,7 @@ const NAV = [
   { href: "#features", label: "Features" },
   { href: "#how-it-works", label: "How it works" },
   { href: "#faq", label: "FAQ" },
+  { href: "https://aamir-hussain-azad.vercel.app/", label: "Portfolio" },
 ];
 
 // A Server Component: rendered to static HTML at build time, so it is fast and fully
@@ -138,12 +141,32 @@ export default function LandingPage() {
           </Link>
           <nav aria-label="Sections" className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
             {NAV.map((n) => (
-              <a key={n.href} href={n.href} className="transition-colors hover:text-foreground">
+              <a
+                key={n.href}
+                href={n.href}
+                target={n.href.startsWith("http") ? "_blank" : undefined}
+                rel={n.href.startsWith("http") ? "noreferrer" : undefined}
+                className="transition-colors hover:text-foreground"
+              >
                 {n.label}
               </a>
             ))}
           </nav>
+          <div className="hidden min-w-[240px] items-center gap-2 rounded-full border bg-background/70 px-3 py-2 text-sm text-muted-foreground shadow-sm md:flex">
+            <Search className="size-4" aria-hidden="true" />
+            <input
+              aria-label="Search Azarvis"
+              placeholder="Ask Azarvis…"
+              className="w-full border-0 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            />
+          </div>
           <nav aria-label="Main" className="flex items-center gap-1">
+            <Button variant="outline" size="sm" className="hidden sm:inline-flex" asChild>
+              <Link href="https://aamir-hussain-azad.vercel.app/" target="_blank" rel="noreferrer">
+                <BriefcaseBusiness className="mr-2 size-4" aria-hidden="true" />
+                Portfolio
+              </Link>
+            </Button>
             <ThemeToggle />
             <Button variant="ghost" className="max-sm:px-2" asChild>
               <Link href="/login">Sign in</Link>
