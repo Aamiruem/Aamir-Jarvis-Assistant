@@ -625,7 +625,10 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
 }
 /* Opened from the navbar: a dropdown under the search bar, no dimmed page. Clicking outside still closes it. */
 .palette-backdrop.anchored { background: transparent; backdrop-filter: none; padding: 0; display: block; }
-.palette.anchored { position: fixed; border-radius: 14px; transform-origin: top center; }
+.palette.anchored { position: fixed; border-radius: 12px; transform-origin: top left; }
+/* The input row sits exactly where the search bar was, so typing happens in the same place. */
+.palette.anchored .palette-input { height: 40px; padding: 0 12px; border-bottom-color: transparent; background: var(--field); }
+.palette.anchored .palette-input input:not([type='checkbox']) { font-size: 13.5px; padding: 0; }
 .palette.anchored .palette-list { max-height: min(60vh, 520px); }
 .palette-input { display: flex; align-items: center; gap: 10px; padding: 6px 14px; border-bottom: 1px solid var(--border); color: var(--accent); }
 .palette-input input:not([type='checkbox']) { flex: 1; background: none; border: none; box-shadow: none !important; font-size: 16px; padding: 12px 0; color: var(--text); }

@@ -103,9 +103,10 @@ export default function CommandPalette({ open, initialQuery = '', onClose, ancho
     setSel(0);
     const bar = anchorRef?.current;
     if (bar && window.innerWidth > 760) {
+      // Same spot as the search bar: its top-left corner and its width (never narrower than 360px).
       const r = bar.getBoundingClientRect();
-      const width = Math.min(Math.max(r.width, 540), window.innerWidth - 16);
-      setAnchor({ top: r.bottom + 8, left: Math.max(8, Math.min(r.left, window.innerWidth - width - 8)), width });
+      const width = Math.min(Math.max(r.width, 360), window.innerWidth - r.left - 8);
+      setAnchor({ top: r.top, left: r.left, width });
     } else {
       setAnchor(null);
     }
