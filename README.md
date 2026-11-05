@@ -100,7 +100,7 @@ npm run dev                        # http://localhost:5173: register, enter the 
 **4. Optional extras**
 ```bash
 pip install -r backend/streamlit-admin/requirements.txt && streamlit run backend/streamlit-admin/app.py
-pip install -r backend/mcp-server/requirements.txt && claude mcp add jarvis -- python "%CD%\backend\mcp-server\server.py"
+pip install -r backend/mcp-server/requirements.txt && claude mcp add azarvis -- python "%CD%\backend\mcp-server\server.py"
 python jarvis.py                   # terminal chat
 ```
 

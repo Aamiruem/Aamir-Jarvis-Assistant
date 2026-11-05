@@ -107,7 +107,7 @@ learning happens.
 ## Phase 10: MCP (Model Context Protocol)
 **Read:** `backend/mcp-server/server.py`
 - MCP standardises tools/resources so any AI client can use them.
-- `claude mcp add jarvis -- python <path>/backend/mcp-server/server.py`, then ask Claude Code
+- `claude mcp add azarvis -- python <path>/backend/mcp-server/server.py`, then ask Claude Code
   "what's on my Jarvis task list?"
 
 **Exercises**

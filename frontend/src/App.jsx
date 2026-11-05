@@ -14,6 +14,9 @@ import WelcomePrompt from './components/WelcomePrompt.jsx';
 import InstallDialog from './components/InstallDialog.jsx';
 import { share, useInstall } from './pwa.js';
 
+// Aamir Hussain Azad's portfolio: linked from the top bar and the command palette.
+const PORTFOLIO_URL = 'https://aamir-hussain-azad.vercel.app/';
+
 // Code splitting: Home and sign-in load first; every other tab is its own small file,
 // downloaded the first time it's opened (Chat is fetched early while the browser is idle).
 const loadChat = () => import('./components/Chat.jsx');
@@ -358,6 +361,30 @@ export default function App() {
           </button>
           <ThemeMenu theme={theme} />
           <NotificationBell />
+          {/* Top-right: your portfolio, plus account and sign-out always within reach. */}
+          <div className="topbar-right">
+            <a
+              className="portfolio-btn"
+              href={PORTFOLIO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Aamir Hussain Azad — portfolio"
+            >
+              <Icon name="briefcase" size="1em" />
+              <span>Portfolio</span>
+            </a>
+            <button
+              className="topbar-avatar"
+              onClick={() => go('account')}
+              title={`${user.name}: account and security`}
+              aria-label="Account and security"
+            >
+              {user.name.slice(0, 1).toUpperCase()}
+            </button>
+            <button className="icon-btn" onClick={logout} title="Log out" aria-label="Log out">
+              <Icon name="logout" size="1.2em" />
+            </button>
+          </div>
         </header>
         <section className="content">
           <Suspense fallback={<div className="tab-loading"><div className="orb pulse" /></div>}>
@@ -408,7 +435,7 @@ export default function App() {
         onClose={() => setPaletteOpen(false)}
         tabs={tabs}
         conversations={conversations}
-        actions={{ openTab: setTab, ask, newChat, startSession, install: installApp, share: shareJarvis, openNotes: (chapter, heading) => { setNotesTarget({ chapter, heading, at: Date.now() }); setTab('notes'); }, openConversation, openContacts, toggleTheme: () => theme.setChoice(theme.mode === 'dark' ? 'light' : 'dark') }}
+        actions={{ openTab: setTab, ask, newChat, startSession, install: installApp, share: shareJarvis, openPortfolio: () => window.open(PORTFOLIO_URL, '_blank', 'noopener,noreferrer'), openNotes: (chapter, heading) => { setNotesTarget({ chapter, heading, at: Date.now() }); setTab('notes'); }, openConversation, openContacts, toggleTheme: () => theme.setChoice(theme.mode === 'dark' ? 'light' : 'dark') }}
       />
       <nav className="bottom-nav" aria-label="Main (phone)">
         {tabs.filter((t) => BOTTOM_TABS.includes(t.id)).map((t) => (
