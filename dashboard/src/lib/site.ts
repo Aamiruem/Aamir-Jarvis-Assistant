@@ -5,9 +5,9 @@ export const SITE = {
   name: "Jarvis AI Assistant",
   shortName: "Jarvis",
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3001").replace(/\/$/, ""),
-  title: "Jarvis – AI Voice Assistant for Tasks, Reminders, Memory & Your PC",
+  title: "Jarvis – AI Voice Assistant for Tasks, Reminders & Your PC",
   description:
-    "Jarvis is a personal AI voice assistant powered by Claude. Talk naturally to set reminders, manage tasks, search your documents, check the weather and control your Windows, Mac or Linux PC, hands-free.",
+    "Jarvis is a personal AI voice assistant powered by Claude: reminders, tasks, study notes, answers from your documents and hands-free control of your PC.",
   keywords: [
     "AI assistant",
     "AI voice assistant",

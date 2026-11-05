@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { LoginForm } from "@/components/auth/login-form";
 
 export const metadata: Metadata = {
-  title: "Sign in",
-  description: "Sign in to Jarvis, your AI voice assistant, with a one-time code.",
+  title: { absolute: "Sign in to Jarvis, your AI voice assistant" },
+  description: "Sign in to Jarvis, your personal AI voice assistant, with your email, your password and a one-time code.",
   alternates: { canonical: "/login" },
 };
 

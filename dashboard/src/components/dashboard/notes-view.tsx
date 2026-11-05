@@ -73,21 +73,23 @@ export function NotesView() {
   const [selectedCourse, setSelectedCourse] = useState<(typeof COURSE_LIBRARY)[number]>(COURSE_LIBRARY[0]);
   const [chapterIndex, setChapterIndex] = useState(0);
 
-  const loadNotes = async () => {
-    setLoading(true);
-    try {
-      const rows = await notesApi.list();
-      setNotes(rows);
-      setError(null);
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // First load: state is only set once the request finishes (loading starts as true).
   useEffect(() => {
-    loadNotes();
+    let cancelled = false;
+    notesApi
+      .list()
+      .then(
+        (rows) => {
+          if (cancelled) return;
+          setNotes(rows);
+          setError(null);
+        },
+        (e) => !cancelled && setError(errorMessage(e)),
+      )
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const resetForm = () => {

@@ -9,6 +9,8 @@ FROM node:22-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# public/ holds no files yet, and git doesn't keep empty folders: make sure it exists for the COPY below.
+RUN mkdir -p public
 # The /api proxy target is baked in at build time (Next evaluates rewrites during the build).
 ARG BACKEND_URL=http://express-api:4000
 # SEO: canonical links, sitemap.xml and the Google Search Console tag are built from these.

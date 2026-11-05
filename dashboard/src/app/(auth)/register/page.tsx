@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { RegisterForm } from "@/components/auth/register-form";
 
 export const metadata: Metadata = {
-  title: "Create account",
-  description: "Create a free Jarvis account and start talking to your AI voice assistant in minutes.",
+  title: { absolute: "Create your Jarvis account, your AI voice assistant" },
+  description: "Create a Jarvis account in a minute and start talking to your AI voice assistant for tasks, reminders and notes.",
   alternates: { canonical: "/register" },
 };
 

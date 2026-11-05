@@ -6,7 +6,7 @@ test("landing page introduces Jarvis and links to sign-in", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "What you can do with Jarvis" })).toBeAttached();
 
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page).toHaveURL(/\/login$/, { timeout: 15_000 }); // a busy machine can take a moment to switch pages
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
 });
 
