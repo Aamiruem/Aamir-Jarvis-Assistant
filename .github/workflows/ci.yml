@@ -57,9 +57,23 @@ jobs:
         with: { name: playwright-report, path: dashboard/playwright-report, retention-days: 7 }
 
   docker:
+    name: docker (${{ matrix.service }})
     runs-on: ubuntu-latest
     needs: [fastapi-ai, express-api, frontend, dashboard]
+    strategy:
+      fail-fast: false # build every image, so one failure doesn't hide another
+      matrix:
+        service: [fastapi-ai, express-api, streamlit-admin, frontend, dashboard]
     steps:
       - uses: actions/checkout@v5
       - run: cp .env.example .env
-      - run: docker compose build
+      - name: docker compose build ${{ matrix.service }}
+        run: |
+          set -o pipefail
+          docker compose build --progress plain ${{ matrix.service }} 2>&1 | tee build.log
+      # Job logs need a GitHub login; annotations are shown on the run page to anyone who can see it.
+      - name: Report the build error
+        if: failure()
+        run: |
+          msg=$(grep -iE "error|failed|ERR!|not found" build.log | tail -n 25 | sed 's/%/%25/g; s/\r//g' | sed ':a;N;$!ba;s/\n/%0A/g')
+          echo "::error title=docker build ${{ matrix.service }}::${msg:-no error lines found, see the job log}"
