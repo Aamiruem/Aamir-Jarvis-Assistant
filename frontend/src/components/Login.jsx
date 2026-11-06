@@ -293,7 +293,7 @@ export default function Login({ onAuth }) {
           </form>
         )}
 
-        <footer className="login-foot">Protected by one-time codes and short-lived sessions</footer>
+        <footer className="login-foot">Protected by hashed passwords and short-lived sessions</footer>
       </div>
     </div>
   );

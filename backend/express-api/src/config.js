@@ -29,6 +29,9 @@ export const config = {
     maxFailedLogins: num(process.env.MAX_FAILED_LOGINS, 5),
     lockMinutes: num(process.env.LOCK_MINUTES, 15),
     loginOtpRequired: bool(process.env.LOGIN_OTP_REQUIRED, true), // 2-step login, like net banking
+    // Plain email + password for a site with no email service: no codes, addresses are not
+    // checked, so ADMIN_EMAILS grants nothing, and password reset is off.
+    passwordOnly: bool(process.env.PASSWORD_ONLY, false),
     rateLimitPer15Min: num(process.env.AUTH_RATE_LIMIT, 30),
   },
 
@@ -66,6 +69,6 @@ if (config.env === 'production') {
   for (const [name, value] of [['JWT_SECRET', config.auth.jwtSecret], ['OTP_SECRET', config.otp.secret]]) {
     if (!value || value.startsWith('dev-only')) throw new Error(`Set ${name} in production`);
   }
-  if (config.notifications.provider === 'console' && !config.demoMode)
-    throw new Error('Set OTP_PROVIDER=smtp or aws in production, or DEMO_MODE=true to show codes on the page');
+  if (config.notifications.provider === 'console' && !config.demoMode && !config.auth.passwordOnly)
+    throw new Error('Set OTP_PROVIDER=smtp or aws in production, or PASSWORD_ONLY=true for plain email + password');
 }

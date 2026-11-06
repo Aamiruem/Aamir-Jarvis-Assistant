@@ -222,3 +222,36 @@ test('account deletion needs the password and purges all data', async () => {
   await assert.rejects(auth.refresh(s.refreshToken, ctx));
   await assert.rejects(auth.login({ email: 'asha@example.com', password: GOOD_PW }, ctx), errors.AuthenticationError);
 });
+
+function passwordOnlyAuth() {
+  const container = createContainer({ storage: 'memory', notifier: inbox, settings: { passwordOnly: true } });
+  return container.authService;
+}
+
+test('password-only: sign up signs you in, and sign in needs just the password', async () => {
+  const simple = passwordOnlyAuth();
+  const signedUp = await simple.register({ name: 'Asha', email: 'asha@example.com', password: GOOD_PW }, ctx);
+  assert.ok(signedUp.accessToken && signedUp.refreshToken);
+
+  const signedIn = await simple.login({ email: 'asha@example.com', password: GOOD_PW }, ctx);
+  assert.ok(signedIn.accessToken && signedIn.refreshToken);
+  assert.equal(inbox.sent.length, 0); // no codes at all
+
+  await assert.rejects(simple.login({ email: 'asha@example.com', password: 'Wr0ng!Passphrase' }, ctx), errors.AuthenticationError);
+});
+
+test('password-only: an unchecked address never gets admin', async () => {
+  const simple = passwordOnlyAuth();
+  simple.adminEmails = ['boss@example.com'];
+  const signedUp = await simple.register({ name: 'Mallory', email: 'boss@example.com', password: GOOD_PW }, ctx);
+  assert.equal(signedUp.user.role, 'user');
+  const signedIn = await simple.login({ email: 'boss@example.com', password: GOOD_PW }, ctx);
+  assert.equal(signedIn.user.role, 'user');
+});
+
+test('password-only: password reset is off, so nobody can take over an account with it', async () => {
+  const simple = passwordOnlyAuth();
+  await simple.register({ name: 'Asha', email: 'asha@example.com', password: GOOD_PW }, ctx);
+  await assert.rejects(simple.forgotPassword({ email: 'asha@example.com' }, ctx), errors.ValidationError);
+  assert.equal(inbox.sent.length, 0);
+});

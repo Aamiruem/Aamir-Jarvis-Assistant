@@ -55,10 +55,11 @@ export class AuthService {
       name,
       email,
       passwordHash: await this.hasher.hash(password),
-      role: this.adminEmails.includes(email) ? 'admin' : 'user',
+      role: this.#isAdminEmail(email) ? 'admin' : 'user',
       passwordChangedAt: this.clock(),
     });
     await this.audit.log('register', { userId: user.id, ctx });
+    if (this.settings.passwordOnly) return this.#completeLogin(user, ctx);
     const challenge = await this.otp.issue({ userId: user.id, purpose: 'verify_email', destination: email, channel: 'email' });
     return { emailVerificationRequired: true, ...challenge };
   }
@@ -98,11 +99,11 @@ export class AuthService {
       await this.users.update(user.id, { failedLoginAttempts: 0, lockUntil: null });
     }
 
-    if (!user.emailVerified) {
+    if (!user.emailVerified && !this.settings.passwordOnly) {
       const challenge = await this.otp.issue({ userId: user.id, purpose: 'verify_email', destination: user.email, channel: 'email' });
       return { emailVerificationRequired: true, ...challenge };
     }
-    if (this.settings.loginOtpRequired) {
+    if (this.settings.loginOtpRequired && !this.settings.passwordOnly) {
       const { channel, destination } = this.#otpRoute(user);
       const challenge = await this.otp.issue({ userId: user.id, purpose: 'login', destination, channel });
       await this.audit.log('login_otp_sent', { userId: user.id, ctx, meta: { channel } });
@@ -143,9 +144,14 @@ export class AuthService {
     return { channel: 'email', destination: user.email };
   }
 
+  /** An unchecked address proves nothing, so ADMIN_EMAILS only counts when email is verified. */
+  #isAdminEmail(email) {
+    return !this.settings.passwordOnly && this.adminEmails.includes(email);
+  }
+
   async #completeLogin(user, ctx) {
     const patch = { lastLoginAt: this.clock() };
-    if (this.adminEmails.includes(user.email)) patch.role = 'admin'; // picks up ADMIN_EMAILS changes
+    if (this.#isAdminEmail(user.email)) patch.role = 'admin'; // picks up ADMIN_EMAILS changes
     const updated = await this.users.update(user.id, patch);
     await this.audit.log('login_success', { userId: user.id, ctx });
     return this.#startSession(updated, crypto.randomUUID(), ctx);
@@ -238,6 +244,7 @@ export class AuthService {
 
   /** Always answers the same way, so it can't be used to find out which emails are registered. */
   async forgotPassword({ email }, ctx) {
+    if (this.settings.passwordOnly) throw new ValidationError('Password reset is not available yet. It needs email, which is not set up.');
     email = (email || '').trim().toLowerCase();
     const user = EMAIL_RE.test(email) ? await this.users.findByEmail(email) : null;
     const generic = { message: 'If an account exists for this email, a reset code has been sent.' };
