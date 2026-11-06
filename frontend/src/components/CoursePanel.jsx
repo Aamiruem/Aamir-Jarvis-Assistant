@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { toast } from '../ui.jsx';
-import MarkdownView from './MarkdownView.jsx';
+import StudyNotesView from './StudyNotesView.jsx';
 
 // A YouTube course (frontend/public/courses, made by scripts/import_youtube_course.py): every
 // lecture in order with the video, its chapters, code links and description, your own notes
@@ -108,9 +108,10 @@ function LectureNotes({ course, lecture, notes, onSaved }) {
       <section>
         <h4><Icon name="sparkles" size="1em" /> Notes by Azarvis</h4>
         <p className="muted small">
-          Complete study notes for this lecture's topic with your master prompt: concepts basic → advanced, code with dry runs,
-          mistakes, exercises, interview questions, a cheat sheet and a quiz. Azarvis can't watch the video, so they're built from
-          the title, the description and your notes.
+          Complete study notes for this lecture's topic in 13 sections: definitions, difficult words, concepts basic → advanced,
+          diagrams, code at three levels with a dry run, real-world uses, exercises, interview questions, comparisons, a summary,
+          a cheat sheet and a final test. Answers stay hidden until you ask. Azarvis can't watch the video, so the notes are built
+          from the title, the description and your notes.
         </p>
         {job ? (
           <div className="progress-card">
@@ -123,7 +124,7 @@ function LectureNotes({ course, lecture, notes, onSaved }) {
           </button>
         )}
         {error && <p className="error">{error}</p>}
-        {ai && !job && <MarkdownView source={ai.content} className="lecture-ai-notes" />}
+        {ai && !job && <StudyNotesView markdown={ai.content} className="lecture-ai-notes" />}
       </section>
     </div>
   );

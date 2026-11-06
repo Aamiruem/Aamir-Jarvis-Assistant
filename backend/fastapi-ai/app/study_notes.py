@@ -1,7 +1,8 @@
 """Study notes written by Claude with the user's master prompt (Notes → "Make notes with Azarvis").
 
-The prompt asks for long, structured notes (introduction, vocabulary, basic → advanced concepts,
-code with dry runs, mistakes, exercises, interview questions, cheat sheet, assessment), so the
+The prompt asks for long, structured notes in 13 sections (definitions, terminology, basic → advanced
+concepts, diagrams, code with dry runs, applications, exercises, interview questions, comparison,
+summary, cheat sheet, knowledge test) plus a final Answers section, so the
 answer is streamed with a large token budget inside a background job (see app/mllab/jobs.py).
 For a lecture, Claude gets its title and the public video description; it cannot watch the video,
 and the notes say so.
@@ -12,80 +13,92 @@ from app.llm.claude import _current_key, base_params
 
 MAX_TOKENS = 32_000
 
-MASTER_PROMPT = """# MASTER PROMPT – AI/ML ENGINEER NOTES MAKER
+MASTER_PROMPT = """# MASTER PROMPT – AI/ML ENGINEER STUDY NOTES
 
-Act as my personal AI/ML professor, senior software engineer, Python instructor and technical interview mentor.
+Act as my personal AI/ML Engineering professor, technical mentor and interview coach.
 
-I am an intermediate Python learner preparing to become an industry-ready AI/ML Engineer.
+Create complete, well-structured study notes on my topic from BEGINNER to ADVANCED level. Explain everything in very easy English, assuming I want to understand concepts deeply, not memorize them.
 
-Whenever I provide a topic, create complete, structured study notes using the following instructions.
+## 1. Definitions and Basic Understanding
+- Give a simple definition in easy English.
+- Explain why the concept is used.
+- Explain where and when it is used.
+- Give a real-life example.
+- Explain the technical definition after the simple definition.
 
-## 1. Topic Introduction
-- What is this topic?
-- Simple definition in very easy English.
+## 2. Difficult Words and Terminology
+- Identify difficult and technical words.
+- Give the meaning in simple English.
+- Explain each word with an example.
+- Include important technical terminology and abbreviations.
+Use a table: Word | Easy Meaning | Example.
+
+## 3. Concept Explanation (Basic to Advanced)
+Explain every subtopic step by step:
+- What is it?
 - Why do we need it?
-- Where is it used in real life?
-- Why is it important in AI/ML engineering?
+- How does it work internally?
+- How does it work in real-world applications?
+- Advantages, disadvantages and limitations.
+- Common mistakes and misunderstandings.
+- Connections with previously learned concepts.
+Do not skip important concepts.
 
-## 2. Difficult Words and Vocabulary
-Create a vocabulary table (Difficult Word | Easy Meaning | Example). Explain every difficult technical word in simple English.
+## 4. Visual Explanation and Diagrams
+Use visual learning wherever possible: flowcharts, architecture diagrams, graphs and charts, tables and comparison diagrams, memory diagrams, step-by-step execution diagrams. Explain every diagram.
 
-## 3. Concept Explanation: Basic to Advanced
-Divide the topic into Level 1: Absolute basics, Level 2: Fundamental concepts, Level 3: Intermediate concepts, Level 4: Advanced concepts, Level 5: Industry-level applications. Explain every concept step by step. Never skip important fundamentals.
+## 5. Practical Coding (Basic to Advanced)
+Provide Python code at three levels:
+1. Basic code – understand the concept.
+2. Intermediate code – practical implementation.
+3. Advanced code – industry-level implementation.
+For every code example: explain each line; explain every keyword, function and variable; show the expected output; explain why the code works; give real-world use cases; follow clean coding practices.
 
-## 4. Visual Learning
-Use visual explanations wherever possible: flowcharts, architecture diagrams, concept maps, graphs, tables, real-world illustrations, step-by-step workflows. Explain what every diagram represents.
+## 6. Code Dry Run
+Perform a complete manual dry run: initial variable values, each execution step, how variables change, loop iterations where applicable, function calls and return values, and the final output. Use a table: Step | Line / Action | Variables | Output.
 
-## 5. Real-Life Examples
-Give at least 3 practical examples: a daily-life example, a software development example, an AI/ML engineering example.
+## 7. Real-World Applications
+Explain how this concept is used in real-world software development, Data Science, Machine Learning, Deep Learning, Generative AI, AI Backend Engineering and production-level applications, with practical examples.
 
-## 6. Python Code: Conceptual to Advanced
-For every important concept, provide basic syntax, a simple code example, intermediate code, advanced code, an industry-level practical example and the expected output. Explain every important line of code in simple English. Use proper Python naming conventions and clean coding practices.
+## 8. Practical Exercises
+Beginner: 5 questions. Intermediate: 5 questions. Advanced: 5 questions. Give a hint with each question. Keep the solutions separate (in the Answers section at the end) so I can attempt them independently.
 
-## 7. Code Dry Run
-Perform a complete manual dry run: initial values, variable changes, function execution, loop iterations, conditions, return values, final output, in a dry-run table (Step | Execution | Variable Value | Output). Never skip execution steps.
+## 9. Interview Preparation
+10 basic, 10 intermediate, 10 advanced and 5 tricky or scenario-based questions. For every question: give a clear answer, explain the reasoning, give a practical example, include coding questions and solutions wherever applicable, and list common follow-up questions.
 
-## 8. Common Mistakes and Debugging
-Common beginner mistakes, common advanced mistakes, error messages and their meanings, why errors occur, how to fix them, best practices.
+## 10. Topic Comparison
+Compare related concepts using tables: differences, similarities, advantages, disadvantages and when to use each.
 
-## 9. Practical Exercises
-5 beginner, 5 intermediate and 5 advanced exercises, and 2 real-world mini-projects. Give hints first. Provide solutions separately so I can try independently.
+## 11. Topic Summary
+Complete topic summary, most important concepts, key takeaways, important definitions, common mistakes to avoid, and what I should remember for interviews.
 
-## 10. Technical Interview Preparation
-10 basic, 10 intermediate and 10 advanced interview questions, 5 coding interview problems, expected answers with explanations, code-based interview questions, tricky questions asked in IT companies, and follow-up questions an interviewer might ask.
+## 12. Quick Revision Cheat Sheet
+A compact cheat sheet: important definitions, syntax and formulas, important keywords, code snippets, command references, diagrams and common interview facts.
 
-## 11. Industry-Level Applications
-How this topic is used in real-world software development, Data Science, Machine Learning, Deep Learning, Generative AI, AI Backend Engineering and production systems.
+## 13. Final Knowledge Test
+10 MCQs, 5 conceptual questions, 5 coding problems and 5 interview questions. Do not show the answers here: let me attempt them first. Put every answer in the Answers section at the end, so I can check my own answers and ask you to evaluate them.
 
-## 12. Topic Summary
-Important definitions, core concepts, important formulas, important syntax, key differences, most important takeaways.
+## IMPORTANT TEACHING RULES
+1. Use very easy English and simple explanations.
+2. Never assume I already understand a technical term.
+3. Explain difficult words immediately.
+4. Teach from basic to advanced in a logical sequence.
+5. Use practical, real-life examples.
+6. Never skip code explanations or dry runs.
+7. Include diagrams and graphs wherever useful.
+8. Connect concepts to actual AI/ML engineering work.
+9. Use Python for practical coding wherever appropriate.
+10. Make the notes detailed, organized, revision-friendly and interview-oriented.
 
-## 13. Quick Revision Cheat Sheet
-A compact revision table (Concept | Syntax / Formula | Meaning | Example) with important syntax, short code snippets, important commands, common errors, interview reminders and must-remember concepts.
-
-## 14. Knowledge Assessment
-10 MCQs, 5 output-prediction questions, 5 debugging questions and 5 coding challenges. Do not reveal answers immediately: put all answers in a final "Answers" section.
-
-## TEACHING RULES
-1. Use very easy English.
-2. Explain difficult words immediately.
-3. Assume I want to understand, not memorize.
-4. Teach from basic to advanced.
-5. Never skip the logic behind code.
-6. Use practical examples and visual diagrams.
-7. Explain WHY, HOW and WHEN.
-8. Explain every important line of code.
-9. Include complete code and expected outputs.
-10. Connect concepts to AI/ML engineering.
-11. Keep notes properly structured with headings and tables.
-12. Make notes suitable for future revision and technical interviews.
+Final goal: help me understand the topic deeply, write code independently, solve technical problems, explain concepts confidently in interviews and use the knowledge in industry-level AI/ML projects.
 
 IMPORTANT: Do not give a short overview when I request complete notes. Explain the topic thoroughly.
 
-Format: Markdown with # headings for the 14 sections, tables, fenced ```python code blocks, and formulas as \\( … \\) inline or \\[ … \\] on their own lines.
-
-## MY LEARNING LEVEL:
-Intermediate Python → Advanced → Industry Ready AI/ML Engineer."""
+Format (the notes are shown in an app, so follow this exactly):
+- Markdown with one # heading per section, numbered and named as above ("# 1. Definitions and Basic Understanding" … "# 13. Final Knowledge Test"), and ## / ### headings inside them.
+- After section 13, a last section "# Answers" holding the exercise solutions (section 8) and every answer to the knowledge test (section 13). Nothing after it.
+- Draw diagrams as ASCII art inside ```text code blocks (Mermaid is not rendered), and explain each one below it.
+- Tables in Markdown, code in fenced ```python blocks, formulas as \\( … \\) inline or \\[ … \\] on their own lines."""
 
 
 def request_text(topic: str, lecture: dict | None = None, context: str = "") -> str:

@@ -14,7 +14,8 @@ def test_request_says_it_is_based_on_the_topic_not_the_video():
     )
     assert text.startswith("## MY TOPIC:\nPandas GroupBy")
     assert "can't watch the video" in text and "https://github.com/x/y" in text and "<my_notes>\nsplit-apply-combine" in text
-    assert "14. Knowledge Assessment" in study_notes.MASTER_PROMPT
+    assert "13. Final Knowledge Test" in study_notes.MASTER_PROMPT
+    assert "# Answers" in study_notes.MASTER_PROMPT  # the app hides this section until asked
 
 
 def test_generate_job_returns_the_notes(monkeypatch):

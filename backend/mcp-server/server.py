@@ -305,7 +305,9 @@ if __name__ == "__main__":
     transport = os.environ.get("MCP_TRANSPORT", "stdio")
     if transport == "stdio":
         mcp.run()
-    else:
+    elif transport in ("streamable-http", "sse"):
         # HTTP transports let several clients share one running server.
         mcp.settings.port = int(os.environ.get("MCP_HTTP_PORT", "8090"))
         mcp.run(transport=transport)
+    else:
+        raise SystemExit(f'MCP_TRANSPORT must be "stdio", "streamable-http" or "sse", not "{transport}".')
