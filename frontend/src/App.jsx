@@ -1,6 +1,8 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { api, auth, onSessionExpired } from './api.js';
 import HomePanel from './components/HomePanel.jsx';
+import { sessionPlan } from './session.js';
+import { useRoomWatch } from './useRoomWatch.js';
 import Login from './components/Login.jsx';
 import CommandPalette from './components/CommandPalette.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
@@ -8,8 +10,6 @@ import ThemeMenu from './components/ThemeMenu.jsx';
 import { Icon } from './icons.jsx';
 import { useTheme } from './theme.js';
 import { toast, Toaster } from './ui.jsx';
-import { sessionPlan } from './session.js';
-import { useRoomWatch } from './useRoomWatch.js';
 import WelcomePrompt from './components/WelcomePrompt.jsx';
 import InstallDialog from './components/InstallDialog.jsx';
 import { share, useInstall } from './pwa.js';

@@ -4,13 +4,13 @@ const list = (value) =>
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
 const num = (value, fallback) => (value === undefined || value === '' ? fallback : Number(value));
-const bool = (value, fallback) => (value === undefined || value === '' ? fallback : value === 'true');
+const bool = (value, fallback) => (value === undefined || value.trim() === '' ? fallback : value.trim() === 'true');
 
 export const config = {
   env: process.env.NODE_ENV || 'development',
   port: num(process.env.PORT, 4000),
   // MONGODB_URI is what Vercel's MongoDB Atlas integration sets.
-  mongoUri: process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/jarvis',
+  mongoUri: (process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/jarvis').trim(),
   aiServiceUrl: process.env.AI_SERVICE_URL || 'http://localhost:8001',
   aiWaitMs: num(process.env.AI_WAIT_MS, 20_000), // how long a request waits for a restarting AI service
   chatIdleMs: num(process.env.CHAT_IDLE_MS, 180_000), // give up on a chat reply that sends nothing for this long

@@ -14,26 +14,55 @@ still accepted for older setups.
 
 Transport: stdio by default. Set MCP_TRANSPORT=streamable-http (with MCP_HTTP_PORT,
 default 8090) to serve several clients over HTTP instead.
+
+Every tool is async and shares one pooled HTTP connection to the AI service, so a slow
+call (ask_azarvis can take a minute) never blocks the others. Tools carry MCP annotations
+(read-only / destructive / idempotent) so clients can auto-approve reads and ask before deletes.
 """
+import asyncio
+import json
 import os
-import time
+from typing import Any
 
 import httpx
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import Context, FastMCP
+from mcp.types import ToolAnnotations
 
 AI_URL = os.environ.get("AI_SERVICE_URL", "http://localhost:8001").rstrip("/")
-TIMEOUT = float(os.environ.get("MCP_TIMEOUT", "120"))
+TIMEOUT = float(os.environ.get("MCP_TIMEOUT", "120"))  # longest wait for the service to send anything
 HEADERS = {
     "X-Internal-Key": os.environ.get("INTERNAL_API_KEY", "change-me-internal-key"),
     # AZARVIS_USER_ID is the new name; JARVIS_USER_ID keeps older configs working.
     "X-User-Id": os.environ.get("AZARVIS_USER_ID") or os.environ.get("JARVIS_USER_ID", "local"),
 }
+MAX_SEARCH_RESULTS = 10  # the AI service rejects k > 10
+# Safe to send twice: a retry after a 502/503 can't create a duplicate.
+IDEMPOTENT = {"GET", "PUT", "PATCH", "DELETE"}
+
+READ = ToolAnnotations(readOnlyHint=True, openWorldHint=False)
+WRITE = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
+SET = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=True, openWorldHint=False)
+DELETE = ToolAnnotations(readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=False)
 
 mcp = FastMCP("azarvis")
+_client: httpx.AsyncClient | None = None
 
 
 class ServiceError(RuntimeError):
     """A clean, human-readable failure the MCP client can show without a stack trace."""
+
+
+def _http() -> httpx.AsyncClient:
+    """One keep-alive connection pool for every tool call (created on first use)."""
+    global _client
+    if _client is None:
+        _client = httpx.AsyncClient(
+            base_url=AI_URL,
+            headers=HEADERS,
+            timeout=httpx.Timeout(TIMEOUT, connect=5.0),
+            limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
+        )
+    return _client
 
 
 def _detail(resp: httpx.Response) -> str:
@@ -51,24 +80,29 @@ def _detail(resp: httpx.Response) -> str:
     return str(detail)[:300]
 
 
-def _call(method: str, path: str, *, retries: int = 2, **kwargs):
+def _unreachable() -> str:
+    return (
+        f"Can't reach the Azarvis AI service at {AI_URL}. Start everything with "
+        '"npm run dev" in the project folder (or run uvicorn on :8001), then try again.'
+    )
+
+
+async def _call(method: str, path: str, *, retries: int = 2, **kwargs) -> Any:
     """Call the Azarvis AI service, retrying briefly while it is starting up.
 
-    Connection refused or a 502/503 usually means the service is still booting (or
-    restarting after an edit), so we wait and try again instead of failing at once.
+    A refused connection never reached the service, so it is always safe to retry. A 502/503
+    (service still booting) is retried only for idempotent methods, and a timeout is never
+    retried: the service may have done the work already, and a second try would double it.
     Raises ServiceError with a plain message on anything that can't be recovered.
     """
     last = "the Azarvis AI service did not respond"
     for attempt in range(retries + 1):
         try:
-            resp = httpx.request(method, f"{AI_URL}{path}", headers=HEADERS, timeout=TIMEOUT, **kwargs)
-        except httpx.ConnectError:
-            last = (
-                f"Can't reach the Azarvis AI service at {AI_URL}. Start everything with "
-                '"npm run dev" in the project folder (or run uvicorn on :8001), then try again.'
-            )
+            resp = await _http().request(method, path, **kwargs)
+        except (httpx.ConnectError, httpx.ConnectTimeout):
+            last = _unreachable()
         except httpx.TimeoutException:
-            last = f"The Azarvis AI service at {AI_URL} took longer than {TIMEOUT:.0f}s to answer."
+            raise ServiceError(f"The Azarvis AI service at {AI_URL} took longer than {TIMEOUT:.0f}s to answer.")
         else:
             if resp.status_code < 400:
                 if resp.status_code == 204 or not resp.content:
@@ -77,144 +111,174 @@ def _call(method: str, path: str, *, retries: int = 2, **kwargs):
                     return resp.json()
                 except ValueError:
                     return {"text": resp.text}
-            # 502/503 = gateway/service not ready yet: worth one more try.
-            if resp.status_code in (502, 503) and attempt < retries:
+            if resp.status_code in (502, 503) and method in IDEMPOTENT and attempt < retries:
                 last = f"the AI service returned {resp.status_code}"
             else:
                 raise ServiceError(f"Azarvis AI service error {resp.status_code}: {_detail(resp)}")
         if attempt < retries:
-            time.sleep(0.8 * (attempt + 1))
+            await asyncio.sleep(0.8 * (attempt + 1))
     raise ServiceError(f"Couldn't complete the request: {last}.")
 
 
 # ---------- Knowledge base (uploaded PDFs, notes, web pages) ----------
 
-@mcp.tool()
-def search_knowledge(query: str, k: int = 4) -> list[dict]:
-    """Search the user's Azarvis knowledge base (uploaded PDFs, notes and saved web pages) and return matching passages."""
-    hits = _call("POST", "/rag/search", json={"query": query, "k": max(1, min(k, 20))})
-    return [{"source": h["source"], "score": h["score"], "text": h["text"]} for h in hits]
+@mcp.tool(title="Search knowledge base", annotations=READ)
+async def search_knowledge(query: str, k: int = 4) -> list[dict]:
+    """Search the user's Azarvis knowledge base (uploaded PDFs, notes and saved web pages) and return matching passages (k: 1-10)."""
+    hits = await _call("POST", "/rag/search", json={"query": query, "k": max(1, min(k, MAX_SEARCH_RESULTS))})
+    return [{"source": h.get("source"), "score": h.get("score"), "text": h.get("text")} for h in hits]
 
 
-@mcp.tool()
-def add_note(title: str, text: str) -> dict:
+@mcp.tool(title="Add note", annotations=WRITE)
+async def add_note(title: str, text: str) -> dict:
     """Save a text note into the Azarvis knowledge base so it can be searched later."""
-    return _call("POST", "/rag/text", json={"title": title, "text": text})
+    return await _call("POST", "/rag/text", json={"title": title, "text": text})
 
 
-@mcp.tool()
-def add_web_page(url: str) -> dict:
+@mcp.tool(title="Add web page", annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=True))
+async def add_web_page(url: str) -> dict:
     """Fetch a web page and add its text to the Azarvis knowledge base (blocked for private/local addresses)."""
-    return _call("POST", "/rag/url", json={"url": url})
+    return await _call("POST", "/rag/url", json={"url": url})
 
 
 # ---------- Tasks & reminders ----------
 
-@mcp.tool()
-def list_tasks(include_done: bool = False) -> list[dict]:
+@mcp.tool(title="List tasks", annotations=READ)
+async def list_tasks(include_done: bool = False) -> list[dict]:
     """List the user's Azarvis tasks."""
-    return _call("GET", "/tasks", params={"include_done": include_done})
+    return await _call("GET", "/tasks", params={"include_done": include_done})
 
 
-@mcp.tool()
-def add_task(title: str, due: str | None = None, remind_at: str | None = None) -> dict:
+@mcp.tool(title="Add task", annotations=WRITE)
+async def add_task(title: str, due: str | None = None, remind_at: str | None = None) -> dict:
     """Add a task to the user's Azarvis to-do list.
 
     due: free text like 'friday 5pm'. remind_at: ISO-8601 time for a reminder notification,
     e.g. '2026-11-02T17:00:00+05:30'.
     """
-    return _call("POST", "/tasks", json={"title": title, "due": due, "remind_at": remind_at})
+    return await _call("POST", "/tasks", json={"title": title, "due": due, "remind_at": remind_at})
 
 
-@mcp.tool()
-def complete_task(task_id: int) -> dict:
+@mcp.tool(title="Complete task", annotations=SET)
+async def complete_task(task_id: int) -> dict:
     """Mark an Azarvis task as done."""
-    return _call("PATCH", f"/tasks/{task_id}", json={"done": True})
+    return await _call("PATCH", f"/tasks/{task_id}", json={"done": True})
 
 
-@mcp.tool()
-def delete_task(task_id: int) -> dict:
+@mcp.tool(title="Delete task", annotations=DELETE)
+async def delete_task(task_id: int) -> dict:
     """Delete an Azarvis task permanently."""
-    return _call("DELETE", f"/tasks/{task_id}")
+    return await _call("DELETE", f"/tasks/{task_id}")
 
 
 # ---------- Long-term memory ----------
 
-@mcp.tool()
-def remember(fact: str) -> dict:
+@mcp.tool(title="Remember a fact", annotations=WRITE)
+async def remember(fact: str) -> dict:
     """Save a durable fact about the user to Azarvis's long-term memory."""
-    return _call("POST", "/memories", json={"fact": fact})
+    return await _call("POST", "/memories", json={"fact": fact})
 
 
-@mcp.tool()
-def recall() -> list[dict]:
+@mcp.tool(title="Recall memories", annotations=READ)
+async def recall() -> list[dict]:
     """List everything Azarvis remembers about the user."""
-    return _call("GET", "/memories")
+    return await _call("GET", "/memories")
 
 
-@mcp.tool()
-def forget(memory_id: int) -> dict:
+@mcp.tool(title="Forget a memory", annotations=DELETE)
+async def forget(memory_id: int) -> dict:
     """Delete one remembered fact by its id (see recall() for ids)."""
-    return _call("DELETE", f"/memories/{memory_id}")
+    return await _call("DELETE", f"/memories/{memory_id}")
 
 
 # ---------- Contacts ----------
 
-@mcp.tool()
-def list_contacts(query: str = "") -> list[dict]:
+@mcp.tool(title="List contacts", annotations=READ)
+async def list_contacts(query: str = "") -> list[dict]:
     """List the user's contacts, optionally filtered by a name/email/company search."""
-    return _call("GET", "/contacts", params={"q": query})
+    return await _call("GET", "/contacts", params={"q": query})
 
 
-@mcp.tool()
-def add_contact(name: str, phone: str | None = None, email: str | None = None, company: str | None = None, notes: str | None = None) -> dict:
+@mcp.tool(title="Add contact", annotations=WRITE)
+async def add_contact(name: str, phone: str | None = None, email: str | None = None, company: str | None = None, notes: str | None = None) -> dict:
     """Add a contact to the user's Azarvis address book."""
     body = {"name": name, "phone": phone, "email": email, "company": company, "notes": notes}
-    return _call("POST", "/contacts", json={k: v for k, v in body.items() if v is not None})
+    return await _call("POST", "/contacts", json={k: v for k, v in body.items() if v is not None})
 
 
 # ---------- The agent, NLP and notifications ----------
 
-@mcp.tool()
-def ask_azarvis(message: str) -> str:
+@mcp.tool(title="Ask Azarvis", annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False, openWorldHint=True))
+async def ask_azarvis(message: str, ctx: Context) -> str:
     """Ask the Azarvis agent itself (it can use all of its own tools: web search, the user's data, the computer) and return its reply."""
-    return _call("POST", "/chat", json={"message": message}).get("reply", "")
+    # Streams the agent's events, so the client sees each tool Azarvis uses as it happens, and
+    # TIMEOUT applies to silence between events rather than to the whole (possibly long) answer.
+    reply, errors, steps = [], [], 0
+    try:
+        async with _http().stream("POST", "/chat/stream", json={"message": message}) as resp:
+            if resp.status_code >= 400:
+                await resp.aread()
+                raise ServiceError(f"Azarvis AI service error {resp.status_code}: {_detail(resp)}")
+            async for line in resp.aiter_lines():
+                if not line.startswith("data:"):
+                    continue
+                try:
+                    ev = json.loads(line[5:])
+                except ValueError:
+                    continue
+                kind = ev.get("type")
+                if kind == "text":
+                    reply.append(ev.get("text", ""))
+                elif kind == "tool":
+                    steps += 1
+                    await ctx.report_progress(steps, message=f"Used {ev.get('name')}")
+                    await ctx.info(f"Azarvis used {ev.get('name')}" + ("" if ev.get("ok", True) else " (it failed)"))
+                elif kind == "error":
+                    errors.append(ev.get("message", "Unknown error"))
+    except (httpx.ConnectError, httpx.ConnectTimeout):
+        raise ServiceError(_unreachable())
+    except httpx.TimeoutException:
+        raise ServiceError(f"Azarvis went quiet for more than {TIMEOUT:.0f}s, so the request was stopped.")
+    text = "".join(reply).strip()
+    if not text and errors:
+        raise ServiceError(" ".join(errors))
+    return text
 
 
-@mcp.tool()
-def analyze_text(text: str) -> dict:
+@mcp.tool(title="Analyze text", annotations=READ)
+async def analyze_text(text: str) -> dict:
     """Run Azarvis's NLP pipeline on some text: intent classification, sentiment and named entities."""
-    return _call("POST", "/nlp/analyze", json={"text": text})
+    return await _call("POST", "/nlp/analyze", json={"text": text})
 
 
-@mcp.tool()
-def mark_notifications_read(ids: list[int]) -> dict:
+@mcp.tool(title="Mark notifications read", annotations=SET)
+async def mark_notifications_read(ids: list[int]) -> dict:
     """Mark the given reminder notifications as read."""
-    return _call("POST", "/notifications/read", json={"ids": ids})
+    return await _call("POST", "/notifications/read", json={"ids": ids})
 
 
-@mcp.tool()
-def health() -> dict:
+@mcp.tool(title="Health check", annotations=READ)
+async def health() -> dict:
     """Check that the Azarvis AI service is reachable and whether its Claude API key works.
 
     Returns status, the configured model, the operating system and whether the service may
     control the computer. Use this first if other tools are failing.
     """
-    return _call("GET", "/health", retries=0)
+    return await _call("GET", "/health", retries=0)
 
 
 # ---------- Resources ----------
 
 @mcp.resource("azarvis://stats")
-def stats() -> dict:
+async def stats() -> dict:
     """The user's usage analytics from the Azarvis chat logs."""
-    return _call("GET", "/stats")
+    return await _call("GET", "/stats")
 
 
 @mcp.resource("azarvis://notifications")
-def notifications() -> list[dict]:
+async def notifications() -> list[dict]:
     """The user's recent reminder notifications."""
-    return _call("GET", "/notifications")
+    return await _call("GET", "/notifications")
 
 
 # ---------- Prompts ----------
