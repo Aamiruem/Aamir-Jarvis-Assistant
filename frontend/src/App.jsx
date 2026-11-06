@@ -278,15 +278,18 @@ export default function App() {
       <aside className={`sidebar ${menuOpen ? 'open' : ''}`}>
         <div className="side-head">
           <div className="brand">
-            <img className="brand-logo" src="/icon.svg" alt="" width="30" height="30" />
-            <span>Azarvis</span>
+            <span className="brand-mark"><img className="brand-logo" src="/icon.svg" alt="" width="34" height="34" /></span>
+            <span className="brand-name">
+              <span className="brand-word">Azarvis</span>
+              <span className="brand-tag">AI Assistant</span>
+            </span>
           </div>
-          <button className="icon-btn side-collapse" onClick={toggleMenu} title="Hide the sidebar" aria-label="Hide the sidebar">
-            <Icon name="collapse" size="1.15em" />
+          <button className="icon-btn side-collapse" onClick={toggleMenu} title="Collapse sidebar" aria-label="Collapse sidebar">
+            <Icon name="panelClose" size="1.2em" />
           </button>
         </div>
         <button className="side-new" onClick={newChat}>
-          <Icon name="plus" size="1.15em" /> New chat
+          <span className="side-new-plus"><Icon name="plus" size="1em" /></span> New chat
         </button>
         <nav className="side-nav" aria-label="Main">
           {tabs
@@ -331,7 +334,7 @@ export default function App() {
 
       <main className="main">
         <header className="topbar">
-          <button className="icon-btn menu" onClick={toggleMenu} aria-label={collapsed ? 'Show sidebar' : 'Menu'} title="Menu"><Icon name="menu" /></button>
+          <button className={`icon-btn menu ${collapsed ? 'menu--expand' : ''}`} onClick={toggleMenu} aria-label={collapsed ? 'Show sidebar' : 'Menu'} title={collapsed ? 'Show sidebar' : 'Menu'}><Icon name="menu" className="menu-burger" /><Icon name="panelOpen" className="menu-expand" /></button>
           <span className="topbar-brand" aria-hidden="true"><img className="brand-logo" src="/icon.svg" alt="" width="26" height="26" />Azarvis</span>
           {/* Where you are (the sidebar is where you switch); not a second menu. */}
           {(() => {
