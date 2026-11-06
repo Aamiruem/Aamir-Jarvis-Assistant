@@ -1,8 +1,10 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { readAlertsAloud, setReadAlertsAloud } from '../alerts.js';
 import { api } from '../api.js';
 import { useNow, useVisibleInterval } from '../hooks.js';
 import { Icon } from '../icons.jsx';
 import { speechSupported } from '../useSpeech.js';
+import { applyVoice, currentVoice } from '../voiceSettings.js';
 import { AiNotice, aiProblemOf } from './AiNotice.jsx';
 import './HomePanel.css';
 
@@ -19,6 +21,35 @@ const COMMANDS = [
   { icon: 'folder', hue: 150, label: 'Open Downloads', hint: 'On this PC', prompt: 'open my downloads folder', send: true },
   { icon: 'screenshot', hue: 12, label: 'Screenshot', hint: 'Saved to Pictures', prompt: 'take a screenshot', send: true },
 ];
+
+// Spoken requests you can also tap: each one runs in Chat (or start "Talk to Azarvis" and say it).
+const VOICE_COMMANDS = [
+  { icon: 'tasks', label: 'Check my tasks', prompt: 'What are my open tasks?', send: true },
+  { icon: 'timeline', label: 'Plan my day', prompt: 'Plan my day from my tasks and reminders: what to do first, what to follow up on and what can wait.', send: true },
+  { icon: 'alarm', label: 'Read my reminders', prompt: 'What are my reminders for today?', send: true },
+  { icon: 'bell', label: 'Catch me up', prompt: 'What needs my attention right now, and what can I ignore?', send: true },
+  { icon: 'brain', label: 'Remember something', prompt: 'Remember that ', send: false },
+  { icon: 'sparkles', label: 'Explain a topic', prompt: 'Explain in very easy English, with an example: ', send: false },
+];
+const VOICE_SAMPLE = 'Hello! I am Azarvis. Your voice settings are working.';
+
+/** True while this device is speaking (a reply, a reminder, a voice test). */
+function useSpeakingNow() {
+  const [speaking, setSpeaking] = useState(false);
+  useEffect(() => {
+    const synth = window.speechSynthesis;
+    if (!synth) return undefined;
+    const t = setInterval(() => setSpeaking(synth.speaking && !synth.paused), 300);
+    return () => clearInterval(t);
+  }, []);
+  return speaking;
+}
+
+const Wave = ({ on }) => (
+  <span className={`cc-wave ${on ? 'on' : ''}`} aria-hidden="true">
+    {Array.from({ length: 12 }, (_, i) => <i key={i} style={{ '--i': i }} />)}
+  </span>
+);
 
 const fmtTime = (iso) => new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 const fmtWhen = (iso) => {
@@ -88,6 +119,8 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
   const [pc, setPc] = useState(undefined); // undefined = loading, null = not available
   const [problem, setProblem] = useState('');
   const [ask, setAsk] = useState('');
+  const [aloud, setAloud] = useState(readAlertsAloud);
+  const speaking = useSpeakingNow();
 
   const loadTasks = useCallback(() => api.tasks(true).then(setTasks), []);
 
@@ -135,6 +168,17 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
 
   const complete = (t) => api.toggleTask(t.id, true).then(loadTasks).catch((e) => setProblem(e.message));
   const runCommand = (c) => (c.tab ? onOpenTab(c.tab) : onAsk(c.prompt, Boolean(c.send)));
+  const stopSpeaking = () => window.speechSynthesis?.cancel();
+  const testVoice = () => {
+    const synth = window.speechSynthesis;
+    if (!synth) return;
+    synth.cancel();
+    synth.speak(applyVoice(new SpeechSynthesisUtterance(VOICE_SAMPLE), currentVoice(synth.getVoices(), 'en-IN'), 'en-IN'));
+  };
+  const toggleAloud = () => {
+    setReadAlertsAloud(!aloud);
+    setAloud(!aloud);
+  };
   const submitAsk = (e) => {
     e.preventDefault();
     if (ask.trim()) onAsk(ask.trim(), true);
@@ -222,6 +266,9 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
             <div className="cc-core-text">
               <strong>AZARVIS</strong>
               <small>AI CORE</small>
+              <span className={`cc-core-state ${speaking ? 'on' : ''}`} role="status">
+                <Wave on={speaking} /> {speaking ? 'Speaking' : 'Ready'}
+              </span>
             </div>
           </div>
           <button
@@ -283,6 +330,44 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
           ))}
         </div>
       </Panel>
+
+      <div className="cc-row cc-row-voice">
+        <Panel icon="mic" title="Voice commands" extra={speechSupported && <span className="cc-live">VOICE</span>}>
+          <ul className="cc-voice-cmds">
+            {VOICE_COMMANDS.map((c) => (
+              <li key={c.label}>
+                <button onClick={() => onAsk(c.prompt, c.send)}>
+                  <Icon name={c.icon} size="1em" />
+                  <span>“{c.label}”</span>
+                  <Icon name="chevron" size="0.9em" className="cc-voice-go" />
+                </button>
+              </li>
+            ))}
+          </ul>
+          <small className="muted">Tap one, or press <strong>Talk to Azarvis</strong> and say it in your own words.</small>
+        </Panel>
+
+        <Panel icon="volume" title="Voice & speech">
+          <div className={`cc-speech-now ${speaking ? 'on' : ''}`}>
+            <Wave on={speaking} />
+            <div>
+              <strong>{speaking ? 'Azarvis is speaking' : 'Quiet'}</strong>
+              <small>{speaking ? 'Talk, or press Stop speaking, to cut it short' : speechSupported ? 'Replies are read aloud in voice mode' : 'Voice needs Chrome or Edge'}</small>
+            </div>
+          </div>
+          <label className="cc-switch">
+            <input type="checkbox" checked={aloud} onChange={toggleAloud} />
+            <span>Speak reminders and alerts aloud</span>
+          </label>
+          <div className="cc-speech-actions">
+            <button className="btn sm" onClick={testVoice} disabled={!speechSupported}><Icon name="volume" size="1em" /> Test voice</button>
+            <button className="btn sm" onClick={() => onOpenTab('account')}><Icon name="edit" size="1em" /> Voice style</button>
+          </div>
+          <button className="cc-stop" onClick={stopSpeaking} disabled={!speaking}>
+            <Icon name="stop" size="1.05em" /> Stop speaking
+          </button>
+        </Panel>
+      </div>
 
       <div className="cc-row cc-row-cards">
         <Panel icon="timeline" title="Your tasks">
