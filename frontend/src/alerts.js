@@ -1,6 +1,7 @@
 // Azarvis reads new alerts (reminders, PC watcher) out loud on this device. On by default;
 // the choice is per browser, since only the device in front of you should talk.
-import { cleanForSpeech, pickVoice } from './speechText.js';
+import { cleanForSpeech } from './speechText.js';
+import { applyVoice, currentVoice } from './voiceSettings.js';
 
 const KEY = 'jarvis-speak-alerts';
 
@@ -30,13 +31,6 @@ export function speakAlerts(alerts) {
   const synth = window.speechSynthesis;
   const text = cleanForSpeech(alertSpeech(alerts));
   if (!synth || !text || !readAlertsAloud()) return false;
-  const u = new SpeechSynthesisUtterance(text);
-  const voice = pickVoice(synth.getVoices(), 'en-IN');
-  if (voice) {
-    u.voice = voice;
-    u.lang = voice.lang;
-  }
-  u.rate = 1.05;
-  synth.speak(u);
+  synth.speak(applyVoice(new SpeechSynthesisUtterance(text), currentVoice(synth.getVoices(), 'en-IN'), 'en-IN'));
   return true;
 }

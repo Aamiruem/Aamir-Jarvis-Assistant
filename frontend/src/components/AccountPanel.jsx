@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { PageHeader } from '../ui.jsx';
 import SecurityPanel from './SecurityPanel.jsx';
+import VoiceSettings from './VoiceSettings.jsx';
 
 export default function AccountPanel({ user, onUserChange, onDeleted }) {
   const [name, setName] = useState(user.name);
@@ -62,6 +63,9 @@ export default function AccountPanel({ user, onUserChange, onDeleted }) {
           ))}
         </div>
       )}
+
+      <h3>Voice</h3>
+      <VoiceSettings />
 
       <h3>Profile</h3>
       <form className="row" onSubmit={saveName}>

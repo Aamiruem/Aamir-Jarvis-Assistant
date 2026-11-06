@@ -449,7 +449,7 @@ export default function App() {
             {tab === 'account' && <AccountPanel user={user} onUserChange={setUser} onDeleted={logout} />}
             {tab === 'admin' && user.role === 'admin' && <AdminPanel currentUserId={user.id} />}
           </Suspense>
-          {tab !== 'chat' && <SiteFooter compact={tab !== 'home'} />}
+          {tab !== 'chat' && <SiteFooter compact={tab !== 'home'} onOpenTab={setTab} />}
         </section>
       </main>
 

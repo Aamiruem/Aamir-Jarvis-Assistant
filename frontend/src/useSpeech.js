@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { cleanForSpeech, isBargeIn, isEcho, pauseFor, pickVoice, takeSentences } from './speechText.js';
+import { cleanForSpeech, isBargeIn, isEcho, pauseFor, takeSentences } from './speechText.js';
+import { applyVoice, currentVoice, VOICE_EVENT } from './voiceSettings.js';
 
 // Voice in/out with the browser's built-in Web Speech API (works best in Chrome / Edge).
 const Recognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
@@ -17,14 +18,6 @@ const ECHO_TAIL_MS = 1200; // the mic can still pick up Azarvis's voice just aft
 
 // Most confident of the alternatives the recognizer offers for one phrase.
 const best = (result) => Array.from(result).reduce((a, b) => ((b.confidence || 0) > (a.confidence || 0) ? b : a)).transcript;
-
-const readVoicePreference = () => {
-  try {
-    return localStorage.getItem('jarvis-voice') || '';
-  } catch {
-    return '';
-  }
-};
 
 /**
  * Two ways to listen:
@@ -69,16 +62,21 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang =
     s?.interrupt();
   };
 
-  // The most natural voice installed (voices load asynchronously in Chrome).
+  // The chosen voice, else the most natural one installed (voices load asynchronously in Chrome),
+  // reloaded when the voice settings change.
   useEffect(() => {
     const synth = window.speechSynthesis;
     if (!synth) return;
     const load = () => {
-      voiceRef.current = pickVoice(synth.getVoices(), lang, readVoicePreference());
+      voiceRef.current = currentVoice(synth.getVoices(), lang);
     };
     load();
     synth.addEventListener?.('voiceschanged', load);
-    return () => synth.removeEventListener?.('voiceschanged', load);
+    window.addEventListener(VOICE_EVENT, load);
+    return () => {
+      synth.removeEventListener?.('voiceschanged', load);
+      window.removeEventListener(VOICE_EVENT, load);
+    };
   }, [lang]);
 
   useEffect(() => {
@@ -303,11 +301,7 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang =
     };
     const utter = (text) => {
       if (!synth) return;
-      const u = new SpeechSynthesisUtterance(text);
-      const voice = voiceRef.current;
-      if (voice) u.voice = voice;
-      u.lang = voice?.lang || lang;
-      u.rate = 1.05;
+      const u = applyVoice(new SpeechSynthesisUtterance(text), voiceRef.current, lang);
       u.onend = u.onerror = () => {
         if (interrupted) return;
         done += 1;

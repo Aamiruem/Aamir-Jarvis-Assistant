@@ -5,13 +5,36 @@
 export const PORTFOLIO_URL = 'https://aamir-hussain-azad.vercel.app/';
 export const DASHBOARD_URL = 'https://azarvis-ai.vercel.app/';
 export const CONTACT_EMAIL = 'aamirhussainazad786@gmail.com';
+export const REPO_URL = 'https://github.com/Aamiruem/Aamir-Jarvis-Assistant';
 
-export const AZARVIS_LINKS = [
-  { href: DASHBOARD_URL, label: 'Azarvis website', icon: 'globe' },
+// Inside the app these open the tab; on the sign-in screen they go to the website's features.
+export const PRODUCT_LINKS = [
+  { tab: 'home', label: 'Voice assistant', icon: 'mic' },
+  { tab: 'chat', label: 'Chat', icon: 'chat' },
+  { tab: 'automate', label: 'Automate', icon: 'rocket' },
+  { tab: 'notes', label: 'Notes & courses', icon: 'notes' },
+  { tab: 'tasks', label: 'Tasks & reminders', icon: 'tasks' },
+  { tab: 'knowledge', label: 'Knowledge base', icon: 'book' },
+  { tab: 'mllab', label: 'ML Lab', icon: 'flask' },
+  { tab: 'vision', label: 'Vision', icon: 'camera' },
+];
+
+// What the Automate tab writes for and opens (drafts you send yourself).
+export const WORKS_WITH = [
+  { tab: 'automate', label: 'Gmail', icon: 'mail' },
+  { tab: 'automate', label: 'Google Drive', icon: 'drive' },
+  { tab: 'automate', label: 'YouTube', icon: 'youtube' },
+  { tab: 'automate', label: 'LinkedIn', icon: 'linkedin' },
+  { tab: 'automate', label: 'Instagram', icon: 'instagram' },
+  { href: 'https://www.anthropic.com/claude', label: 'Claude AI', icon: 'sparkles' },
+];
+
+export const RESOURCES = [
   { href: `${DASHBOARD_URL}dashboard`, label: 'Dashboard', icon: 'chart' },
-  { href: `${DASHBOARD_URL}#features`, label: 'Features', icon: 'sparkles' },
   { href: `${DASHBOARD_URL}#how-it-works`, label: 'How it works', icon: 'timeline' },
   { href: `${DASHBOARD_URL}#faq`, label: 'FAQ', icon: 'help' },
+  { href: REPO_URL, label: 'Source code', icon: 'github' },
+  { href: `${REPO_URL}/tree/main/backend/mcp-server`, label: 'MCP server', icon: 'cpu' },
 ];
 
 export const PROJECTS = [
