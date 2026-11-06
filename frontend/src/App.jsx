@@ -4,6 +4,7 @@ import HomePanel from './components/HomePanel.jsx';
 import { sessionPlan } from './session.js';
 import { useRoomWatch } from './useRoomWatch.js';
 import Login from './components/Login.jsx';
+import SiteFooter from './components/SiteFooter.jsx';
 import CommandPalette from './components/CommandPalette.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
 import ThemeMenu from './components/ThemeMenu.jsx';
@@ -15,7 +16,7 @@ import InstallDialog from './components/InstallDialog.jsx';
 import { share, useInstall } from './pwa.js';
 
 // Aamir Hussain Azad's portfolio: linked from the top bar and the command palette.
-const PORTFOLIO_URL = 'https://aamir-hussain-azad.vercel.app/';
+import { PORTFOLIO_URL } from './siteLinks.js';
 
 // Code splitting: Home and sign-in load first; every other tab is its own small file,
 // downloaded the first time it's opened (Chat is fetched early while the browser is idle).
@@ -445,6 +446,7 @@ export default function App() {
             {tab === 'account' && <AccountPanel user={user} onUserChange={setUser} onDeleted={logout} />}
             {tab === 'admin' && user.role === 'admin' && <AdminPanel currentUserId={user.id} />}
           </Suspense>
+          {tab !== 'chat' && <SiteFooter compact={tab !== 'home'} />}
         </section>
       </main>
 

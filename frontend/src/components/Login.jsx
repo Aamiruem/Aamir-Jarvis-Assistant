@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { auth, setAccessToken } from '../api.js';
 import { Icon } from '../icons.jsx';
+import SiteFooter from './SiteFooter.jsx';
 
 // Mirrors backend/express-api/src/auth/PasswordPolicy.js so problems show while typing.
 // The server still has the final say.
@@ -178,7 +179,7 @@ export default function Login({ onAuth }) {
   const [title, subtitle] = step === 'otp' && challenge ? [otpTitle[challenge.purpose], headings.otp[1]] : headings[step] ?? headings.login;
 
   return (
-    <div className="center-screen">
+    <div className="center-screen login-screen">
       <div className="card login">
         <header className="login-brand">
           <img src="/icon.svg" alt="" width="56" height="56" className="login-logo" />
@@ -295,6 +296,7 @@ export default function Login({ onAuth }) {
 
         <footer className="login-foot">Protected by hashed passwords and short-lived sessions</footer>
       </div>
+      <SiteFooter />
     </div>
   );
 }
