@@ -38,17 +38,19 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--run", action="store_true", help="actually call Claude and write the notes")
     ap.add_argument("--limit", type=int, default=0, help="stop after this many new notes (0 = all)")
-    ap.add_argument("--include-members", action="store_true", help="also write notes for members-only lectures")
+    ap.add_argument("--public-only", action="store_true", help="skip members-only lectures (default: cover all 244 by title)")
     args = ap.parse_args()
 
     course = json.loads(COURSE.read_text(encoding="utf-8"))
-    lectures = [l for l in course["lectures"] if args.include_members or not l.get("members_only")]
+    # Every lecture's TITLE is public, so notes can be written on each topic. For members-only
+    # lectures only the title is known (no description), and the video is never used either way.
+    lectures = [l for l in course["lectures"] if not (args.public_only and l.get("members_only"))]
     pending = [l for l in lectures if not path_for(l).exists()]
     todo = pending[: args.limit] if args.limit else pending
 
-    skipped_members = len(course["lectures"]) - len(lectures)
+    members = sum(1 for l in lectures if l.get("members_only"))
     print(f"Lectures in the course: {len(course['lectures'])}")
-    print(f"Members-only skipped:   {skipped_members}" + ("" if args.include_members else "  (use --include-members to include)"))
+    print(f"Covered now:            {len(lectures)}  ({members} members-only, from the public title only)" + ("" if not args.public_only else "  (--public-only)"))
     print(f"Notes already written:  {len(lectures) - len(pending)}")
     print(f"Notes to write now:     {len(todo)}")
     ceiling = len(todo) * MAX_TOKENS_PER_LECTURE
