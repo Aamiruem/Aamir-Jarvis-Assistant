@@ -80,7 +80,7 @@ function FooterLinkItem({ link }: { link: FooterLink }) {
 
 function FooterColumn({ title, links, wide = false }: { title: string; links: FooterLink[]; wide?: boolean }) {
   return (
-    <nav aria-label={title} className={wide ? "sm:col-span-2" : undefined}>
+    <nav aria-label={title} className={wide ? "sm:col-span-2 md:col-span-1" : undefined}>
       <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-foreground">{title}</h2>
       <ul className={wide ? "grid gap-x-6 gap-y-2.5 sm:grid-cols-2" : "flex flex-col gap-2.5"}>
         {links.map((link) => (
@@ -121,7 +121,7 @@ export function SiteFooter({ variant = "full" }: { variant?: "full" | "compact" 
 
   return (
     <footer className="border-t bg-muted/30">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.1fr_2fr]">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,2.5fr)]">
         <div className="flex max-w-sm flex-col gap-4">
           <Link href="/" aria-label="Azarvis home" className="inline-flex w-fit items-center gap-2.5">
             <AzarvisMark className="size-8" />
@@ -167,7 +167,7 @@ export function SiteFooter({ variant = "full" }: { variant?: "full" | "compact" 
           </ul>
         </div>
 
-        <div className="grid gap-10 sm:grid-cols-2 md:grid-cols-5">
+        <div className="grid gap-x-8 gap-y-10 sm:grid-cols-2 md:grid-cols-[minmax(0,0.8fr)_minmax(0,3fr)_minmax(0,0.9fr)_minmax(0,0.75fr)]">
           <FooterColumn title="Azarvis" links={AZARVIS} />
           <FooterColumn title="Projects" links={PROJECTS.map((p) => ({ ...p, external: true }))} wide />
           <FooterColumn title="Account" links={ACCOUNT} />
