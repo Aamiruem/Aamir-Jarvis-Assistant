@@ -7,10 +7,11 @@ export const DASHBOARD_URL = 'https://azarvis-ai.vercel.app/';
 export const CONTACT_EMAIL = 'aamirhussainazad786@gmail.com';
 
 export const AZARVIS_LINKS = [
-  { href: DASHBOARD_URL, label: 'Azarvis website' },
-  { href: `${DASHBOARD_URL}dashboard`, label: 'Dashboard' },
-  { href: `${DASHBOARD_URL}#features`, label: 'Features' },
-  { href: `${DASHBOARD_URL}#faq`, label: 'FAQ' },
+  { href: DASHBOARD_URL, label: 'Azarvis website', icon: 'globe' },
+  { href: `${DASHBOARD_URL}dashboard`, label: 'Dashboard', icon: 'chart' },
+  { href: `${DASHBOARD_URL}#features`, label: 'Features', icon: 'sparkles' },
+  { href: `${DASHBOARD_URL}#how-it-works`, label: 'How it works', icon: 'timeline' },
+  { href: `${DASHBOARD_URL}#faq`, label: 'FAQ', icon: 'help' },
 ];
 
 export const PROJECTS = [
@@ -27,10 +28,11 @@ export const PROJECTS = [
   { label: 'Zerodha Clone', href: 'https://github.com/Aamiruem/Zerodha-Clone/tree/main' },
 ];
 
+// brand: the hover color of each round button in the footer.
 export const SOCIAL = [
-  { href: PORTFOLIO_URL, label: 'Portfolio', icon: 'globe' },
-  { href: 'https://github.com/Aamiruem', label: 'GitHub', icon: 'github' },
-  { href: 'https://www.linkedin.com/in/aamir-hussain-azad-62623924b', label: 'LinkedIn', icon: 'linkedin' },
-  { href: 'https://leetcode.com/u/Aamiruem/', label: 'LeetCode', icon: 'code' },
-  { href: `mailto:${CONTACT_EMAIL}`, label: 'Email', icon: 'mail' },
+  { href: PORTFOLIO_URL, label: 'Portfolio', icon: 'briefcase', brand: '#8b5cf6' },
+  { href: 'https://github.com/Aamiruem', label: 'GitHub', icon: 'github', brand: '#6e7681' },
+  { href: 'https://www.linkedin.com/in/aamir-hussain-azad-62623924b', label: 'LinkedIn', icon: 'linkedin', brand: '#0a66c2' },
+  { href: 'https://leetcode.com/u/Aamiruem/', label: 'LeetCode', icon: 'code', brand: '#ffa116' },
+  { href: `mailto:${CONTACT_EMAIL}`, label: 'Email', icon: 'mail', brand: '#ea4335' },
 ];
