@@ -8,6 +8,7 @@ import { useEffect } from "react";
 
 import { AzarvisLogo } from "@/components/azarvis-logo";
 import { SessionSplash } from "@/components/dashboard/session-splash";
+import { SiteFooter } from "@/components/site-footer";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
@@ -88,6 +89,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </Button>
         </header>
         <main className="flex-1 px-4 py-6 sm:px-6">{children}</main>
+        <SiteFooter variant="compact" />
       </div>
     </div>
   );

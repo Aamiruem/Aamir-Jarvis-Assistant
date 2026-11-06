@@ -53,6 +53,28 @@ export const SITE = {
   gaId: /^G-[A-Z0-9]+$/.test(process.env.NEXT_PUBLIC_GA_ID?.trim() ?? "") ? process.env.NEXT_PUBLIC_GA_ID!.trim() : "",
 } as const;
 
+/** The voice web app (a separate deployment from this dashboard). */
+export const APP_URL = "https://azarvis-app.vercel.app/";
+export const CONTACT_EMAIL = "aamirhussainazad786@gmail.com";
+
+/**
+ * Aamir's other projects, from the portfolio: the live demo when there is one, else the source.
+ * The web app's footer has the same list in frontend/src/siteLinks.js.
+ */
+export const PROJECTS = [
+  { label: "Crop Yield Prediction", href: "https://indian-crop-optimization-appuction-kqfhgqkn6wfg6qeb44efik.streamlit.app/", live: true },
+  { label: "Retail Sales Analytics", href: "https://retail-sales-customer-fdug7zphhdjmvfoonctdkw.streamlit.app/", live: true },
+  { label: "Mansik Santulan", href: "https://mansik-santulan-scores-1.onrender.com", live: true },
+  { label: "EstateIQ Price Predictor", href: "https://github.com/Aamiruem/Real-Estate-Price-Predictor" },
+  { label: "Arvixa Marketplace", href: "https://github.com/Aamiruem/Shopping-Cart" },
+  { label: "RAG Chatbot", href: "https://aamir-hussain-azad.vercel.app/" },
+  { label: "Email Spam Classifier", href: "https://github.com/Aamiruem/EmailChecker/tree/main" },
+  { label: "Email Checker Pro", href: "https://github.com/Aamiruem/Professional-Email-Checker/tree/main" },
+  { label: "Zoom Clone", href: "https://github.com/Aamiruem/ApnaCollegeZoomClone/tree/main" },
+  { label: "Airbnb Clone", href: "https://github.com/Aamiruem/Airbnb-Clone-main/tree/master" },
+  { label: "Zerodha Clone", href: "https://github.com/Aamiruem/Zerodha-Clone/tree/main" },
+] as const;
+
 /** Public pages, for the sitemap. Everything under /dashboard is private (noindex). */
 export const PUBLIC_ROUTES = [
   { path: "/", priority: 1, changeFrequency: "weekly" },
