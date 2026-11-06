@@ -59,8 +59,9 @@ export function createContainer({ storage = 'mongo', dataDir, notifier, purgeUse
     accessTtl: authSettings.accessTokenTtl,
     refreshDays: authSettings.refreshTokenDays,
   });
-  // Codes only print in the terminal (OTP_PROVIDER=console): in development, also show them on the page.
-  const revealCodes = !notifier && config.env !== 'production' && config.notifications.provider === 'console';
+  // Codes only print in the terminal (OTP_PROVIDER=console): also show them on the page in
+  // development, or in production when DEMO_MODE is on (a demo with no real email service).
+  const revealCodes = !notifier && config.notifications.provider === 'console' && (config.env !== 'production' || config.demoMode);
   const otp = new OtpService({ otpRepo: repos.otps, notifier: notifier ?? createNotifier(config.notifications), ...config.otp, revealCodes });
   const audit = new AuditLogger({ auditRepo: repos.auditRepo });
 

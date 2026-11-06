@@ -17,6 +17,9 @@ export const config = {
   internalApiKey: process.env.INTERNAL_API_KEY || 'change-me-internal-key',
   corsOrigins: list(process.env.CLIENT_ORIGINS || 'http://localhost:5173,http://localhost:3000'),
   adminEmails: list(process.env.ADMIN_EMAILS), // these accounts get role "admin"
+  // Quick public demo with no email service: the verification code is shown on the page
+  // instead of emailed. Anyone can register (the email isn't really checked), so only for a demo.
+  demoMode: bool(process.env.DEMO_MODE, false),
 
   auth: {
     jwtSecret: process.env.JWT_SECRET || 'dev-only-change-me',
@@ -63,5 +66,6 @@ if (config.env === 'production') {
   for (const [name, value] of [['JWT_SECRET', config.auth.jwtSecret], ['OTP_SECRET', config.otp.secret]]) {
     if (!value || value.startsWith('dev-only')) throw new Error(`Set ${name} in production`);
   }
-  if (config.notifications.provider === 'console') throw new Error('Set OTP_PROVIDER=smtp or aws in production');
+  if (config.notifications.provider === 'console' && !config.demoMode)
+    throw new Error('Set OTP_PROVIDER=smtp or aws in production, or DEMO_MODE=true to show codes on the page');
 }
