@@ -21,7 +21,7 @@ export function useTheme() {
     const apply = () => {
       const mode = resolve(choice);
       document.documentElement.dataset.theme = mode;
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', mode === 'light' ? '#f4f7fd' : '#050816');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', mode === 'light' ? '#f4f7fd' : '#222428');
     };
     apply();
     try {

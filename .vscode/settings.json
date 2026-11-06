@@ -2,15 +2,6 @@
     "python.defaultInterpreterPath": "${workspaceFolder}/backend/fastapi-ai/.venv/Scripts/python.exe",
     "python.analysis.extraPaths": ["${workspaceFolder}/backend/fastapi-ai/.venv/Lib/site-packages"],
     "workbench.colorCustomizations": {
-        "activityBar.background": "#1B2433",
-        "titleBar.activeBackground": "#1F2023",
-        "titleBar.activeForeground": "#E6E8EB",
-        "titleBar.inactiveBackground": "#1F2023",
-        "titleBar.inactiveForeground": "#B8BEC8",
-        "statusBar.background": "#1F2023",
-        "statusBar.foreground": "#E6E8EB",
-        "statusBar.debuggingBackground": "#3B4250",
-        "statusBar.debuggingForeground": "#FFFFFF",
         "statusBar.noFolderBackground": "#1F2023",
         "statusBar.noFolderForeground": "#E6E8EB"
     }

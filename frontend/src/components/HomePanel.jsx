@@ -4,7 +4,6 @@ import { useNow, useVisibleInterval } from '../hooks.js';
 import { Icon } from '../icons.jsx';
 import { speechSupported } from '../useSpeech.js';
 import { AiNotice, aiProblemOf } from './AiNotice.jsx';
-import NeuralField from './NeuralField.jsx';
 import './HomePanel.css';
 
 // Command Center: the first screen after sign-in. Everything on it is live data from the
@@ -151,9 +150,7 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
 
   return (
     <div className="cc">
-      <div className="cc-bg" aria-hidden="true">
-        <NeuralField />
-      </div>
+      <div className="cc-bg" aria-hidden="true" />
 
       <header className="cc-hero">
         <Clock name={user.name} />
