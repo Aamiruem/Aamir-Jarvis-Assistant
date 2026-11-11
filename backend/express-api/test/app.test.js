@@ -161,3 +161,45 @@ test('feedback: anyone can send it, it is validated, and only admins can read it
   assert.equal(item.rating, 5);
   assert.equal(item.ip, undefined); // never sent to the browser
 });
+
+test('passkeys: only our own sites, one-use challenges, private to their owner', async () => {
+  const site = { Origin: 'http://localhost:5173' };
+  // Signed-out options work from our site, and look the same for unknown and known emails.
+  const anon = await call('/api/auth/passkeys/login/options', { json: {}, headers: site });
+  assert.equal(anon.status, 200);
+  assert.ok(anon.body.challengeId && anon.body.options.challenge);
+  assert.equal(anon.body.options.rpId, 'localhost');
+  const unknown = await call('/api/auth/passkeys/login/options', { json: { email: 'nobody@example.com' }, headers: site });
+  assert.deepEqual(unknown.body.options.allowCredentials, []);
+
+  // Any other site is refused.
+  const evil = await call('/api/auth/passkeys/login/options', { json: {}, headers: { Origin: 'https://evil.example' } });
+  assert.equal(evil.status, 400);
+
+  // A passkey nobody added can't sign in, and the challenge can't be reused.
+  const fake = { id: 'bm90LWEtcmVhbC1rZXk', rawId: 'bm90LWEtcmVhbC1rZXk', type: 'public-key', response: {} };
+  const first = await call('/api/auth/passkeys/login', { json: { challengeId: anon.body.challengeId, response: fake } });
+  assert.equal(first.status, 401);
+  const again = await call('/api/auth/passkeys/login', { json: { challengeId: anon.body.challengeId, response: fake } });
+  assert.equal(again.status, 401);
+  assert.match(again.body.error, /expired/);
+
+  // Adding and listing need an account.
+  assert.equal((await call('/api/auth/passkeys/register/options', { json: {}, headers: site })).status, 401);
+  assert.equal((await call('/api/auth/passkeys')).status, 401);
+
+  // A passkey belongs to its owner: someone else can't list or delete it.
+  const reg = await call('/api/auth/register', { json: { name: 'Owner Person', email: 'owner-pk@example.com', password: 'Gr8!Passphrase' } });
+  const verified = await call('/api/auth/verify-email', { json: { challengeId: reg.body.challengeId, code: inbox.lastCode() } });
+  const owner = verified.body.user.id;
+  const opts = await call('/api/auth/passkeys/register/options', { json: {}, token: tokenFor(owner), headers: site });
+  assert.equal(opts.status, 200);
+  assert.equal(opts.body.options.authenticatorSelection.residentKey, 'required');
+  const saved = await container.passkeys.create({ userId: owner, credentialId: 'cred-1', publicKey: 'AA', counter: 0, transports: [], name: 'iPhone · Safari', rpId: 'localhost', createdAt: new Date() });
+  const mine = await call('/api/auth/passkeys', { token: tokenFor(owner) });
+  assert.deepEqual(mine.body.map((p) => p.name), ['iPhone · Safari']);
+  assert.equal(mine.body[0].publicKey, undefined);
+  assert.deepEqual((await call('/api/auth/passkeys', { token: tokenFor('someone-else') })).body, []);
+  assert.equal((await call(`/api/auth/passkeys/${saved.id}`, { method: 'DELETE', token: tokenFor('someone-else') })).status, 404);
+  assert.equal((await call(`/api/auth/passkeys/${saved.id}`, { method: 'DELETE', token: tokenFor(owner) })).status, 204);
+});

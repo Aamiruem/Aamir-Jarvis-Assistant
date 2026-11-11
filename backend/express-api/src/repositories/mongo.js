@@ -3,6 +3,7 @@
 import mongoose from 'mongoose';
 import { Conversation } from '../models/Conversation.js';
 import { Feedback } from '../models/Feedback.js';
+import { Passkey } from '../models/Passkey.js';
 import { AuditLog, OtpChallenge, Session } from '../models/Security.js';
 import { User } from '../models/User.js';
 import { UserNote } from '../models/UserNote.js';
@@ -213,5 +214,40 @@ export class MongoUserNoteRepository {
 
   async deleteAllForUser(userId) {
     await UserNote.deleteMany({ userId });
+  }
+}
+
+export class MongoPasskeyRepository extends MongoRepository {
+  constructor() {
+    super(Passkey);
+  }
+
+  async listForUser(userId) {
+    if (!mongoose.isValidObjectId(userId)) return [];
+    const docs = await this.model.find({ userId }).sort({ createdAt: -1 }).lean();
+    return docs.map(MongoPasskeyRepository.plain);
+  }
+
+  async findByCredentialId(credentialId) {
+    return MongoPasskeyRepository.plain(await this.model.findOne({ credentialId }).lean());
+  }
+
+  async create(data) {
+    return MongoPasskeyRepository.plain((await this.model.create(data)).toObject());
+  }
+
+  async deleteForUser(userId, id) {
+    if (!mongoose.isValidObjectId(id) || !mongoose.isValidObjectId(userId)) return null;
+    return MongoPasskeyRepository.plain(await this.model.findOneAndDelete({ _id: id, userId }).lean());
+  }
+
+  async deleteAllForUser(userId) {
+    if (mongoose.isValidObjectId(userId)) await this.model.deleteMany({ userId });
+  }
+
+  /** userId as a string, like the in-memory rows, so services can compare ids. */
+  static plain(doc) {
+    const row = MongoRepository.toPlain(doc);
+    return row ? { ...row, userId: String(row.userId) } : null;
   }
 }

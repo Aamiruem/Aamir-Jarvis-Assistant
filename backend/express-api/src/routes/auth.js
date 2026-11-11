@@ -5,7 +5,7 @@ import rateLimit from 'express-rate-limit';
 
 export const REFRESH_COOKIE = 'jarvis_rt';
 
-export function createAuthRouter({ authService, requireAuth, settings }) {
+export function createAuthRouter({ authService, passkeyService, requireAuth, settings }) {
   const router = Router();
 
   // Slows down password and OTP guessing per IP (on top of per-account lockout and OTP attempt limits).
@@ -79,6 +79,21 @@ export function createAuthRouter({ authService, requireAuth, settings }) {
     await authService.deleteAccount(req.user.id, body(req).password, req.user, ctx(req));
     res.clearCookie(REFRESH_COOKIE, cookieOptions).status(204).end();
   });
+
+  // ----- passkeys: Face ID / Touch ID / Windows Hello / fingerprint, no password -----
+  // The browser's Origin header says which site asked; PasskeyService only accepts our own.
+  const origin = (req) => req.get('origin') || '';
+  if (passkeyService) {
+    router.post('/passkeys/login/options', limiter, async (req, res) => res.json(await passkeyService.loginOptions(body(req), origin(req))));
+    router.post('/passkeys/login', limiter, async (req, res) => send(res, await passkeyService.login(body(req), ctx(req))));
+    router.get('/passkeys', requireAuth, async (req, res) => res.json(await passkeyService.list(req.user.id)));
+    router.post('/passkeys/register/options', requireAuth, limiter, async (req, res) => res.json(await passkeyService.registrationOptions(req.user.id, origin(req))));
+    router.post('/passkeys', requireAuth, limiter, async (req, res) => res.status(201).json(await passkeyService.register(req.user.id, body(req), ctx(req))));
+    router.delete('/passkeys/:id', requireAuth, async (req, res) => {
+      await passkeyService.remove(req.user.id, req.params.id, ctx(req));
+      res.status(204).end();
+    });
+  }
 
   return router;
 }

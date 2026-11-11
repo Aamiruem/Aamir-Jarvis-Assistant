@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Icon } from '../icons.jsx';
 import { PORTFOLIO_URL, REPO_URL } from '../siteLinks.js';
 import FeedbackForm from './FeedbackForm.jsx';
@@ -24,8 +25,8 @@ const STEPS = [
 ];
 
 const SECURITY = [
-  ['key', 'Hashed passwords', 'Passwords are hashed with bcrypt, never stored as text.'],
-  ['shield', 'Two-step sign-in', 'One-time codes by email, plus lockout after repeated wrong passwords.'],
+  ['key', 'Passkeys, no password', 'Sign in with Face ID, Touch ID, Windows Hello or a fingerprint on iPhone, Android, Mac and Windows.'],
+  ['shield', 'Two-step sign-in', 'Passwords are hashed with bcrypt and need a one-time code; repeated wrong guesses lock the account.'],
   ['clock', 'Short-lived sessions', 'Access tokens live only in memory; refresh cookies are httpOnly.'],
   ['trash', 'Your data, deletable', 'Deleting your account removes your chats, notes and documents.'],
 ];
@@ -34,6 +35,7 @@ const FAQ = [
   ['Do I need an account to try Azarvis?', 'No. Open the demo to look around the app with sample data: chat with scripted answers, add tasks, browse the real study notes and write drafts. Nothing in the demo is sent to a server; tasks you add stay in your browser.'],
   ['Which AI powers Azarvis?', 'Answers come from Claude by Anthropic. Azarvis adds the voice, your reminders, your documents and your notes around it.'],
   ['Does Azarvis send emails or posts on its own?', 'No. Automate writes drafts. You read them and send them yourself, so nothing goes out without your yes.'],
+  ['Can I sign in without a password?', 'Yes, with a passkey. Sign in once, open Account, and add a passkey on each device you use. After that, Face ID, Touch ID, Windows Hello or your fingerprint opens Azarvis on that device. The secret key never leaves the device.'],
   ['Can I use it on my phone?', 'Yes. Azarvis works in a phone browser and can be installed like an app (Install app in the sidebar).'],
   ['What happens to my data?', 'Your chats, notes and documents belong to your account. You can sign out of every device or delete the account, which removes them.'],
   ['Who built Azarvis?', 'Aamir Hussain Azad, an AI/ML engineer and full-stack developer. The source code is on GitHub.'],
@@ -46,34 +48,70 @@ const DEMO_TILES = [
   ['automate', 'rocket', 300, 'Automate', 'Write a draft email or post in one click.'],
 ];
 
+// The four pillars under the hero buttons (icon + two short lines, like the brand artwork).
+const PILLARS = [
+  ['mic', 'Voice', 'that listens'],
+  ['zap', 'Tools', 'that connect'],
+  ['notes', 'Notes', 'that teach'],
+  ['shield', 'Trust', 'that endures'],
+];
+
+/**
+ * The hero art: the glass "A" on its platform over the city. It tilts in 3D toward the
+ * pointer, sways slowly on its own, and a holo ring turns under it. Pointer tilt is skipped
+ * for touch screens and for visitors who asked for reduced motion.
+ */
 function HeroVisual() {
+  const stage = useRef(null);
+  useEffect(() => {
+    const el = stage.current;
+    if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches || !window.matchMedia('(pointer: fine)').matches) return;
+    let frame = 0;
+    const move = (e) => {
+      const r = el.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;
+      const y = (e.clientY - r.top) / r.height - 0.5;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        el.style.setProperty('--ry', `${(x * 16).toFixed(2)}deg`);
+        el.style.setProperty('--rx', `${(-y * 12).toFixed(2)}deg`);
+        el.style.setProperty('--gx', `${((x + 0.5) * 100).toFixed(1)}%`);
+        el.style.setProperty('--gy', `${((y + 0.5) * 100).toFixed(1)}%`);
+      });
+    };
+    const leave = () => {
+      cancelAnimationFrame(frame);
+      el.style.setProperty('--ry', '0deg');
+      el.style.setProperty('--rx', '0deg');
+    };
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerleave', leave);
+    return () => {
+      cancelAnimationFrame(frame);
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerleave', leave);
+    };
+  }, []);
+
   return (
-    <div className="hero-visual" aria-hidden="true">
-      <div className="hv-window">
-        <div className="hv-bar">
-          <i /><i /><i />
-          <span>Azarvis · Listening</span>
-        </div>
-        <div className="hv-body">
-          <div className="hv-orb-wrap">
-            <div className="orb hv-orb" />
-            <div className="hv-wave">
-              {Array.from({ length: 14 }, (_, i) => <span key={i} style={{ '--i': i }} />)}
-            </div>
-          </div>
-          <div className="hv-msg hv-msg--user">Hey Azarvis, remind me to submit the ML assignment at 6 pm.</div>
-          <div className="hv-msg hv-msg--bot">
-            <span className="hv-msg-head"><Icon name="check" size="0.95em" /> Reminder set</span>
-            Done. I’ll remind you at <strong>6:00 pm</strong> today: “Submit the ML assignment”.
-          </div>
-          <div className="hv-chips">
-            <span><Icon name="alarm" size="0.95em" /> 6:00 pm · ML assignment</span>
-            <span><Icon name="notes" size="0.95em" /> 3 chapters to revise</span>
-          </div>
+    <div className="hero-art" ref={stage} aria-hidden="true">
+      <div className="hero-art-glow" />
+      <div className="hero-art-tilt">
+        <div className="hero-art-sway">
+          <img src="/hero-azarvis.webp" alt="" width="530" height="540" className="hero-art-img" fetchpriority="high" decoding="async" />
+          <div className="hero-art-shine" />
+          <div className="hero-art-ring" />
+          <div className="hero-art-ring hero-art-ring--2" />
         </div>
       </div>
-      <div className="hv-float hv-float--a"><Icon name="mail" size="1em" /> Draft ready for Gmail</div>
-      <div className="hv-float hv-float--b"><Icon name="volume" size="1em" /> Speaking…</div>
+      <div className="hv-float hv-float--listen">
+        <span className="hv-wave">
+          {Array.from({ length: 9 }, (_, i) => <span key={i} style={{ '--i': i }} />)}
+        </span>
+        Listening…
+      </div>
+      <div className="hv-float hv-float--a"><Icon name="check" size="1em" /> Reminder set · 6:00 pm</div>
+      <div className="hv-float hv-float--b"><Icon name="mail" size="1em" /> Draft ready for Gmail</div>
     </div>
   );
 }
@@ -83,31 +121,35 @@ export default function Landing({ onNavigate }) {
     <>
       <section className="hero pub-wrap">
         <div className="hero-copy">
-          <span className="eyebrow"><span className="eyebrow-dot" /> Personal AI voice assistant · powered by Claude</span>
+          <span className="hero-kicker">Intelligence that moves with you</span>
           <h1>
-            Talk naturally.
+            Smarter today.
             <br />
-            <span className="grad-text">Azarvis gets it done.</span>
+            <span className="grad-text">Limitless tomorrow.</span>
           </h1>
+          <p className="hero-built">Built with Azarvis.</p>
           <p className="hero-lead">
-            Azarvis listens, answers out loud and handles your reminders, tasks, study notes, documents and your computer, all from one place.
+            Your personal AI voice assistant. Azarvis listens, answers out loud and handles your reminders, tasks, study notes, documents and your computer, all from one place.
           </p>
           <div className="hero-ctas">
-            <button type="button" className="btn primary btn-lg" onClick={() => onNavigate('demo')}>
-              <Icon name="sparkles" size="1.05em" /> Try the live demo
+            <button type="button" className="btn primary btn-lg" onClick={() => onNavigate('signup')}>
+              Get started <Icon name="chevron" size="1em" />
             </button>
-            <button type="button" className="btn btn-lg" onClick={() => onNavigate('signup')}>
-              Create free account <Icon name="chevron" size="1em" />
+            <button type="button" className="btn btn-lg hero-ghost" onClick={() => onNavigate('demo')}>
+              <Icon name="sparkles" size="1.05em" /> Explore the live demo
             </button>
           </div>
           <p className="hero-sub muted">
             No sign-up needed for the demo. Already have an account?{' '}
             <button type="button" className="link-btn" onClick={() => onNavigate('login')}>Sign in</button>
           </p>
-          <ul className="hero-proof">
-            <li><Icon name="mic" size="1em" /> Hands-free voice</li>
-            <li><Icon name="shield" size="1em" /> Two-step sign-in</li>
-            <li><Icon name="phone" size="1em" /> Works on phone</li>
+          <ul className="hero-pillars">
+            {PILLARS.map(([icon, top, bottom]) => (
+              <li key={top}>
+                <Icon name={icon} size="1.5em" />
+                <span>{top}<br />{bottom}</span>
+              </li>
+            ))}
           </ul>
         </div>
         <HeroVisual />

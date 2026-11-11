@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { auth, setAccessToken } from '../api.js';
 import { Icon } from '../icons.jsx';
+import { passkeysSupported, signInWithPasskey, unlockName } from '../passkeys.js';
 
 // Mirrors backend/express-api/src/auth/PasswordPolicy.js so problems show while typing.
 // The server still has the final say.
@@ -91,6 +92,7 @@ export default function Login({ onAuth, initialStep = 'login', onDemo, onHome })
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [canPasskey] = useState(passkeysSupported);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -134,6 +136,10 @@ export default function Login({ onAuth, initialStep = 'login', onDemo, onHome })
     e.preventDefault();
     run(async () => handle(await auth.login(form.email, form.password), 'login'));
   };
+  // No password: the device's Face ID / Touch ID / Windows Hello / fingerprint (see passkeys.js).
+  // The email is optional; without it the device lists the passkeys it has for Azarvis.
+  const passkeyLogin = () => run(async () => onAuth(await signInWithPasskey(form.email)));
+
   const submitRegister = (e) => {
     e.preventDefault();
     if (passwordsDiffer(form.password, form.confirm)) return;
@@ -188,7 +194,7 @@ export default function Login({ onAuth, initialStep = 'login', onDemo, onHome })
         <ul className="auth-points">
           <li><span><Icon name="mic" size="1.05em" /></span><div><strong>Hands-free</strong><p className="muted">Say “Hey Azarvis” and hear the answer out loud.</p></div></li>
           <li><span><Icon name="tasks" size="1.05em" /></span><div><strong>Never miss a thing</strong><p className="muted">Reminders read to you at the start of the day.</p></div></li>
-          <li><span><Icon name="shield" size="1.05em" /></span><div><strong>Private by design</strong><p className="muted">Two-step sign-in and short-lived sessions.</p></div></li>
+          <li><span><Icon name="shield" size="1.05em" /></span><div><strong>No password needed</strong><p className="muted">Add a passkey and sign in with Face ID, Touch ID, Windows Hello or a fingerprint.</p></div></li>
         </ul>
         {onDemo && (
           <button type="button" className="auth-demo" onClick={onDemo}>
@@ -220,6 +226,15 @@ export default function Login({ onAuth, initialStep = 'login', onDemo, onHome })
             <PasswordField value={form.password} onChange={update('password')} placeholder="Password" autoComplete="current-password" />
             {error && <div className="error">{error}</div>}
             <button className="btn primary full" disabled={busy}>{busy ? 'Checking…' : 'Sign in'}</button>
+            {canPasskey && (
+              <>
+                <div className="login-or" role="separator"><span>or, without a password</span></div>
+                <button type="button" className="btn full login-passkey" onClick={passkeyLogin} disabled={busy}>
+                  <Icon name="key" size="1.05em" /> Sign in with a passkey
+                  <small>{unlockName()}</small>
+                </button>
+              </>
+            )}
             <button type="button" className="btn ghost full" onClick={() => go('forgot')}>Forgot password?</button>
             <p className="login-switch">
               New to Azarvis? <button type="button" className="link-btn" onClick={() => go('register')}>Create an account</button>

@@ -61,7 +61,7 @@ export function createApp(container) {
   );
 
   app.use(express.json({ limit: '1mb' }));
-  app.use('/api/auth', createAuthRouter({ authService: container.authService, requireAuth, settings: container.settings }));
+  app.use('/api/auth', createAuthRouter({ authService: container.authService, passkeyService: container.passkeyService, requireAuth, settings: container.settings }));
   const { users, conversations, sessions, audit, notes, feedback } = container;
   app.use('/api/conversations', createConversationRouter({ requireAuth, conversations }));
   app.use('/api/chat', createChatRouter({ requireAuth, conversations }));

@@ -96,6 +96,9 @@ export const auth = {
   resendOtp: (challengeId) => publicPost('/auth/otp/resend', { challengeId }),
   forgotPassword: (email) => publicPost('/auth/password/forgot', { email }),
   resetPassword: (challengeId, code, newPassword) => publicPost('/auth/password/reset', { challengeId, code, newPassword }),
+  // Passkeys (see passkeys.js): no password, the device's Face ID / fingerprint / Windows Hello.
+  passkeyOptions: (email) => publicPost('/auth/passkeys/login/options', { email }),
+  passkeyLogin: (challengeId, response) => publicPost('/auth/passkeys/login', { challengeId, response }),
   async logout() {
     await publicPost('/auth/logout').catch(() => {});
     accessToken = null;
@@ -152,6 +155,10 @@ export const api = {
   setRole: (userId, role) => request(`/admin/users/${userId}/role`, { method: 'PATCH', body: { role } }),
   unlockUser: (userId) => post(`/admin/users/${userId}/unlock`),
   adminFeedback: (limit = 50) => request(`/admin/feedback?limit=${limit}`),
+  passkeys: () => request('/auth/passkeys'),
+  passkeyRegisterOptions: () => post('/auth/passkeys/register/options', {}),
+  addPasskey: (challengeId, response, name) => post('/auth/passkeys', { challengeId, response, name }),
+  removePasskey: (id) => request(`/auth/passkeys/${id}`, { method: 'DELETE' }),
   // Public: works signed out (the website and the demo); linked to the account when signed in.
   sendFeedback: (feedback) => post('/feedback', feedback),
 

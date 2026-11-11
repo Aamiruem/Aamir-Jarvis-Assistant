@@ -126,6 +126,21 @@ export class AuthService {
     return this.#completeLogin(user, ctx);
   }
 
+  /**
+   * Sign-in with a passkey PasskeyService has already verified. The passkey is both factors
+   * (device + face/finger/PIN), so no email code; a locked account stays locked.
+   */
+  async completePasskeyLogin(userId, ctx, passkeyName = '') {
+    const user = await this.users.findById(userId);
+    if (!user) throw new AuthenticationError();
+    if (user.lockUntil && user.lockUntil > this.clock()) {
+      await this.audit.log('login_blocked_locked', { userId: user.id, ctx, meta: { method: 'passkey' } });
+      throw new AccountLockedError(user.lockUntil);
+    }
+    await this.audit.log('passkey_login', { userId: user.id, ctx, meta: { passkey: passkeyName } });
+    return this.#completeLogin(user, ctx);
+  }
+
   async #recordFailedLogin(user, ctx) {
     const attempts = (user.failedLoginAttempts || 0) + 1;
     if (attempts >= this.settings.maxFailedLogins) {

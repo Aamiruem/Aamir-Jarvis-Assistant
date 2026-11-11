@@ -21,6 +21,14 @@ export const config = {
   // instead of emailed. Anyone can register (the email isn't really checked), so only for a demo.
   demoMode: bool(process.env.DEMO_MODE, false),
 
+  // Passkeys (Face ID / Touch ID / Windows Hello / fingerprint sign-in). The browser only
+  // allows them on https:// sites and on localhost. origins: the exact addresses the app is
+  // opened from; rpId: the domain they belong to (default: the host of the page).
+  passkeys: {
+    origins: list(process.env.PASSKEY_ORIGINS || process.env.CLIENT_ORIGINS || 'http://localhost:5173,http://localhost:3000'),
+    rpId: (process.env.PASSKEY_RP_ID || '').trim(),
+  },
+
   auth: {
     jwtSecret: process.env.JWT_SECRET || 'dev-only-change-me',
     accessTokenTtl: process.env.ACCESS_TOKEN_TTL || '15m', // short-lived; renewed with the refresh token

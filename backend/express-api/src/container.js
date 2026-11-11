@@ -5,6 +5,7 @@ import { AuditLogger } from './auth/AuditLogger.js';
 import { AuthService } from './auth/AuthService.js';
 import { createNotifier } from './auth/notifiers.js';
 import { OtpService } from './auth/OtpService.js';
+import { PasskeyService } from './auth/PasskeyService.js';
 import { PasswordHasher } from './auth/PasswordHasher.js';
 import { PasswordPolicy } from './auth/PasswordPolicy.js';
 import { TokenService } from './auth/TokenService.js';
@@ -24,6 +25,7 @@ function memoryRepos(dataDir) {
     conversations: new memory.InMemoryConversationRepository(opts('conversations')),
     notes: new memory.InMemoryUserNoteRepository(opts('notes')),
     feedback: new memory.InMemoryFeedbackRepository(opts('feedback')),
+    passkeys: new memory.InMemoryPasskeyRepository(opts('passkeys')),
   };
 }
 
@@ -36,6 +38,7 @@ function mongoRepos() {
     conversations: new mongo.MongoConversationRepository(),
     notes: new mongo.MongoUserNoteRepository(),
     feedback: new mongo.MongoFeedbackRepository(),
+    passkeys: new mongo.MongoPasskeyRepository(),
   };
 }
 
@@ -53,6 +56,7 @@ export function createContainer({ storage = 'mongo', dataDir, notifier, purgeUse
     await aiFetch('/me/data', actingUser, { method: 'DELETE' }); // SQL, vector store, S3 files
     await repos.conversations.deleteAllForUser(actingUser.id); // chat history
     await repos.notes.deleteAllForUser(actingUser.id); // user notes
+    await repos.passkeys.deleteAllForUser(actingUser.id); // passkeys
   }
 
   const authSettings = { ...config.auth, ...settings };
@@ -80,5 +84,15 @@ export function createContainer({ storage = 'mongo', dataDir, notifier, purgeUse
     purgeUserData: purgeUserData ?? (storage === 'memory' ? async () => {} : purgeFromAllStores),
   });
 
-  return { ...repos, storage, tokens, otp, audit, authService, settings: authSettings };
+  // Passkeys work on the app's own sites only (CLIENT_ORIGINS, or PASSKEY_ORIGINS when set).
+  const passkeyService = new PasskeyService({
+    passkeys: repos.passkeys,
+    users: repos.users,
+    audit,
+    authService,
+    rpId: config.passkeys.rpId,
+    origins: config.passkeys.origins,
+  });
+
+  return { ...repos, storage, tokens, otp, audit, authService, passkeyService, settings: authSettings };
 }

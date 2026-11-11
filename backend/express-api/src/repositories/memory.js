@@ -259,3 +259,25 @@ export class InMemoryFeedbackRepository extends InMemoryRepository {
     return this.rows.size;
   }
 }
+
+export class InMemoryPasskeyRepository extends InMemoryRepository {
+  async listForUser(userId) {
+    return this.where((p) => p.userId === String(userId)).sort((a, b) => b.createdAt - a.createdAt);
+  }
+
+  async findByCredentialId(credentialId) {
+    return this.where((p) => p.credentialId === credentialId)[0] || null;
+  }
+
+  /** Deletes one of this user's passkeys; returns it, or null when it isn't theirs. */
+  async deleteForUser(userId, id) {
+    const row = await this.findById(id);
+    if (!row || row.userId !== String(userId)) return null;
+    await this.delete(id);
+    return row;
+  }
+
+  async deleteAllForUser(userId) {
+    this._deleteWhere((p) => p.userId === String(userId));
+  }
+}

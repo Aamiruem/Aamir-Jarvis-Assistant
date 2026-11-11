@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { auth, api } from '../api.js';
+import { Icon } from '../icons.jsx';
+import { addPasskey, deviceUnlockAvailable, passkeysSupported, unlockName } from '../passkeys.js';
 
 const EVENT_LABELS = {
   register: 'Account created',
@@ -21,6 +23,10 @@ const EVENT_LABELS = {
   refresh_token_reuse_detected: '⚠ Suspicious session reuse: all devices signed out',
   role_changed: 'Role changed by admin',
   account_unlocked_by_admin: 'Unlocked by admin',
+  passkey_added: 'Passkey added',
+  passkey_removed: 'Passkey removed',
+  passkey_login: 'Signed in with a passkey',
+  passkey_login_failed: 'Failed passkey sign-in'
 };
 
 function device(ua = '') {
@@ -37,8 +43,14 @@ export default function SecurityPanel({ user, onUserChange, onSignedOut }) {
   const [code, setCode] = useState('');
   const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
+  const [passkeys, setPasskeys] = useState(null);
+  const [hasUnlock, setHasUnlock] = useState(false);
+  useEffect(() => {
+    deviceUnlockAvailable().then(setHasUnlock);
+  }, []);
 
   const load = () => {
+    api.passkeys().then(setPasskeys).catch(() => setPasskeys([]));
     auth.sessions().then(setSessions).catch(() => {});
     auth.activity().then(setActivity).catch(() => {});
   };
@@ -64,6 +76,13 @@ export default function SecurityPanel({ user, onUserChange, onSignedOut }) {
     setCode('');
   }, 'Phone verified.');
   const setChannel = (otpChannel) => run(async () => onUserChange(await api.updateMe({ preferences: { otpChannel } })), 'Saved.')();
+  const newPasskey = run(async () => {
+    await addPasskey();
+  }, `Passkey added. Next time, sign in on this device with ${unlockName()}: no password needed.`);
+  const removePasskey = (p) => {
+    if (!window.confirm(`Remove the passkey "${p.name}"? That device will need your password again.`)) return;
+    run(() => api.removePasskey(p.id), 'Passkey removed.')();
+  };
   const logoutAll = run(async () => {
     await auth.logoutAll();
     onSignedOut();
@@ -75,9 +94,48 @@ export default function SecurityPanel({ user, onUserChange, onSignedOut }) {
       {msg && <div className="success">{msg}</div>}
       {error && <div className="error">{error}</div>}
 
+      <div className="card passkeys-card">
+        <div className="row wrap">
+          <span className="badge-icon" style={{ '--hue': 265 }}><Icon name="key" /></span>
+          <div className="grow">
+            <strong>Passkeys: sign in without a password</strong>
+            <p className="muted small">
+              Use Face ID, Touch ID, Windows Hello or your phone's fingerprint. Add one on each device you use: iPhone, Android, Mac or Windows. The device keeps the secret key; Azarvis never sees it.
+            </p>
+          </div>
+          {passkeysSupported() ? (
+            <button className="btn primary" onClick={newPasskey}>
+              <Icon name="plus" size="1em" /> Add a passkey on this device
+            </button>
+          ) : (
+            <span className="muted small">Passkeys need the https:// address of Azarvis (or localhost on this computer).</span>
+          )}
+        </div>
+        {passkeysSupported() && !hasUnlock && (
+          <p className="hint">This device has no built-in unlock, but you can still use a passkey saved on your phone (scan the QR code it shows) or a security key.</p>
+        )}
+        {passkeys?.length > 0 ? (
+          <ul className="list">
+            {passkeys.map((p) => (
+              <li key={p.id}>
+                <span>
+                  {p.name} {p.backedUp && <span className="tool-chip">synced</span>}
+                  <div className="meta">
+                    Added {new Date(p.createdAt).toLocaleDateString()} · {p.lastUsedAt ? `last used ${new Date(p.lastUsedAt).toLocaleString()}` : 'not used yet'}
+                  </div>
+                </span>
+                <button className="btn ghost" onClick={() => removePasskey(p)}>Remove</button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          passkeys && <p className="muted small">No passkeys yet.</p>
+        )}
+      </div>
+
       <div className="card">
         <strong>Sign-in codes</strong>
-        <p className="muted">Every sign-in needs a one-time code. Choose where it's sent.</p>
+        <p className="muted">Every password sign-in needs a one-time code. Choose where it's sent. (Passkeys don't need one: the device check is the second factor.)</p>
         <div className="row wrap">
           <label className="row"><input type="radio" checked={user.preferences?.otpChannel !== 'sms'} onChange={() => setChannel('email')} /> Email ({user.email})</label>
           <label className="row">
