@@ -26,6 +26,7 @@ UNSEEN = [
     ("WHY IS THIS STILL BROKEN", "frustration"),
     ("yaar bahut tension hai exam ki", "anxiety"),
     ("I dont get what you mean", "confusion"),
+    ("My python script keeps crashing with KeyError and I'm so frustrated!!", "frustration"),
 ]
 
 
@@ -42,7 +43,7 @@ def client():
 def test_reads_unseen_messages():
     assert not [t for t, _ in UNSEEN if t.lower() in TRAINING], "test messages must not be in the training data"
     wrong = [(t, expected, read_emotion(t).emotion) for t, expected in UNSEEN if read_emotion(t).emotion != expected]
-    assert len(wrong) <= 1, wrong  # at least 11 of 12
+    assert len(wrong) <= 1, wrong  # at least 12 of 13
 
 
 def test_how_it_is_said_changes_the_intensity():
@@ -111,6 +112,11 @@ def test_guidance_reaches_the_agent_context(client):  # client: the app has star
     assert "Tone:" in guidance and "never announce" in guidance
     assert guidance in _user_context("ctx", guidance=guidance)
     assert "How the user seems" not in _user_context("ctx")
+
+
+def test_a_worried_hinglish_message_gets_support_not_a_command(client):
+    r = client.post("/mind/understand", json={"text": "yaar exam kal hai aur kuch yaad nahi, bahut tension hai"}, headers=headers("hin")).json()
+    assert r["emotion"] == "anxiety" and r["need"] == "vent" and r["voice"]["style"] == "reassuring"
 
 
 def test_api_reads_and_keeps_mood_private(client):

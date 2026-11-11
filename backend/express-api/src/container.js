@@ -15,6 +15,18 @@ import * as memory from './repositories/memory.js';
 import * as mongo from './repositories/mongo.js';
 import { MongoRateLimitStore } from './scale/MongoRateLimitStore.js';
 
+/**
+ * True when the AI service can't be reached at all (connection refused, unknown host, timeout) or
+ * a proxy says it isn't there (404/502/503/504); false for a real error from a running service.
+ */
+export function aiUnavailable(err) {
+  if (err?.name === 'TimeoutError' || err?.name === 'AbortError') return true;
+  const code = err?.cause?.code || err?.code;
+  if (['ECONNREFUSED', 'ENOTFOUND', 'EAI_AGAIN', 'ECONNRESET', 'ETIMEDOUT', 'EHOSTUNREACH', 'UND_ERR_CONNECT_TIMEOUT'].includes(code)) return true;
+  if (err instanceof TypeError && /fetch failed/i.test(err.message)) return true;
+  return /responded (404|502|503|504)/.test(err?.message || '');
+}
+
 function memoryRepos(dataDir) {
   // dataDir set → each repository keeps its rows in <dataDir>/<name>.json
   const opts = (name) => (dataDir ? { file: path.join(dataDir, `${name}.json`) } : {});
@@ -56,7 +68,16 @@ export function createContainer({ storage = 'mongo', dataDir, notifier, purgeUse
   const repos = storage === 'mongo' ? mongoRepos() : memoryRepos(storage === 'file' ? dataDir : undefined);
 
   async function purgeFromAllStores(actingUser) {
-    await aiFetch('/me/data', actingUser, { method: 'DELETE' }); // SQL, vector store, S3 files
+    // The AI service's data: SQL (tasks, memories), vector store, S3 files.
+    try {
+      await aiFetch('/me/data', actingUser, { method: 'DELETE', signal: AbortSignal.timeout(20_000) });
+    } catch (err) {
+      // No AI service to reach (not deployed, as on a website-only host, or down): it holds nothing
+      // we can erase right now, and the person must not be trapped in an account they want gone.
+      // Recorded so it can be purged later. A reachable service that fails still stops the deletion.
+      if (!aiUnavailable(err)) throw err;
+      await audit.log('ai_purge_skipped', { userId: actingUser.id, meta: { reason: String(err.message).slice(0, 160) } });
+    }
     await repos.conversations.deleteAllForUser(actingUser.id); // chat history
     await repos.notes.deleteAllForUser(actingUser.id); // user notes
     await repos.passkeys.deleteAllForUser(actingUser.id); // passkeys

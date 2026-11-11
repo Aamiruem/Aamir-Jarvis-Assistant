@@ -57,7 +57,7 @@ NEGATED_POSITIVE = re.compile(r"\b(not|never|no longer|isn'?t|wasn'?t|don'?t|doe
 # like "feeling lonely tonight" is read by its key word even if the sentence is new to the model.
 LEXICON = {
     "sadness": r"lonely|alone|sad|depress\w*|cry|crying|cried|hurt\w*|empty|hopeless|heartbroken|grie\w*|miss (you|him|her|them|home)|udaas|dukhi|rona",
-    "frustration": r"annoy\w*|angry|mad|irritat\w*|hate|useless|ugh+|wtf|fed up|sick of|pissed|gussa|bekaar|still (not|broken|failing)",
+    "frustration": r"frustrat\w*|annoy\w*|angry|mad|irritat\w*|hate|useless|ugh+|wtf|fed up|sick of|pissed|gussa|bekaar|still (not|broken|failing)|keeps? (crashing|failing|breaking)",
     "anxiety": r"worr\w*|nervous|anxious|scared|afraid|stress\w*|panic\w*|tension|overwhelm\w*|overthink\w*|dar lag|ghabra\w*",
     "joy": r"happy|glad|yay|awesome|delighted|promoted|khush|mast|maza",
     "gratitude": r"thanks?|thank you|thx|grateful|appreciate\w*|shukriya|dhanyava?a?d",

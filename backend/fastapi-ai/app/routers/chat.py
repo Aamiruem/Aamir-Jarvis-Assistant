@@ -61,6 +61,11 @@ def _friendly_error(e: Exception) -> str:
     return f"{type(e).__name__}: {e}"
 
 
+def _sure_intent(nlp: dict) -> str | None:
+    """The ML intent, only when it is fairly sure: a weak guess must not override how the user feels."""
+    return nlp["intent"] if nlp.get("confidence", 0) >= 0.5 else None
+
+
 def _mind_event(insight) -> dict:
     """What the browser may show and use: the reading, the plan and the voice style (not the full prompt)."""
     e = insight.emotion
@@ -76,7 +81,7 @@ async def chat_stream(req: ChatRequest, caller: Caller = Depends(get_caller)):
     """Server-Sent Events stream of agent events (used by the Node gateway / React UI / CLI)."""
     started = time.perf_counter()
     nlp = analyze(req.message)
-    insight = understand(caller.user_id, req.message, nlp["intent"])
+    insight = understand(caller.user_id, req.message, _sure_intent(nlp))
 
     async def events():
         yield f"data: {json.dumps({'type': 'nlp', **nlp})}\n\n"
@@ -104,7 +109,7 @@ async def chat(req: ChatRequest, caller: Caller = Depends(get_caller)):
     """Non-streaming variant (used by Streamlit and the MCP server)."""
     started = time.perf_counter()
     nlp = analyze(req.message)
-    insight = understand(caller.user_id, req.message, nlp["intent"])
+    insight = understand(caller.user_id, req.message, _sure_intent(nlp))
     reply, tools, done, errors = "", [], None, []
     async for ev in run_agent(req.message, [h.model_dump() for h in req.history], caller.user_id, fast=req.voice, guidance=insight.guidance()):
         if ev["type"] == "text":

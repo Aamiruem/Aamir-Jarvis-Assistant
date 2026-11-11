@@ -22,8 +22,8 @@ class UnderstandRequest(BaseModel):
 
 @router.post("/understand")
 def understand_text(req: UnderstandRequest, caller: Caller = Depends(get_caller)):
-    intent, _ = get_classifier().predict(req.text)
-    insight = understand(caller.user_id, req.text, intent, track=req.track)
+    intent, confidence = get_classifier().predict(req.text)
+    insight = understand(caller.user_id, req.text, intent if confidence >= 0.5 else None, track=req.track)
     return {**insight.as_dict(), "guidance": insight.guidance()}
 
 

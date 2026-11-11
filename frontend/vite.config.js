@@ -7,10 +7,14 @@ import { defineConfig, loadEnv } from 'vite';
  * the frontend was started ("npm run dev" inside frontend/), /api requests go to the LIVE
  * Azarvis API instead of failing with "Can't reach the Azarvis server". Accounts made this way
  * are real. AZARVIS_LIVE_API=off turns this off; AZARVIS_LIVE_API=<url> picks another API.
+ * Once a local API has answered in this session it never switches to the live one: a local API
+ * that stops (a restart, a crash) gets a clear error instead, so local testing can't write to the
+ * live database by accident.
  */
 function liveApiFallback() {
   const live = (process.env.AZARVIS_LIVE_API || 'https://azarvis-api.vercel.app').replace(/\/$/, '');
   let localUp = false;
+  let seenLocal = false;
   let checkedAt = 0;
   let warned = false;
   const probe = () =>
@@ -45,7 +49,16 @@ function liveApiFallback() {
           localUp = await probe();
           checkedAt = Date.now();
         }
-        if (localUp) return next(); // the normal local proxy
+        if (localUp) {
+          seenLocal = true;
+          return next(); // the normal local proxy
+        }
+        if (seenLocal) {
+          res.statusCode = 503;
+          res.setHeader('content-type', 'application/json');
+          res.end(JSON.stringify({ error: 'The local Azarvis API (localhost:4000) stopped. Start it again ("npm run dev" in the main project folder), then try again.', code: 'LOCAL_API_DOWN' }));
+          return;
+        }
         if (!warned) {
           warned = true;
           server.config.logger.warn(
