@@ -63,6 +63,10 @@ export const SOCIAL = [
 // GitHub account whose public repositories the website's Projects section loads live.
 export const GITHUB_USER = 'Aamiruem';
 
+// Repository homepages that are set on GitHub but don't load (checked 2026-11-11: both answer
+// 404). They are left out of the live apps; remove an entry once its deployment works again.
+export const HIDDEN_HOMEPAGES = ['cuvette-javascript-project.vercel.app', 'pocket-notes-main-o45a.vercel.app'];
+
 // Live apps shown first in the Projects section (platform = where it is hosted). Repositories
 // whose GitHub "homepage" points at a live site are added to these automatically.
 export const LIVE_APPS = [

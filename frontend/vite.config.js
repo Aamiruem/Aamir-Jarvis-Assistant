@@ -99,6 +99,22 @@ function seo(env) {
         tags.push(meta({ name: 'twitter:image', content: `${site}/og-image.png` }));
       }
       if (verification) tags.push(meta({ name: 'google-site-verification', content: verification }));
+      // Structured data for the site itself: helps Google show "Azarvis" as the site name and
+      // connect the app to Aamir's profiles (the app and FAQ data are in index.html / Landing.jsx).
+      tags.push({
+        tag: 'script',
+        attrs: { type: 'application/ld+json' },
+        children: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: 'Azarvis',
+          alternateName: ['Azarvis AI', 'Azarvis AI Assistant', 'Azarvis by Aamir Hussain Azad'],
+          ...(site ? { url: `${site}/` } : {}),
+          inLanguage: 'en-IN',
+          publisher: { '@type': 'Person', name: 'Aamir Hussain Azad', url: 'https://aamir-hussain-azad.vercel.app/' },
+        }),
+        injectTo: 'head',
+      });
       if (gaId) {
         // Google Analytics 4. The ID was checked against /^G-[A-Z0-9]+$/, so it is safe inside the script.
         tags.push({ tag: 'script', attrs: { async: true, src: `https://www.googletagmanager.com/gtag/js?id=${gaId}` }, injectTo: 'head' });

@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { track } from '../analytics.js';
 import { Icon } from '../icons.jsx';
-import { GITHUB_USER, LIVE_APPS, PROJECTS } from '../siteLinks.js';
+import { GITHUB_USER, HIDDEN_HOMEPAGES, LIVE_APPS, PROJECTS } from '../siteLinks.js';
 
 // Aamir's projects, loaded live: the GitHub profile and public repositories (GitHub's public API,
 // no key needed), plus the live apps on Vercel, Streamlit and Render. A repository whose GitHub
 // "homepage" is a live site joins the live apps automatically. Loaded only when the section is
 // about to scroll into view, cached for an hour, with the static list as a fallback.
 
-const CACHE_KEY = `azarvis-gh-${GITHUB_USER}`;
+const CACHE_KEY = `azarvis-gh-v2-${GITHUB_USER}`;
 const CACHE_MS = 60 * 60_000;
 
 export const PLATFORMS = {
@@ -52,6 +52,17 @@ const ago = (iso) => {
   return `${years} year${years === 1 ? '' : 's'} ago`;
 };
 
+/** A repository's homepage, if it is a real live site (not GitHub itself, not a known-broken one). */
+function liveHomepage(url) {
+  if (!url || !/^https?:\/\//.test(url)) return '';
+  try {
+    const host = new URL(url).hostname;
+    return host === 'github.com' || host.endsWith('.github.com') || HIDDEN_HOMEPAGES.includes(host) ? '' : url;
+  } catch {
+    return '';
+  }
+}
+
 async function loadGitHub() {
   try {
     const cached = JSON.parse(sessionStorage.getItem(CACHE_KEY));
@@ -73,7 +84,7 @@ async function loadGitHub() {
       title: pretty(r.name),
       description: r.description || '',
       url: r.html_url,
-      homepage: r.homepage && /^https?:\/\//.test(r.homepage) ? r.homepage : '',
+      homepage: liveHomepage(r.homepage),
       language: r.language || '',
       stars: r.stargazers_count,
       forks: r.forks_count,
@@ -109,7 +120,8 @@ function useOnline(url, enabled) {
   return state;
 }
 
-const STATUS = { checking: 'Checking…', online: 'Online', waking: 'Waking up', offline: 'Unreachable' };
+// A cross-site check can only see that the server answered, not whether the page itself works.
+const STATUS = { checking: 'Checking…', online: 'Responding', waking: 'Waking up', offline: 'Unreachable' };
 
 function LiveCard({ app, visible }) {
   const status = useOnline(app.href, visible);
@@ -120,7 +132,7 @@ function LiveCard({ app, visible }) {
         <span className={`proj-platform proj-platform--${app.platform}`}>
           <PlatformMark platform={app.platform} /> {p.label}
         </span>
-        <span className={`proj-status proj-status--${status}`} title="Checked from your browser just now">
+        <span className={`proj-status proj-status--${status}`} title="Checked from your browser just now: the server answered">
           <i /> {STATUS[status]}
         </span>
       </div>

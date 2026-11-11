@@ -8,7 +8,7 @@
     <meta name="keywords" content="Azarvis, Azarvis AI, Aamir Hussain Azad, Jarvis by Aamir Hussain Azad, AI assistant, AI voice assistant, personal assistant, voice assistant for PC, hands-free, reminders, task manager, Claude" />
     <meta name="author" content="Aamir Hussain Azad" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
-    <meta name="theme-color" content="#222428" />
+    <meta name="theme-color" content="#07090e" />
     <meta name="color-scheme" content="dark light" />
     <!-- Link previews (WhatsApp, LinkedIn, X, Slack). og:url, og:image and the canonical link are
          made absolute at build time from VITE_SITE_URL (see the seo plugin in vite.config.js). -->
@@ -64,6 +64,9 @@
             "operatingSystem": "Windows, macOS, Linux, Web",
             "browserRequirements": "Voice needs Google Chrome or Microsoft Edge",
             "description": "A personal AI voice assistant powered by Claude: reminders, tasks, long-term memory, chat with your documents and control of your computer, hands-free.",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+            "featureList": "Voice assistant, Chat with Claude, Tasks and reminders, AI/ML study notes, Email and social media drafts, Knowledge base, ML Lab, Vision, Passkey sign-in",
+            "screenshot": "/og-image.png",
             "author": {
               "@id": "#author"
             },
@@ -81,8 +84,8 @@
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" /></noscript>
     <style>
       /* Splash shown the instant the HTML arrives, before any JavaScript; React replaces it. */
-      .boot { min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 14px; padding: 24px; text-align: center; background: #222428; color: #e3ecff; font-family: Inter, system-ui, sans-serif; }
-      [data-theme='light'] .boot { background: #f4f7fd; color: #0f1b33; }
+      .boot { min-height: 100vh; display: grid; place-content: center; justify-items: center; gap: 14px; padding: 24px; text-align: center; background: #0b0d12; color: #e3ecff; font-family: Inter, system-ui, sans-serif; }
+      [data-theme='light'] .boot { background: #f4f6fb; color: #0f1b33; }
       .boot-logo { filter: drop-shadow(0 0 22px rgba(129, 140, 248, 0.55)); animation: boot 1.4s ease-in-out infinite; }
       .boot .boot-by { font-size: 13px; letter-spacing: 0.04em; opacity: 0.6; }
       .boot h1 { margin: 6px 0 0; font: 700 26px/1.2 Rajdhani, system-ui, sans-serif; letter-spacing: 0.3em; }
