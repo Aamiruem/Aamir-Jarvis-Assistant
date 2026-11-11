@@ -5,7 +5,6 @@ import Landing from './Landing.jsx';
 import Login from './Login.jsx';
 import SiteFooter from './SiteFooter.jsx';
 import ThemeMenu from './ThemeMenu.jsx';
-import '../public.css';
 
 // Everything a visitor sees before signing in: the website (Home), Sign in / Sign up, and the
 // Demo, which shows the app with sample data and needs no account.

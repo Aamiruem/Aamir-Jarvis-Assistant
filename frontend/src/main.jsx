@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 import ErrorBoundary from './ErrorBoundary.jsx';
 import './styles.css';
+import './public.css'; // after styles.css: the public website's rules refine the shared ones
 
 registerServiceWorker();
 

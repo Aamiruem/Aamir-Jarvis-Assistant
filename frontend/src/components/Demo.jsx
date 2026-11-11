@@ -71,13 +71,17 @@ function DemoChat({ seed, onSeedUsed }) {
   const [aloud, setAloud] = useState(false);
   const aloudRef = useRef(aloud);
   aloudRef.current = aloud;
-  const endRef = useRef(null);
+  const logRef = useRef(null);
   const typing = Boolean(pending);
 
   useEffect(() => {
     if (seed) onSeedUsed();
   }, []);
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), [messages, typing]);
+  // Keep the newest message in view by scrolling the log only (not the whole page).
+  useEffect(() => {
+    const log = logRef.current;
+    if (log) log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' });
+  }, [messages, typing]);
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
 
   // A short "typing" pause, then the scripted answer (cancelled if the chat closes first).
@@ -112,7 +116,7 @@ function DemoChat({ seed, onSeedUsed }) {
           <input type="checkbox" checked={aloud} onChange={(e) => setAloud(e.target.checked)} /> Read answers aloud
         </label>
       </div>
-      <div className="demo-chat-log" aria-live="polite">
+      <div className="demo-chat-log" aria-live="polite" ref={logRef}>
         {messages.map((m, i) => (
           <div key={i} className={`demo-msg demo-msg--${m.role}`}>
             <p>{m.text}</p>
@@ -128,7 +132,6 @@ function DemoChat({ seed, onSeedUsed }) {
             <span /><span /><span />
           </div>
         )}
-        <div ref={endRef} />
       </div>
       <div className="demo-suggest">
         {SUGGESTIONS.map((s) => (

@@ -332,6 +332,7 @@
 
 .demo-chat { display: flex; flex-direction: column; border-radius: 16px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; }
 .demo-chat-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.demo-chat-head .grow { flex: 1 0 auto; }
 .demo-aloud { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); cursor: pointer; }
 .demo-chat-log { display: flex; flex-direction: column; gap: 12px; padding: 18px 16px; min-height: 280px; max-height: min(56vh, 520px); overflow-y: auto; }
 .demo-msg { position: relative; max-width: min(82%, 620px); padding: 11px 15px; border-radius: 16px; line-height: 1.55; font-size: 14.5px; }
