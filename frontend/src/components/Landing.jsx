@@ -346,7 +346,7 @@ export default function Landing({ onNavigate, onSection, theme }) {
                   <span className="feature-icon sm"><Icon name={a.icon ?? 'globe'} size="1.05em" /></span>
                   <span className="grow">
                     <strong>{a.label}</strong>
-                    <small>{a.text.split(':')[0].split('.')[0]}</small>
+                    <small>{a.short ?? a.text}</small>
                   </span>
                   <Icon name="external" size="0.95em" className="launch-go" />
                 </a>
@@ -536,23 +536,6 @@ export default function Landing({ onNavigate, onSection, theme }) {
         </div>
       </section>
 
-      <section className="band band--b band--cta">
-        <div className="pub-wrap">
-          <div className="final-cta">
-            <div className="orb final-orb" aria-hidden="true" />
-            <h2>Ready to talk to Azarvis?</h2>
-            <p>Create your account in a minute, or look around the demo first.</p>
-            <div className="hero-ctas">
-              <button type="button" className="btn btn-lg final-primary" onClick={() => onNavigate('signup')}>
-                Create free account
-              </button>
-              <button type="button" className="btn btn-lg final-secondary" onClick={() => onNavigate('demo')}>
-                <Icon name="sparkles" size="1.05em" /> Try the demo
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
     </>
   );
 }

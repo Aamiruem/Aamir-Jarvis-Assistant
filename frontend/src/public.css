@@ -808,9 +808,16 @@ body:has(.pub) { background: #171c27; }
 .flows-note { display: flex; align-items: flex-start; gap: 8px; max-width: 860px; margin: 18px auto 0; font-size: 13.5px; line-height: 1.55; color: var(--muted); text-align: center; justify-content: center; }
 .flows-note .icon { flex: none; margin-top: 3px; color: #10b981; }
 
-@media (max-width: 1280px) {
+/* Keep every navbar item on one line; fold the links into the menu before they would wrap. */
+.pub-links button, .pub-demo-link, .pub-author span, .pub-signin, .pub-cta { white-space: nowrap; }
+@media (max-width: 1560px) {
   .pub-author span { display: none; }
   .pub-author { padding: 3px; }
+  .pub-links button { padding-inline: 9px; }
+}
+@media (max-width: 1320px) {
+  .pub-links { display: none; }
+  .pub-burger { display: inline-grid; }
 }
 @media (max-width: 1100px) {
   .pipeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }

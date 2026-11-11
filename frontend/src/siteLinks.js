@@ -80,13 +80,13 @@ export const HIDDEN_HOMEPAGES = ['cuvette-javascript-project.vercel.app', 'pocke
 // whose GitHub "homepage" points at a live site are added to these automatically.
 // icon / hue: how the app's button looks on the website (Live projects strip, footer).
 export const LIVE_APPS = [
-  { label: 'Arvixa Store', href: ARVIXA_URL, platform: 'vercel', icon: 'cart', hue: 25, text: 'Online marketplace for India: mobiles, fashion, groceries and more, with cart and checkout.', repo: 'Shopping-Cart' },
-  { label: 'Presence AI', href: PRESENCE_URL, platform: 'vercel', icon: 'target', hue: 160, text: 'AI focus tracker and interview coach: live distraction detection, mock interviews and a speech coach.', repo: 'Real-Time-Conversession-and-Distraction-Face' },
-  { label: 'Gratia Estates', href: GRATIA_URL, platform: 'vercel', icon: 'house', hue: 205, text: 'Real estate in Gurgaon: compare new-launch and ready-to-move projects, with price prediction.', repo: 'Gratia-Estates-Website' },
-  { label: 'Azarvis Voice App', href: 'https://azarvis-app.vercel.app/', platform: 'vercel', icon: 'mic', hue: 265, text: 'This assistant: voice, chat, tasks, notes and automations.', repo: 'Aamir-Jarvis-Assistant' },
-  { label: 'Azarvis Dashboard', href: 'https://azarvis-ai.vercel.app/', platform: 'vercel', icon: 'chart', hue: 230, text: 'Next.js dashboard and landing page for Azarvis.', repo: 'Aamir-Jarvis-Assistant' },
-  { label: 'Portfolio', href: PORTFOLIO_URL, platform: 'vercel', icon: 'briefcase', hue: 280, text: 'Aamir Hussain Azad: AI/ML engineer and full-stack developer.', repo: 'Aamir_Portfolio' },
-  { label: 'Crop Yield Prediction', href: CROP_URL, platform: 'streamlit', icon: 'flask', hue: 120, text: 'Indian crop optimization and yield prediction for farmers, with ML.', repo: 'Indian-Crop-Optimization-Production' },
-  { label: 'Retail Sales Analytics', href: RETAIL_URL, platform: 'streamlit', icon: 'chart', hue: 0, text: 'Retail sales and customer analytics dashboard.', repo: 'Retail-sales-customer' },
-  { label: 'Mansik Santulan', href: MANSIK_URL, platform: 'render', icon: 'brain', hue: 330, text: 'Machine-learning scores for mental balance (mansik santulan).', repo: 'Mansik-Santulan-Scores' },
+  { label: 'Arvixa Store', short: 'Online shopping marketplace', href: ARVIXA_URL, platform: 'vercel', icon: 'cart', hue: 25, text: 'Online marketplace for India: mobiles, fashion, groceries and more, with cart and checkout.', repo: 'Shopping-Cart' },
+  { label: 'Presence AI', short: 'AI focus tracker & interview coach', href: PRESENCE_URL, platform: 'vercel', icon: 'target', hue: 160, text: 'AI focus tracker and interview coach: live distraction detection, mock interviews and a speech coach.', repo: 'Real-Time-Conversession-and-Distraction-Face' },
+  { label: 'Gratia Estates', short: 'Real estate & price prediction', href: GRATIA_URL, platform: 'vercel', icon: 'house', hue: 205, text: 'Real estate in Gurgaon: compare new-launch and ready-to-move projects, with price prediction.', repo: 'Gratia-Estates-Website' },
+  { label: 'Azarvis Voice App', short: 'This voice assistant', href: 'https://azarvis-app.vercel.app/', platform: 'vercel', icon: 'mic', hue: 265, text: 'This assistant: voice, chat, tasks, notes and automations.', repo: 'Aamir-Jarvis-Assistant' },
+  { label: 'Azarvis Dashboard', short: 'Next.js dashboard', href: 'https://azarvis-ai.vercel.app/', platform: 'vercel', icon: 'chart', hue: 230, text: 'Next.js dashboard and landing page for Azarvis.', repo: 'Aamir-Jarvis-Assistant' },
+  { label: 'Portfolio', short: 'Aamir Hussain Azad', href: PORTFOLIO_URL, platform: 'vercel', icon: 'briefcase', hue: 280, text: 'Aamir Hussain Azad: AI/ML engineer and full-stack developer.', repo: 'Aamir_Portfolio' },
+  { label: 'Crop Yield Prediction', href: CROP_URL, short: 'ML for Indian farmers', platform: 'streamlit', icon: 'flask', hue: 120, text: 'Indian crop optimization and yield prediction for farmers, with ML.', repo: 'Indian-Crop-Optimization-Production' },
+  { label: 'Retail Sales Analytics', href: RETAIL_URL, short: 'Sales & customer analytics', platform: 'streamlit', icon: 'chart', hue: 0, text: 'Retail sales and customer analytics dashboard.', repo: 'Retail-sales-customer' },
+  { label: 'Mansik Santulan', href: MANSIK_URL, short: 'Mental-balance ML scores', platform: 'render', icon: 'brain', hue: 330, text: 'Machine-learning scores for mental balance (mansik santulan).', repo: 'Mansik-Santulan-Scores' },
 ];
