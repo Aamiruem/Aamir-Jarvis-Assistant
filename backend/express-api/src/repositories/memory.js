@@ -281,3 +281,17 @@ export class InMemoryPasskeyRepository extends InMemoryRepository {
     this._deleteWhere((p) => p.userId === String(userId));
   }
 }
+
+/** Passkey challenges (one use each). Never written to a file: they live for minutes. */
+export class InMemoryChallengeRepository extends InMemoryRepository {
+  /** Returns the challenge and deletes it, so it can't be used twice. */
+  async take(id) {
+    const row = await this.findById(id);
+    if (row) await this.delete(id);
+    return row;
+  }
+
+  async purgeExpired(now = new Date()) {
+    this._deleteWhere((c) => c.expiresAt < now);
+  }
+}

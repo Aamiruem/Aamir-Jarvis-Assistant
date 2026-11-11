@@ -70,7 +70,7 @@ async function streamChat(req, res, conversations) {
     const open = () =>
       fetch(`${config.aiServiceUrl}/chat/stream`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...aiHeaders(req.user) },
+        headers: { 'Content-Type': 'application/json', ...aiHeaders(req.user), 'X-Request-Id': req.id },
         body: JSON.stringify({ message, history, voice: voice === true }),
         signal: abort.signal,
       });

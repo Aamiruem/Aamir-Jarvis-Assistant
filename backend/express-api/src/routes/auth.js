@@ -5,11 +5,13 @@ import rateLimit from 'express-rate-limit';
 
 export const REFRESH_COOKIE = 'jarvis_rt';
 
-export function createAuthRouter({ authService, passkeyService, requireAuth, settings }) {
+export function createAuthRouter({ authService, passkeyService, requireAuth, settings, limit }) {
   const router = Router();
 
   // Slows down password and OTP guessing per IP (on top of per-account lockout and OTP attempt limits).
-  const limiter = rateLimit({ windowMs: 15 * 60_000, limit: settings.rateLimitPer15Min, standardHeaders: true, legacyHeaders: false });
+  // limit (from app.js) counts across every replica; plain rateLimit when the router is used on its own.
+  const options = { windowMs: 15 * 60_000, limit: settings.rateLimitPer15Min };
+  const limiter = limit ? limit('auth', options) : rateLimit({ ...options, standardHeaders: true, legacyHeaders: false });
 
   const ctx = (req) => ({ ip: req.ip, userAgent: req.get('user-agent') || '' });
   const body = (req) => req.body || {};

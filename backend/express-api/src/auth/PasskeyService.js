@@ -5,7 +5,6 @@
 //
 // A passkey is two factors at once (the device you hold + your face, finger or PIN), so a
 // passkey sign-in does not also ask for the email code.
-import crypto from 'node:crypto';
 import {
   generateAuthenticationOptions,
   generateRegistrationOptions,
@@ -29,13 +28,13 @@ export function deviceName(userAgent = '') {
 
 export class PasskeyService {
   /**
-   * @param {{ passkeys, users, audit, authService, rpName?: string, rpId?: string, origins: string[], clock?: () => Date }} deps
+   * @param {{ passkeys, challenges, users, audit, authService, rpName?: string, rpId?: string, origins: string[], clock?: () => Date }} deps
+   *   challenges: where a challenge waits between the two steps; shared by every API replica.
    *   origins: the web addresses allowed to use passkeys (the app's own sites).
    *   rpId: the domain passkeys belong to; by default the host name of the page asking.
    */
-  constructor({ passkeys, users, audit, authService, rpName = 'Azarvis', rpId = '', origins, clock = () => new Date() }) {
-    Object.assign(this, { passkeys, users, audit, authService, rpName, rpId, origins, clock });
-    this.challenges = new Map(); // id -> { challenge, userId, purpose, rpID, origin, expires }
+  constructor({ passkeys, challenges, users, audit, authService, rpName = 'Azarvis', rpId = '', origins, clock = () => new Date() }) {
+    Object.assign(this, { passkeys, challenges, users, audit, authService, rpName, rpId, origins, clock });
   }
 
   /** The page's origin must be one of ours; the passkey's domain (RP ID) follows from it. */
@@ -47,19 +46,17 @@ export class PasskeyService {
     return { origin, rpID: this.rpId && (host === this.rpId || host.endsWith(`.${this.rpId}`)) ? this.rpId : host };
   }
 
-  #remember(data) {
-    const now = this.clock().getTime();
-    for (const [id, c] of this.challenges) if (c.expires < now) this.challenges.delete(id);
-    const id = crypto.randomUUID();
-    this.challenges.set(id, { ...data, expires: now + CHALLENGE_TTL_MS });
-    return id;
+  async #remember(data) {
+    const now = this.clock();
+    await this.challenges.purgeExpired(now);
+    const saved = await this.challenges.create({ userId: null, ...data, expiresAt: new Date(now.getTime() + CHALLENGE_TTL_MS) });
+    return saved.id;
   }
 
-  /** One use only: a challenge is deleted as soon as it is read. */
-  #take(id, purpose) {
-    const c = this.challenges.get(String(id || ''));
-    this.challenges.delete(String(id || ''));
-    if (!c || c.purpose !== purpose || c.expires < this.clock().getTime()) {
+  /** One use only: a challenge is deleted as soon as it is read (atomically, across replicas). */
+  async #take(id, purpose) {
+    const c = typeof id === 'string' && id ? await this.challenges.take(id) : null;
+    if (!c || c.purpose !== purpose || c.expiresAt < this.clock()) {
       throw new AuthenticationError('That passkey request expired. Please try again.');
     }
     return c;
@@ -84,12 +81,12 @@ export class PasskeyService {
       // residentKey "required": the passkey can sign in without typing the email first.
       authenticatorSelection: { residentKey: 'required', userVerification: 'required' },
     });
-    const challengeId = this.#remember({ challenge: options.challenge, userId: String(user.id), purpose: 'register', ...site });
+    const challengeId = await this.#remember({ challenge: options.challenge, userId: String(user.id), purpose: 'register', ...site });
     return { challengeId, options };
   }
 
   async register(userId, { challengeId, response, name } = {}, ctx = {}) {
-    const c = this.#take(challengeId, 'register');
+    const c = await this.#take(challengeId, 'register');
     if (c.userId !== String(userId)) throw new AuthenticationError('That passkey request belongs to another account.');
     let verification;
     try {
@@ -141,13 +138,13 @@ export class PasskeyService {
       allowCredentials = keys.filter((k) => k.rpId === site.rpID).map((k) => ({ id: k.credentialId, transports: k.transports }));
     }
     const options = await generateAuthenticationOptions({ rpID: site.rpID, userVerification: 'required', allowCredentials });
-    const challengeId = this.#remember({ challenge: options.challenge, purpose: 'login', ...site });
+    const challengeId = await this.#remember({ challenge: options.challenge, purpose: 'login', ...site });
     return { challengeId, options };
   }
 
   /** Checks the signed challenge and signs the owner in (same session as a password login). */
   async login({ challengeId, response } = {}, ctx = {}) {
-    const c = this.#take(challengeId, 'login');
+    const c = await this.#take(challengeId, 'login');
     const key = response?.id ? await this.passkeys.findByCredentialId(String(response.id)) : null;
     if (!key) {
       await this.audit.log('passkey_login_failed', { ctx, meta: { reason: 'unknown_passkey' } });

@@ -21,6 +21,14 @@ export const config = {
   // instead of emailed. Anyone can register (the email isn't really checked), so only for a demo.
   demoMode: bool(process.env.DEMO_MODE, false),
 
+  // Scaling. WEB_CONCURRENCY: API worker processes per container ("auto" = one per CPU core;
+  // needs MongoDB). DRAIN_MS: on shutdown, how long to report "not ready" before closing, so the
+  // load balancer moves traffic away first. SHUTDOWN_TIMEOUT_MS: then wait this long for requests
+  // in progress (a streaming chat reply) before stopping anyway.
+  workers: process.env.WEB_CONCURRENCY === 'auto' ? 0 : num(process.env.WEB_CONCURRENCY, 1),
+  drainMs: num(process.env.DRAIN_MS, process.env.NODE_ENV === 'production' ? 5000 : 0),
+  shutdownTimeoutMs: num(process.env.SHUTDOWN_TIMEOUT_MS, 25_000),
+
   // Passkeys (Face ID / Touch ID / Windows Hello / fingerprint sign-in). The browser only
   // allows them on https:// sites and on localhost. origins: the exact addresses the app is
   // opened from; rpId: the domain they belong to (default: the host of the page).

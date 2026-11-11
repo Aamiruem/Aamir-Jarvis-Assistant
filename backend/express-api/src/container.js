@@ -13,6 +13,7 @@ import path from 'node:path';
 import { config } from './config.js';
 import * as memory from './repositories/memory.js';
 import * as mongo from './repositories/mongo.js';
+import { MongoRateLimitStore } from './scale/MongoRateLimitStore.js';
 
 function memoryRepos(dataDir) {
   // dataDir set → each repository keeps its rows in <dataDir>/<name>.json
@@ -26,6 +27,7 @@ function memoryRepos(dataDir) {
     notes: new memory.InMemoryUserNoteRepository(opts('notes')),
     feedback: new memory.InMemoryFeedbackRepository(opts('feedback')),
     passkeys: new memory.InMemoryPasskeyRepository(opts('passkeys')),
+    challenges: new memory.InMemoryChallengeRepository(), // minutes-long, never saved to a file
   };
 }
 
@@ -39,6 +41,7 @@ function mongoRepos() {
     notes: new mongo.MongoUserNoteRepository(),
     feedback: new mongo.MongoFeedbackRepository(),
     passkeys: new mongo.MongoPasskeyRepository(),
+    challenges: new mongo.MongoChallengeRepository(),
   };
 }
 
@@ -87,6 +90,7 @@ export function createContainer({ storage = 'mongo', dataDir, notifier, purgeUse
   // Passkeys work on the app's own sites only (CLIENT_ORIGINS, or PASSKEY_ORIGINS when set).
   const passkeyService = new PasskeyService({
     passkeys: repos.passkeys,
+    challenges: repos.challenges,
     users: repos.users,
     audit,
     authService,
@@ -94,5 +98,8 @@ export function createContainer({ storage = 'mongo', dataDir, notifier, purgeUse
     origins: config.passkeys.origins,
   });
 
-  return { ...repos, storage, tokens, otp, audit, authService, passkeyService, settings: authSettings };
+  // With MongoDB every replica shares one rate-limit counter; otherwise each process counts alone.
+  const rateLimitStore = storage === 'mongo' ? (prefix) => new MongoRateLimitStore({ prefix }) : () => undefined;
+
+  return { ...repos, storage, tokens, otp, audit, authService, passkeyService, rateLimitStore, settings: authSettings };
 }

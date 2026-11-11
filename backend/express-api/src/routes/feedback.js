@@ -23,9 +23,10 @@ export function validateFeedback(input = {}) {
   return { value: { message, email, rating, category, name: text(input.name, 80), page: text(input.page, 40) } };
 }
 
-export function createFeedbackRouter({ feedback, tokens, settings = {} }) {
+export function createFeedbackRouter({ feedback, tokens, settings = {}, limit }) {
   const router = Router();
-  const limiter = rateLimit({ windowMs: 60 * 60_000, limit: settings.feedbackPerHour ?? 10, standardHeaders: true, legacyHeaders: false });
+  const options = { windowMs: 60 * 60_000, limit: settings.feedbackPerHour ?? 10 };
+  const limiter = limit ? limit('feedback', options) : rateLimit({ ...options, standardHeaders: true, legacyHeaders: false });
 
   // Optional: a signed-in visitor's feedback is linked to their account.
   const userIdFrom = (req) => {

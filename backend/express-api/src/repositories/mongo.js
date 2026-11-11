@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import { Conversation } from '../models/Conversation.js';
 import { Feedback } from '../models/Feedback.js';
 import { Passkey } from '../models/Passkey.js';
+import { WebAuthnChallenge } from '../models/WebAuthnChallenge.js';
 import { AuditLog, OtpChallenge, Session } from '../models/Security.js';
 import { User } from '../models/User.js';
 import { UserNote } from '../models/UserNote.js';
@@ -250,4 +251,18 @@ export class MongoPasskeyRepository extends MongoRepository {
     const row = MongoRepository.toPlain(doc);
     return row ? { ...row, userId: String(row.userId) } : null;
   }
+}
+
+export class MongoChallengeRepository extends MongoRepository {
+  constructor() {
+    super(WebAuthnChallenge);
+  }
+
+  /** Atomic read-and-delete: of two replicas racing for the same challenge, only one gets it. */
+  async take(id) {
+    if (!mongoose.isValidObjectId(id)) return null;
+    return MongoRepository.toPlain(await this.model.findOneAndDelete({ _id: id }).lean());
+  }
+
+  async purgeExpired() {} // MongoDB's TTL index does this
 }

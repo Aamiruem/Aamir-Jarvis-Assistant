@@ -5,6 +5,7 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import mongoose from 'mongoose';
+import crypto from 'node:crypto';
 import os from 'node:os';
 import morgan from 'morgan';
 import { aiGate, aiHeaders, checkAi, markAiDown } from './ai.js';
@@ -28,11 +29,40 @@ export function createApp(container) {
   const { requireAuth, requireAdmin } = createAuthMiddleware(container.tokens);
 
   app.set('trust proxy', 1); // behind nginx / a load balancer: real client IP for rate limits & audit
+  // draining: set on shutdown (index.js) so the load balancer stops sending new requests here.
+  app.locals.draining = false;
+  const instance = `${os.hostname()}:${process.pid}`;
+
+  // Every request gets an id (nginx's, when it sent one), echoed back and passed to the AI
+  // service, so one request can be followed through the load balancer, a replica and Python.
+  app.use((req, res, next) => {
+    const given = req.get('x-request-id');
+    req.id = given && /^[\w-]{8,64}$/.test(given) ? given : crypto.randomUUID();
+    res.set('X-Request-Id', req.id);
+    next();
+  });
   app.use(helmet());
-  app.use(cors({ origin: config.corsOrigins, credentials: true }));
+  app.use(cors({ origin: config.corsOrigins, credentials: true, exposedHeaders: ['X-Request-Id'] }));
   app.use(cookieParser());
-  if (config.env !== 'test') app.use(morgan('dev'));
-  app.use('/api', rateLimit({ windowMs: 60_000, limit: 300, standardHeaders: true, legacyHeaders: false }));
+  if (config.env !== 'test') {
+    morgan.token('id', (req) => req.id.slice(0, 8));
+    app.use(morgan(':id :method :url :status :response-time ms'));
+  }
+
+  // Load-balancer probes. live: the process answers. ready: it can serve traffic right now
+  // (database connected, not shutting down). Neither touches the AI service, so they stay fast.
+  app.get('/api/health/live', (_req, res) => res.json({ status: 'live' }));
+  app.get('/api/health/ready', (_req, res) => {
+    const dbReady = container.storage !== 'mongo' || mongoose.connection.readyState === 1;
+    const ready = dbReady && !app.locals.draining;
+    res.status(ready ? 200 : 503).json({ status: ready ? 'ready' : app.locals.draining ? 'draining' : 'database_down', instance });
+  });
+
+  // Rate limits are shared by every replica when the store is MongoDB (see scale/MongoRateLimitStore.js).
+  // passOnStoreError: if the counter itself is briefly unreachable, serve the request rather than fail it.
+  const limit = (prefix, options) =>
+    rateLimit({ standardHeaders: true, legacyHeaders: false, passOnStoreError: true, store: container.rateLimitStore?.(prefix), ...options });
+  app.use('/api', limit('api', { windowMs: 60_000, limit: 300, skip: (req) => req.path.startsWith('/health') }));
 
   // Everything under /api/ai/* (RAG, vision, NLP, tasks, memory, notifications, stats) is
   // forwarded to the Python FastAPI service after the JWT check. User identity headers come
@@ -49,6 +79,7 @@ export function createApp(container) {
       on: {
         proxyReq: (proxyReq, req) => {
           for (const [name, value] of Object.entries(aiHeaders(req.user))) proxyReq.setHeader(name, value);
+          proxyReq.setHeader('X-Request-Id', req.id);
           proxyReq.removeHeader('cookie'); // the AI service never needs the session cookie
         },
         error: (err, _req, res) => {
@@ -61,13 +92,13 @@ export function createApp(container) {
   );
 
   app.use(express.json({ limit: '1mb' }));
-  app.use('/api/auth', createAuthRouter({ authService: container.authService, passkeyService: container.passkeyService, requireAuth, settings: container.settings }));
+  app.use('/api/auth', createAuthRouter({ authService: container.authService, passkeyService: container.passkeyService, requireAuth, settings: container.settings, limit }));
   const { users, conversations, sessions, audit, notes, feedback } = container;
   app.use('/api/conversations', createConversationRouter({ requireAuth, conversations }));
   app.use('/api/chat', createChatRouter({ requireAuth, conversations }));
   app.use('/api/user-notes', createUserNotesRouter({ requireAuth, notes }));
   // Public: the website's feedback form works without an account (rate-limited per IP).
-  app.use('/api/feedback', createFeedbackRouter({ feedback, tokens: container.tokens, settings: container.settings }));
+  app.use('/api/feedback', createFeedbackRouter({ feedback, tokens: container.tokens, settings: container.settings, limit }));
   app.use('/api/admin', createAdminRouter({ requireAuth, requireAdmin, users, conversations, sessions, audit, feedback }));
 
   app.get('/api/health', async (_req, res) => {
