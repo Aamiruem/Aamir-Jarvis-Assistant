@@ -140,3 +140,24 @@ test('network addresses for the phone link are for signed-in users only', async 
   assert.ok(Array.isArray(body.lanAddresses));
   assert.ok(body.lanAddresses.every((ip) => /^\d+\.\d+\.\d+\.\d+$/.test(ip) && ip !== '127.0.0.1'));
 });
+
+test('feedback: anyone can send it, it is validated, and only admins can read it', async () => {
+  const bad = await call('/api/feedback', { json: { message: ' ' } });
+  assert.equal(bad.status, 400);
+  assert.equal((await call('/api/feedback', { json: { message: 'Nice', rating: 9 } })).status, 400);
+  assert.equal((await call('/api/feedback', { json: { message: 'Nice', email: 'not-an-email' } })).status, 400);
+
+  const sent = await call('/api/feedback', { json: { message: '  Loved the demo!  ', rating: 5, category: 'demo', email: 'Fan@Example.com', page: 'landing' } });
+  assert.equal(sent.status, 201);
+  assert.ok(sent.body.id);
+
+  assert.equal((await call('/api/admin/feedback')).status, 401);
+  assert.equal((await call('/api/admin/feedback', { token: tokenFor('u1') })).status, 403);
+  const list = await call('/api/admin/feedback', { token: tokenFor('admin-1', 'admin') });
+  assert.equal(list.status, 200);
+  const item = list.body.items.find((f) => f.id === sent.body.id);
+  assert.equal(item.message, 'Loved the demo!');
+  assert.equal(item.email, 'fan@example.com');
+  assert.equal(item.rating, 5);
+  assert.equal(item.ip, undefined); // never sent to the browser
+});

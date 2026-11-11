@@ -249,3 +249,13 @@ export class InMemoryUserNoteRepository extends InMemoryRepository {
     this._deleteWhere((n) => n.userId === userId);
   }
 }
+
+export class InMemoryFeedbackRepository extends InMemoryRepository {
+  async recent(limit = 50) {
+    return this.where(() => true).sort((a, b) => b.createdAt - a.createdAt).slice(0, limit);
+  }
+
+  async count() {
+    return this.rows.size;
+  }
+}

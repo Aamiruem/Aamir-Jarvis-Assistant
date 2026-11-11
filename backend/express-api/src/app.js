@@ -16,6 +16,7 @@ import { createAdminRouter } from './routes/admin.js';
 import { createAuthRouter } from './routes/auth.js';
 import { createChatRouter } from './routes/chat.js';
 import { createConversationRouter } from './routes/conversations.js';
+import { createFeedbackRouter } from './routes/feedback.js';
 import { createUserNotesRouter } from './routes/user-notes.js';
 
 /**
@@ -61,11 +62,13 @@ export function createApp(container) {
 
   app.use(express.json({ limit: '1mb' }));
   app.use('/api/auth', createAuthRouter({ authService: container.authService, requireAuth, settings: container.settings }));
-  const { users, conversations, sessions, audit, notes } = container;
+  const { users, conversations, sessions, audit, notes, feedback } = container;
   app.use('/api/conversations', createConversationRouter({ requireAuth, conversations }));
   app.use('/api/chat', createChatRouter({ requireAuth, conversations }));
   app.use('/api/user-notes', createUserNotesRouter({ requireAuth, notes }));
-  app.use('/api/admin', createAdminRouter({ requireAuth, requireAdmin, users, conversations, sessions, audit }));
+  // Public: the website's feedback form works without an account (rate-limited per IP).
+  app.use('/api/feedback', createFeedbackRouter({ feedback, tokens: container.tokens, settings: container.settings }));
+  app.use('/api/admin', createAdminRouter({ requireAuth, requireAdmin, users, conversations, sessions, audit, feedback }));
 
   app.get('/api/health', async (_req, res) => {
     const info = await checkAi(); // 2 s timeout, so a hung AI service can't hang the health check

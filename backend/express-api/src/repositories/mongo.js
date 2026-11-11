@@ -2,6 +2,7 @@
 // Every method returns plain objects with a string `id`, so services never see Mongoose.
 import mongoose from 'mongoose';
 import { Conversation } from '../models/Conversation.js';
+import { Feedback } from '../models/Feedback.js';
 import { AuditLog, OtpChallenge, Session } from '../models/Security.js';
 import { User } from '../models/User.js';
 import { UserNote } from '../models/UserNote.js';
@@ -116,6 +117,27 @@ export class MongoAuditRepository extends MongoRepository {
   async listForUser(userId, limit = 30) {
     const docs = await this.model.find({ userId }).sort({ createdAt: -1 }).limit(limit).lean();
     return docs.map(MongoRepository.toPlain);
+  }
+}
+
+export class MongoFeedbackRepository extends MongoRepository {
+  constructor() {
+    super(Feedback);
+  }
+
+  async create(data) {
+    // A token from the file-storage fallback has a non-ObjectId user id: keep the feedback, drop the link.
+    const userId = data.userId && mongoose.isValidObjectId(data.userId) ? data.userId : null;
+    return super.create({ ...data, userId });
+  }
+
+  async recent(limit = 50) {
+    const docs = await this.model.find().sort({ createdAt: -1 }).limit(limit).lean();
+    return docs.map(MongoRepository.toPlain);
+  }
+
+  async count() {
+    return this.model.countDocuments();
   }
 }
 

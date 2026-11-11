@@ -151,6 +151,9 @@ export const api = {
   adminOverview: () => request('/admin/overview'),
   setRole: (userId, role) => request(`/admin/users/${userId}/role`, { method: 'PATCH', body: { role } }),
   unlockUser: (userId) => post(`/admin/users/${userId}/unlock`),
+  adminFeedback: (limit = 50) => request(`/admin/feedback?limit=${limit}`),
+  // Public: works signed out (the website and the demo); linked to the account when signed in.
+  sendFeedback: (feedback) => post('/feedback', feedback),
 
   documents: () => request('/ai/rag/documents'),
   // Personal notes (Express /api/user-notes, also shown in the dashboard)

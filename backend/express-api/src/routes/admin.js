@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { aiFetch } from '../ai.js';
 import { publicUser } from '../auth/AuthService.js';
 
-export function createAdminRouter({ requireAuth, requireAdmin, users, conversations, sessions, audit }) {
+export function createAdminRouter({ requireAuth, requireAdmin, users, conversations, sessions, audit, feedback }) {
   const router = Router();
   router.use(requireAuth, requireAdmin);
 
@@ -45,6 +45,13 @@ export function createAdminRouter({ requireAuth, requireAdmin, users, conversati
     if (!user) return res.status(404).json({ error: 'User not found' });
     await audit.log('account_unlocked_by_admin', { userId: user.id, meta: { by: req.user.id } });
     res.json(publicUser(user));
+  });
+
+  // Feedback from the public website and the demo, newest first.
+  router.get('/feedback', async (req, res) => {
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+    const [items, total] = await Promise.all([feedback.recent(limit), feedback.count()]);
+    res.json({ total, items: items.map(({ ip, userAgent, ...rest }) => rest) });
   });
 
   return router;

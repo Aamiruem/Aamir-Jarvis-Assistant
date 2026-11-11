@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { auth, setAccessToken } from '../api.js';
 import { Icon } from '../icons.jsx';
-import SiteFooter from './SiteFooter.jsx';
 
 // Mirrors backend/express-api/src/auth/PasswordPolicy.js so problems show while typing.
 // The server still has the final say.
@@ -75,8 +74,10 @@ function PasswordChecklist({ password, name, email }) {
 //   login    -> (password ok) -> otp(login)        -> signed in
 //   register -> otp(verify_email)                  -> signed in
 //   forgot   -> otp(reset_password) + new password -> back to login
-export default function Login({ onAuth }) {
-  const [step, setStep] = useState('login');
+// initialStep: 'login' or 'register' (the website's Sign in / Get started buttons).
+// onDemo: opens the demo, for visitors who want to look around without an account.
+export default function Login({ onAuth, initialStep = 'login', onDemo, onHome }) {
+  const [step, setStep] = useState(initialStep);
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '', code: '', newPassword: '', newConfirm: '' });
   // Both password boxes must match before we send anything to the server.
   const mismatch = (a, b) => b.length > 0 && a !== b;
@@ -179,7 +180,24 @@ export default function Login({ onAuth }) {
   const [title, subtitle] = step === 'otp' && challenge ? [otpTitle[challenge.purpose], headings.otp[1]] : headings[step] ?? headings.login;
 
   return (
-    <div className="center-screen login-screen">
+    <div className="auth-page pub-wrap">
+      <aside className="auth-aside" aria-label="Why Azarvis">
+        <span className="section-kicker">Azarvis AI Assistant</span>
+        <h2>Your day, handled by voice.</h2>
+        <p className="muted">Sign in to pick up where you left off: your chats, reminders, notes and documents are waiting.</p>
+        <ul className="auth-points">
+          <li><span><Icon name="mic" size="1.05em" /></span><div><strong>Hands-free</strong><p className="muted">Say “Hey Azarvis” and hear the answer out loud.</p></div></li>
+          <li><span><Icon name="tasks" size="1.05em" /></span><div><strong>Never miss a thing</strong><p className="muted">Reminders read to you at the start of the day.</p></div></li>
+          <li><span><Icon name="shield" size="1.05em" /></span><div><strong>Private by design</strong><p className="muted">Two-step sign-in and short-lived sessions.</p></div></li>
+        </ul>
+        {onDemo && (
+          <button type="button" className="auth-demo" onClick={onDemo}>
+            <span className="badge-icon" style={{ '--hue': 300 }}><Icon name="sparkles" /></span>
+            <span className="grow"><strong>Just looking?</strong><span className="muted">Try the demo, no account needed</span></span>
+            <Icon name="chevron" size="1em" />
+          </button>
+        )}
+      </aside>
       <div className="card login">
         <header className="login-brand">
           <img src="/icon.svg" alt="" width="56" height="56" className="login-logo" />
@@ -294,9 +312,20 @@ export default function Login({ onAuth }) {
           </form>
         )}
 
-        <footer className="login-foot">Protected by hashed passwords and short-lived sessions</footer>
+        {onDemo && (step === 'login' || step === 'register') && (
+          <button type="button" className="btn full login-demo" onClick={onDemo}>
+            <Icon name="sparkles" size="1em" /> Explore the demo without an account
+          </button>
+        )}
+        <footer className="login-foot">
+          <Icon name="shield" size="0.95em" /> Protected by hashed passwords and short-lived sessions
+          {onHome && (
+            <button type="button" className="link-btn login-home" onClick={onHome}>
+              ← Back to the website
+            </button>
+          )}
+        </footer>
       </div>
-      <SiteFooter />
     </div>
   );
 }

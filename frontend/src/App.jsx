@@ -3,7 +3,7 @@ import { api, auth, onSessionExpired } from './api.js';
 import HomePanel from './components/HomePanel.jsx';
 import { sessionPlan } from './session.js';
 import { useRoomWatch } from './useRoomWatch.js';
-import Login from './components/Login.jsx';
+import PublicSite from './components/PublicSite.jsx';
 import SiteFooter from './components/SiteFooter.jsx';
 import CommandPalette from './components/CommandPalette.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
@@ -201,7 +201,8 @@ export default function App() {
   }, [user]);
 
   if (checking) return <div className="center-screen"><div className="orb pulse" /></div>;
-  if (!user) return <Login onAuth={(u) => setUser(u)} />;
+  // Signed out: the public website (landing page, sign in / sign up, and the demo without an account).
+  if (!user) return <PublicSite theme={theme} onAuth={(u) => setUser(u)} />;
 
   const tabs = TABS.filter((t) => !t.adminOnly || user.role === 'admin');
 

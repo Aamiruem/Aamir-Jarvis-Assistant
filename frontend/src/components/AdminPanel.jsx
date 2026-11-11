@@ -5,9 +5,13 @@ import { PageHeader } from '../ui.jsx';
 export default function AdminPanel({ currentUserId }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
+  const [feedback, setFeedback] = useState(null);
 
   const load = () => api.adminOverview().then(setData).catch((e) => setError(e.message));
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    api.adminFeedback().then(setFeedback).catch(() => setFeedback({ total: 0, items: [], error: true }));
+  }, []);
 
   const toggleRole = async (u) => {
     await api.setRole(u.id, u.role === 'admin' ? 'user' : 'admin').catch((e) => setError(e.message));
@@ -54,6 +58,28 @@ export default function AdminPanel({ currentUserId }) {
           </li>
         ))}
       </ul>
+
+      <h3>Website feedback {feedback && <span className="muted">· {feedback.total}</span>}</h3>
+      {!feedback && <p className="muted">Loading…</p>}
+      {feedback?.error && <p className="error">Feedback could not be loaded.</p>}
+      {feedback && !feedback.error && feedback.items.length === 0 && <p className="muted">No feedback yet. It arrives from the form on the public website and the demo.</p>}
+      {feedback?.items?.length > 0 && (
+        <ul className="list admin-feedback">
+          {feedback.items.map((f) => (
+            <li key={f.id}>
+              <div className="grow">
+                <div className="admin-feedback-head">
+                  <span className="admin-feedback-tag">{f.category}</span>
+                  {f.rating && <span className="admin-feedback-stars" aria-label={`${f.rating} of 5 stars`}>{'★'.repeat(f.rating)}{'☆'.repeat(5 - f.rating)}</span>}
+                  <span className="muted small">{new Date(f.createdAt).toLocaleString()}{f.page ? ` · from ${f.page}` : ''}</span>
+                </div>
+                <p className="admin-feedback-msg">{f.message}</p>
+                {(f.name || f.email) && <p className="muted small">{[f.name, f.email].filter(Boolean).join(' · ')}</p>}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
 
       {ai.by_intent && Object.keys(ai.by_intent).length > 0 && (
         <>

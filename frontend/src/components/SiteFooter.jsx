@@ -3,8 +3,10 @@ import { CONTACT_EMAIL, DASHBOARD_URL, PORTFOLIO_URL, PRODUCT_LINKS, PROJECTS, R
 
 // Site footer. Full on the sign-in screen and the Home tab: the brand, Product / Works with /
 // Resources / Projects columns and a bottom bar. Compact (one line) under the other tabs.
-// onOpenTab is given inside the app, so Product links switch tabs; without it they go to the
-// website's feature list.
+// onOpenTab is given inside the app, so Product links switch tabs (on the public website they
+// open that part of the demo); without it they go to the website's feature list.
+// cta: the public website adds a "Ready to start?" card on top; onDemo / onSignup / onFeedback
+// wire its buttons and the bottom bar's extra links.
 
 const outside = (href) => (href.startsWith('mailto:') ? {} : { target: '_blank', rel: 'noopener noreferrer' });
 const projectIcon = (p) => (p.live ? 'globe' : p.href.includes('github.com') ? 'github' : 'briefcase');
@@ -47,7 +49,7 @@ function Item({ link, onOpenTab }) {
   );
 }
 
-export default function SiteFooter({ compact = false, onOpenTab }) {
+export default function SiteFooter({ compact = false, onOpenTab, cta = false, onDemo, onSignup, onFeedback }) {
   if (compact) {
     return (
       <footer className="site-foot site-foot--compact">
@@ -64,7 +66,22 @@ export default function SiteFooter({ compact = false, onOpenTab }) {
   }
 
   return (
-    <footer className="site-foot">
+    <footer className={`site-foot${cta ? ' site-foot--public' : ''}`}>
+      {cta && (
+        <div className="site-foot-cta">
+          <div className="site-foot-cta-copy">
+            <img src="/icon.svg" alt="" width="44" height="44" />
+            <div>
+              <strong>Start talking to Azarvis today</strong>
+              <span>Free account in a minute, or look around the demo first.</span>
+            </div>
+          </div>
+          <div className="site-foot-cta-btns">
+            {onDemo && <button type="button" className="btn" onClick={onDemo}><Icon name="sparkles" size="1em" /> Try the demo</button>}
+            {onSignup && <button type="button" className="btn primary" onClick={onSignup}>Create free account</button>}
+          </div>
+        </div>
+      )}
       <div className="site-foot-main">
         <div className="site-foot-brand">
           <a href="/" className="site-foot-logo" aria-label="Azarvis home">
@@ -76,7 +93,7 @@ export default function SiteFooter({ compact = false, onOpenTab }) {
             Open the dashboard <Icon name="external" size="0.95em" />
           </a>
           <a className="site-foot-sub" href={REPO_URL} {...outside(REPO_URL)}>
-            Star Azarvis on GitHub
+            <Icon name="github" size="1em" /> Star Azarvis on GitHub <Icon name="star" size="0.9em" className="site-foot-star" />
           </a>
           <ul className="site-foot-social" aria-label="Find Aamir online">
             {SOCIAL.map((s) => (
@@ -106,6 +123,8 @@ export default function SiteFooter({ compact = false, onOpenTab }) {
       <div className="site-foot-bar">
         <span>© 2026 Aamir Hussain Azad. Azarvis AI Assistant.</span>
         <nav aria-label="Footer links">
+          {onDemo && <button type="button" className="site-foot-barbtn" onClick={onDemo}>Demo</button>}
+          {onFeedback && <button type="button" className="site-foot-barbtn" onClick={onFeedback}>Feedback</button>}
           <a href={`mailto:${CONTACT_EMAIL}`}>Contact</a>
           <a href={PORTFOLIO_URL} {...outside(PORTFOLIO_URL)}>Portfolio</a>
           <a href={REPO_URL} {...outside(REPO_URL)}>GitHub</a>

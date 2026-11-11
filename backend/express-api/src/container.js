@@ -23,6 +23,7 @@ function memoryRepos(dataDir) {
     auditRepo: new memory.InMemoryAuditRepository(opts('audit')),
     conversations: new memory.InMemoryConversationRepository(opts('conversations')),
     notes: new memory.InMemoryUserNoteRepository(opts('notes')),
+    feedback: new memory.InMemoryFeedbackRepository(opts('feedback')),
   };
 }
 
@@ -34,6 +35,7 @@ function mongoRepos() {
     auditRepo: new mongo.MongoAuditRepository(),
     conversations: new mongo.MongoConversationRepository(),
     notes: new mongo.MongoUserNoteRepository(),
+    feedback: new mongo.MongoFeedbackRepository(),
   };
 }
 
