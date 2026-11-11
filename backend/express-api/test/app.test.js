@@ -203,3 +203,32 @@ test('passkeys: only our own sites, one-use challenges, private to their owner',
   assert.equal((await call(`/api/auth/passkeys/${saved.id}`, { method: 'DELETE', token: tokenFor('someone-else') })).status, 404);
   assert.equal((await call(`/api/auth/passkeys/${saved.id}`, { method: 'DELETE', token: tokenFor(owner) })).status, 204);
 });
+
+test('load balancer probes: live always, ready until the replica starts draining', async () => {
+  const live = await call('/api/health/live');
+  assert.equal(live.status, 200);
+  const ready = await call('/api/health/ready');
+  assert.equal(ready.status, 200);
+  assert.equal(ready.body.status, 'ready');
+  assert.ok(ready.body.instance);
+
+  const app = server.listeners('request')[0];
+  app.locals.draining = true;
+  try {
+    const draining = await call('/api/health/ready');
+    assert.equal(draining.status, 503);
+    assert.equal(draining.body.status, 'draining');
+    assert.equal((await call('/api/health/live')).status, 200, 'still alive while draining');
+  } finally {
+    app.locals.draining = false;
+  }
+});
+
+test('every response carries a request id; a valid incoming one is kept', async () => {
+  const res = await fetch(`${baseUrl}/api/health/live`);
+  assert.match(res.headers.get('x-request-id'), /^[0-9a-f-]{36}$/);
+  const kept = await fetch(`${baseUrl}/api/health/live`, { headers: { 'X-Request-Id': 'nginx-abc12345' } });
+  assert.equal(kept.headers.get('x-request-id'), 'nginx-abc12345');
+  const bad = await fetch(`${baseUrl}/api/health/live`, { headers: { 'X-Request-Id': '<script>' } });
+  assert.notEqual(bad.headers.get('x-request-id'), '<script>');
+});

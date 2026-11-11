@@ -1,15 +1,27 @@
 # One command runs the whole stack:   docker compose up --build
 #   React UI         http://localhost:3000
 #   Next.js dashboard http://localhost:3001
-#   Express API      http://localhost:4000/api/health
+#   Express API      http://localhost:3000/api/health  (through the load balancer; API_REPLICAS copies)
 #   FastAPI docs     http://localhost:8000/docs
 #   Streamlit admin  http://localhost:8501
 # OTP codes are printed in the express-api logs:  docker compose logs -f express-api
+#
+# Scaling: the frontend's nginx is the load balancer for the API replicas (frontend/nginx.conf).
+#   API_REPLICAS=3 (containers) x API_WORKERS=2 (processes each) = 6 API processes by default.
+#   More at any time, no restart of the rest:  docker compose up -d --scale express-api=5
+#   Replica state (sessions, codes, passkey challenges, rate limits) lives in MongoDB.
 services:
   mongo:
     image: mongo:7
     volumes: [mongo_data:/data/db]
     ports: ["27017:27017"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    restart: unless-stopped
 
   postgres:
     image: postgres:16-alpine
@@ -37,8 +49,22 @@ services:
     environment:
       MONGO_URI: mongodb://mongo:27017/jarvis
       AI_SERVICE_URL: http://fastapi-ai:8000
-    ports: ["4000:4000"]
-    depends_on: [mongo, fastapi-ai]
+      WEB_CONCURRENCY: ${API_WORKERS:-2} # worker processes per replica ("auto" = one per CPU core)
+      DRAIN_MS: 5000                     # on stop: report "draining" first, so nginx moves traffic away
+    deploy:
+      replicas: ${API_REPLICAS:-3}
+    expose: ["4000"] # reached through the load balancer (frontend, port 3000), not directly
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/api/health/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 20s
+    stop_grace_period: 35s # DRAIN_MS + time for streaming replies to finish
+    restart: unless-stopped
+    depends_on:
+      mongo: { condition: service_healthy }
+      fastapi-ai: { condition: service_started }
 
   streamlit-admin:
     build: ./backend/streamlit-admin
@@ -56,7 +82,9 @@ services:
         VITE_GOOGLE_SITE_VERIFICATION: ${GOOGLE_SITE_VERIFICATION:-}
         VITE_GA_ID: ${GA_ID:-}
     ports: ["3000:80"]
-    depends_on: [express-api]
+    restart: unless-stopped
+    depends_on:
+      express-api: { condition: service_healthy }
 
   dashboard:
     build:

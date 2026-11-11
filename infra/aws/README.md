@@ -34,6 +34,29 @@ docker tag jarvis-ai <account>.dkr.ecr.ap-south-1.amazonaws.com/jarvis-ai:latest
 docker push <account>.dkr.ecr.ap-south-1.amazonaws.com/jarvis-ai:latest
 ```
 
+### Load balancing the API (Application Load Balancer + ECS)
+
+The Express API is stateless: sessions, sign-in codes, passkey challenges and rate-limit counters
+are all in MongoDB, so any replica can answer any request. No sticky sessions needed.
+
+| Setting | Value | Why |
+|---|---|---|
+| ECS desired count | **2 or more** tasks, in 2+ Availability Zones | one task or zone can fail without downtime |
+| `WEB_CONCURRENCY` | `auto` | one worker process per vCPU of the task |
+| ALB target group health check | `GET /api/health/ready`, healthy 2 / unhealthy 2, interval 10 s | `ready` turns 503 while a task drains or loses MongoDB |
+| Deregistration delay | **30 s** | lets streaming chat replies finish |
+| `DRAIN_MS` / ECS `stopTimeout` | `5000` / `40` | report "draining", then close (see `src/index.js`) |
+| ALB idle timeout | **60 s** (default) | the API keeps connections 65 s, so the ALB always closes first (no random 502s) |
+| ECS Service Auto Scaling | target tracking, CPU **60 %**, min 2, max 10 | adds tasks under load, removes them after |
+| AWS WAF on the ALB | AWS managed common rule set + a rate-based rule | blocks floods before they reach a task |
+
+Liveness (`/api/health/live`) only says the process answers; use it for container restarts,
+and `/api/health/ready` for traffic. Every response carries `X-Request-Id`, which also reaches the
+AI service and the logs, so one request can be followed across tasks in CloudWatch.
+
+The **AI service** (FastAPI) runs the reminder scheduler, so keep it at **one** task (scale it up,
+not out) until the scheduler moves to a separate worker; two copies would announce reminders twice.
+
 ### Security checklist
 - Never put AWS keys in code or images; use **IAM task roles**.
 - Keep the AI service private (internal ALB / service discovery). Only the Node gateway is public.

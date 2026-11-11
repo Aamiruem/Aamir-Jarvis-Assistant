@@ -10,7 +10,8 @@ ARG VITE_GA_ID=
 ENV VITE_SITE_URL=$VITE_SITE_URL VITE_GOOGLE_SITE_VERIFICATION=$VITE_GOOGLE_SITE_VERIFICATION VITE_GA_ID=$VITE_GA_ID
 RUN npm run build
 
-FROM nginx:1.27-alpine
+# 1.28 (stable) has upstream "resolve", which nginx.conf uses to follow API replicas.
+FROM nginx:1.28-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
