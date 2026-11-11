@@ -33,6 +33,9 @@ describe('respond', () => {
     expect(respond('open the notes').action).toEqual({ type: 'demo', section: 'notes' });
     expect(respond('show me your projects').action).toEqual({ type: 'scroll', id: 'projects' });
     expect(respond('dark mode please').action).toEqual({ type: 'theme', mode: 'dark' });
+    expect(respond('open arvixa store').action).toEqual({ type: 'link', href: 'https://arvixa-store.vercel.app/' });
+    expect(respond('show me real estate in Gurgaon').action.href).toBe('https://gratia-estates.vercel.app/');
+    expect(respond('open the interview coach').action.href).toContain('real-time-conversession');
   });
   it('answers questions without an action', () => {
     expect(respond('what time is it').action).toBeUndefined();

@@ -77,6 +77,11 @@ const PATHS = {
   flask: 'M9 3h6 M10 3v6L4.5 18.5A1.6 1.6 0 0 0 5.9 21h12.2a1.6 1.6 0 0 0 1.4-2.5L14 9V3 M7 15h10',
   chart: 'M4 20V4 M4 20h16 M8 16v-5 M12 16V8 M16 16v-3 M20 16V6',
   house: 'M3 11 12 4l9 7 M5 9.5V20h14V9.5 M10 20v-5h4v5',
+  cart: 'M3 4h2.2l2.3 11h10.8L21 8H6.3 M9.5 19.5a1 1 0 1 0 0 .01 M17.5 19.5a1 1 0 1 0 0 .01',
+  play: 'M8 5v14l11-7Z',
+  heart: 'M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20Z',
+  workflow: 'M4 5h6v5H4z M14 14h6v5h-6z M7 10v4h10 M17 10V5h-3',
+  target: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M12 12h.01',
 };
 
 export function Icon({ name, size = '1.25em', className = '', title, filled = false }) {

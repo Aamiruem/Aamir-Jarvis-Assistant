@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { pageView, track } from '../analytics.js';
 import { Icon } from '../icons.jsx';
+import { GITHUB_USER, PORTFOLIO_URL } from '../siteLinks.js';
 import { Toaster } from '../ui.jsx';
 import Landing from './Landing.jsx';
 import Login from './Login.jsx';
@@ -37,11 +38,12 @@ const urlFor = (page, section) => {
 
 // Landing-page sections linked from the top bar.
 const NAV = [
-  ['features', 'Features'],
-  ['how', 'How it works'],
-  ['demo-preview', 'Demo'],
-  ['faq', 'FAQ'],
-  ['feedback', 'Feedback'],
+  ['features', 'Features', 'sparkles', 190],
+  ['workflows', 'Automations', 'workflow', 300],
+  ['how', 'How it works', 'timeline', 38],
+  ['projects', 'Projects', 'rocket', 265],
+  ['faq', 'FAQ', 'help', 160],
+  ['feedback', 'Feedback', 'chat', 330],
 ];
 
 function PublicNav({ page, theme, onNavigate, onSection }) {
@@ -85,14 +87,19 @@ function PublicNav({ page, theme, onNavigate, onSection }) {
         </a>
 
         <nav className="pub-links" aria-label="Website">
-          {NAV.map(([id, label]) => (
-            <button key={id} type="button" onClick={act(() => onSection(id))}>
+          {NAV.map(([id, label, icon, hue]) => (
+            <button key={id} type="button" style={{ '--hue': hue }} onClick={act(() => onSection(id))}>
+              <Icon name={icon} size="1em" className="pub-link-icon" />
               {label}
             </button>
           ))}
         </nav>
 
         <div className="pub-actions">
+          <a className="pub-author" href={PORTFOLIO_URL} target="_blank" rel="noopener noreferrer" title="Aamir Hussain Azad: portfolio">
+            <img src={`https://github.com/${GITHUB_USER}.png?size=64`} alt="" width="28" height="28" />
+            <span>by Aamir</span>
+          </a>
           <ThemeMenu theme={theme} />
           <button type="button" className={`pub-demo-link ${page === 'demo' ? 'active' : ''}`} onClick={act(() => onNavigate('demo'))}>
             <Icon name="sparkles" size="1em" /> Try demo
@@ -102,6 +109,10 @@ function PublicNav({ page, theme, onNavigate, onSection }) {
           </button>
           <button type="button" className="btn primary pub-cta" onClick={act(() => onNavigate('signup'))}>
             Get started
+          </button>
+          {/* Phones: the demo (no login) is always one tap away. */}
+          <button type="button" className="pub-try" onClick={act(() => onNavigate('demo'))}>
+            <Icon name="play" size="0.9em" /> Try free
           </button>
           <button
             type="button"
@@ -118,15 +129,15 @@ function PublicNav({ page, theme, onNavigate, onSection }) {
 
       {open && (
         <div className="pub-drawer" id="pub-drawer">
-          {NAV.map(([id, label]) => (
-            <button key={id} type="button" onClick={act(() => onSection(id))}>
-              {label}
+          {NAV.map(([id, label, icon, hue]) => (
+            <button key={id} type="button" style={{ '--hue': hue }} onClick={act(() => onSection(id))}>
+              <span className="pub-drawer-label"><Icon name={icon} size="1.05em" className="pub-link-icon" /> {label}</span>
               <Icon name="chevron" size="1em" />
             </button>
           ))}
           <div className="pub-drawer-cta">
             <button type="button" className="btn" onClick={act(() => onNavigate('demo'))}>
-              <Icon name="sparkles" size="1em" /> Try the demo
+              <Icon name="sparkles" size="1em" /> Try the demo (no login)
             </button>
             <button type="button" className="btn" onClick={act(() => onNavigate('login'))}>
               Sign in

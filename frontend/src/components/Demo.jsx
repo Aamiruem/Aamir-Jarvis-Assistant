@@ -395,6 +395,7 @@ export default function Demo({ section, onSection, onNavigate, theme }) {
     else if (action.type === 'page') setTimeout(() => onNavigate(action.page), 900);
     else if (action.type === 'scroll') setTimeout(() => onNavigate('home', '', action.id), 900);
     else if (action.type === 'theme') theme?.setChoice(action.mode);
+    else if (action.type === 'link') window.open(action.href, '_blank', 'noopener,noreferrer');
   };
   const ask = (text) => {
     setSeed(text);

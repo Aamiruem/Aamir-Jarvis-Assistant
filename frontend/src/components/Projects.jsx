@@ -216,9 +216,11 @@ export default function Projects() {
 
   // Live apps: the curated list plus repositories with a live homepage that isn't listed yet.
   const liveApps = useMemo(() => {
+    // Skip repositories already featured (by site or by repository: one app can have two addresses).
     const known = new Set(LIVE_APPS.map((a) => new URL(a.href).hostname));
+    const knownRepos = new Set(LIVE_APPS.map((a) => a.repo));
     const fromRepos = (data?.repos ?? [])
-      .filter((r) => r.homepage && !known.has(new URL(r.homepage).hostname))
+      .filter((r) => r.homepage && !known.has(new URL(r.homepage).hostname) && !knownRepos.has(r.name))
       .map((r) => ({ label: r.title, href: r.homepage, platform: platformOf(r.homepage), text: r.description || 'Live project from GitHub.', repo: r.name }));
     return [...LIVE_APPS, ...fromRepos];
   }, [data]);

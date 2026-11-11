@@ -37,12 +37,21 @@ export const RESOURCES = [
   { href: `${REPO_URL}/tree/main/backend/mcp-server`, label: 'MCP server', icon: 'cpu' },
 ];
 
+const CROP_URL = 'https://indian-crop-optimization-appuction-kqfhgqkn6wfg6qeb44efik.streamlit.app/';
+const RETAIL_URL = 'https://retail-sales-customer-fdug7zphhdjmvfoonctdkw.streamlit.app/';
+const MANSIK_URL = 'https://mansik-santulan-scores-1.onrender.com';
+const ARVIXA_URL = 'https://arvixa-store.vercel.app/';
+const PRESENCE_URL = 'https://real-time-conversession-and-distrac.vercel.app/xky-fqlf-bao';
+const GRATIA_URL = 'https://gratia-estates.vercel.app/';
+
 export const PROJECTS = [
-  { label: 'Crop Yield Prediction', href: 'https://indian-crop-optimization-appuction-kqfhgqkn6wfg6qeb44efik.streamlit.app/', live: true },
-  { label: 'Retail Sales Analytics', href: 'https://retail-sales-customer-fdug7zphhdjmvfoonctdkw.streamlit.app/', live: true },
-  { label: 'Mansik Santulan', href: 'https://mansik-santulan-scores-1.onrender.com', live: true },
+  { label: 'Arvixa Store', href: ARVIXA_URL, live: true },
+  { label: 'Presence AI', href: PRESENCE_URL, live: true },
+  { label: 'Gratia Estates', href: GRATIA_URL, live: true },
+  { label: 'Crop Yield Prediction', href: CROP_URL, live: true },
+  { label: 'Retail Sales Analytics', href: RETAIL_URL, live: true },
+  { label: 'Mansik Santulan', href: MANSIK_URL, live: true },
   { label: 'EstateIQ Price Predictor', href: 'https://github.com/Aamiruem/Real-Estate-Price-Predictor' },
-  { label: 'Arvixa Marketplace', href: 'https://github.com/Aamiruem/Shopping-Cart' },
   { label: 'RAG Chatbot', href: PORTFOLIO_URL },
   { label: 'Email Spam Classifier', href: 'https://github.com/Aamiruem/EmailChecker/tree/main' },
   { label: 'Email Checker Pro', href: 'https://github.com/Aamiruem/Professional-Email-Checker/tree/main' },
@@ -69,11 +78,15 @@ export const HIDDEN_HOMEPAGES = ['cuvette-javascript-project.vercel.app', 'pocke
 
 // Live apps shown first in the Projects section (platform = where it is hosted). Repositories
 // whose GitHub "homepage" points at a live site are added to these automatically.
+// icon / hue: how the app's button looks on the website (Live projects strip, footer).
 export const LIVE_APPS = [
-  { label: 'Azarvis Voice App', href: 'https://azarvis-app.vercel.app/', platform: 'vercel', text: 'This assistant: voice, chat, tasks, notes and automations.', repo: 'Aamir-Jarvis-Assistant' },
-  { label: 'Azarvis Dashboard', href: 'https://azarvis-ai.vercel.app/', platform: 'vercel', text: 'Next.js dashboard and landing page for Azarvis.', repo: 'Aamir-Jarvis-Assistant' },
-  { label: 'Portfolio', href: PORTFOLIO_URL, platform: 'vercel', text: 'Aamir Hussain Azad: AI/ML engineer and full-stack developer.', repo: 'Aamir_Portfolio' },
-  { label: 'Crop Yield Prediction', href: PROJECTS[0].href, platform: 'streamlit', text: 'Indian crop optimization and yield prediction for farmers, with ML.', repo: 'Indian-Crop-Optimization-Production' },
-  { label: 'Retail Sales Analytics', href: PROJECTS[1].href, platform: 'streamlit', text: 'Retail sales and customer analytics dashboard.', repo: 'Retail-sales-customer' },
-  { label: 'Mansik Santulan', href: PROJECTS[2].href, platform: 'render', text: 'Machine-learning scores for mental balance (mansik santulan).', repo: 'Mansik-Santulan-Scores' },
+  { label: 'Arvixa Store', href: ARVIXA_URL, platform: 'vercel', icon: 'cart', hue: 25, text: 'Online marketplace for India: mobiles, fashion, groceries and more, with cart and checkout.', repo: 'Shopping-Cart' },
+  { label: 'Presence AI', href: PRESENCE_URL, platform: 'vercel', icon: 'target', hue: 160, text: 'AI focus tracker and interview coach: live distraction detection, mock interviews and a speech coach.', repo: 'Real-Time-Conversession-and-Distraction-Face' },
+  { label: 'Gratia Estates', href: GRATIA_URL, platform: 'vercel', icon: 'house', hue: 205, text: 'Real estate in Gurgaon: compare new-launch and ready-to-move projects, with price prediction.', repo: 'Gratia-Estates-Website' },
+  { label: 'Azarvis Voice App', href: 'https://azarvis-app.vercel.app/', platform: 'vercel', icon: 'mic', hue: 265, text: 'This assistant: voice, chat, tasks, notes and automations.', repo: 'Aamir-Jarvis-Assistant' },
+  { label: 'Azarvis Dashboard', href: 'https://azarvis-ai.vercel.app/', platform: 'vercel', icon: 'chart', hue: 230, text: 'Next.js dashboard and landing page for Azarvis.', repo: 'Aamir-Jarvis-Assistant' },
+  { label: 'Portfolio', href: PORTFOLIO_URL, platform: 'vercel', icon: 'briefcase', hue: 280, text: 'Aamir Hussain Azad: AI/ML engineer and full-stack developer.', repo: 'Aamir_Portfolio' },
+  { label: 'Crop Yield Prediction', href: CROP_URL, platform: 'streamlit', icon: 'flask', hue: 120, text: 'Indian crop optimization and yield prediction for farmers, with ML.', repo: 'Indian-Crop-Optimization-Production' },
+  { label: 'Retail Sales Analytics', href: RETAIL_URL, platform: 'streamlit', icon: 'chart', hue: 0, text: 'Retail sales and customer analytics dashboard.', repo: 'Retail-sales-customer' },
+  { label: 'Mansik Santulan', href: MANSIK_URL, platform: 'render', icon: 'brain', hue: 330, text: 'Machine-learning scores for mental balance (mansik santulan).', repo: 'Mansik-Santulan-Scores' },
 ];

@@ -2,7 +2,10 @@
 // kinds of questions and can DO things: set a reminder, open a page, switch the theme.
 // respond(text) -> { text, action? }; the page decides how to run the action.
 
+import { LIVE_APPS } from './siteLinks.js';
+
 export const DEMO_TASKS_KEY = 'azarvis-demo-tasks';
+const site = (label) => LIVE_APPS.find((a) => a.label === label)?.href;
 
 /** "6 pm", "6:30pm", "18:00" -> "18:00" (24 h), or '' */
 export function parseTime(text) {
@@ -67,6 +70,11 @@ export function saveDemoTask(task) {
 
 // "open the notes", "take me to projects"...
 const PLACES = [
+  // Aamir's live projects (opened in a new tab).
+  [/\b(arvixa|store|shopping|marketplace)\b/, { type: 'link', href: site('Arvixa Store') }, 'Opening Arvixa Store, Aamir’s online marketplace.'],
+  [/\b(presence|interview coach|focus tracker|distraction)\b/, { type: 'link', href: site('Presence AI') }, 'Opening Presence AI, the interview coach and focus tracker.'],
+  [/\b(gratia|real estate|property|properties|flats?|house prices?)\b/, { type: 'link', href: site('Gratia Estates') }, 'Opening Gratia Estates for real estate in Gurgaon.'],
+  [/\b(crop|farm\w*)\b/, { type: 'link', href: site('Crop Yield Prediction') }, 'Opening the crop yield prediction app.'],
   [/\b(tasks?|to-?dos?|reminders)\b/, { type: 'demo', section: 'tasks' }, 'Opening your tasks in the demo.'],
   [/\b(notes?|courses?|study)\b/, { type: 'demo', section: 'notes' }, 'Opening the study notes.'],
   [/\b(automate|automation|drafts?|posts?)\b/, { type: 'demo', section: 'automate' }, 'Opening Automate, where drafts are written.'],

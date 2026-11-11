@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { track } from '../analytics.js';
 import { fmtTime, respond, saveDemoTask, speak } from '../brain.js';
 import { Icon } from '../icons.jsx';
-import { PORTFOLIO_URL, REPO_URL } from '../siteLinks.js';
+import { LIVE_APPS, PORTFOLIO_URL, REPO_URL } from '../siteLinks.js';
 import { useListen } from '../useListen.js';
 import FeedbackForm from './FeedbackForm.jsx';
 import Projects from './Projects.jsx';
+import Workflows from './Workflows.jsx';
 
 // The public website shown before sign-in. Full-width bands, each with its own background:
 // the hero (a working voice assistant over the brand artwork), numbers, features, the demo,
@@ -21,6 +22,15 @@ const FEATURES = [
   { icon: 'book', hue: 265, title: 'Knowledge base', text: 'Upload PDFs and documents, search them, and let Azarvis answer from what they say.' },
   { icon: 'flask', hue: 160, title: 'ML Lab', text: 'Train models on your own CSV files and see honest scores, measured on rows held back from training.' },
   { icon: 'eye', hue: 335, title: 'Vision & Room Watch', text: 'Describe photos and screenshots, and get greeted when you walk into the room.' },
+];
+
+// What happens to one request, stage by stage: each is a separate part of the system.
+const PIPELINE = [
+  { icon: 'mic', hue: 190, title: 'Listen', text: 'Hears “Hey Azarvis” and turns your speech into text, on your laptop or phone.', example: '“Remind me to call mom at 6 and check the weather in Pune”', tech: ['Web Speech API', 'Wake word'] },
+  { icon: 'brain', hue: 280, title: 'Understand', text: 'Finds what you want (two requests here), the details (6 pm, Pune) and how you feel.', example: 'Intent: task + weather · Feeling: neutral', tech: ['scikit-learn intent model', 'Emotion model'] },
+  { icon: 'sparkles', hue: 230, title: 'Plan', text: 'Claude decides which tools to use and in what order, using what it remembers about you and your documents.', example: 'create_task(6 pm) + get_weather(Pune), in parallel', tech: ['Claude agent', 'Memory + RAG'] },
+  { icon: 'zap', hue: 38, title: 'Act', text: 'Runs the tools: tasks, notes, files, email drafts, web search, ML models and your computer.', example: 'Reminder saved · 29 °C and sunny in Pune', tech: ['24 tools + web search', 'MCP server'] },
+  { icon: 'volume', hue: 160, title: 'Speak', text: 'Answers out loud, in a tone that fits your mood: calmer when you are stressed, brighter when you are excited.', example: '“Done. I’ll remind you at 6. Pune is 29 degrees and sunny.”', tech: ['Speech synthesis', 'Mood-aware voice'] },
 ];
 
 const STEPS = [
@@ -78,7 +88,7 @@ const STATS = [
   [4, '', 'devices: Windows, Mac, Android, iPhone', 'phone', 280],
 ];
 
-const COMMANDS = ['Remind me to call mom at 6 pm', 'Open the notes', 'What time is it?', 'Show me the projects', 'Tell me a joke'];
+const COMMANDS = ['Remind me to call mom at 6 pm', 'Open the notes', 'Open Arvixa Store', 'What time is it?', 'Show me the projects', 'Tell me a joke'];
 
 /** Counts from 0 to `to` once the element is on screen. */
 function CountUp({ to, suffix = '' }) {
@@ -171,6 +181,7 @@ function HeroAssistant({ onNavigate, onSection, theme }) {
       saveDemoTask(a.task);
       setLastTask(a.task);
     } else if (a.type === 'theme') theme?.setChoice(a.mode);
+    else if (a.type === 'link') window.open(a.href, '_blank', 'noopener,noreferrer'); // right away: still inside the click
     else if (a.type === 'scroll') setTimeout(() => onSection(a.id), 700);
     else if (a.type === 'demo') setTimeout(() => onNavigate('demo', a.section), 1400);
     else if (a.type === 'page') setTimeout(() => onNavigate(a.page), 1200);
@@ -322,6 +333,29 @@ export default function Landing({ onNavigate, onSection, theme }) {
         </div>
       </section>
 
+      <section className="band band--launch" aria-labelledby="launch-title">
+        <div className="pub-wrap">
+          <div className="launch-head">
+            <h2 id="launch-title"><span className="proj-dot proj-dot--live" /> Live projects by Aamir</h2>
+            <button type="button" className="link-btn" onClick={() => onSection('projects')}>See all projects and code <Icon name="chevron" size="0.9em" /></button>
+          </div>
+          <ul className="launch">
+            {LIVE_APPS.filter((a) => !a.href.includes('azarvis-app.vercel.app')).map((a) => (
+              <li key={a.href}>
+                <a className="launch-btn" href={a.href} target="_blank" rel="noopener noreferrer" style={{ '--hue': a.hue ?? 220 }} onClick={() => track('project_open', { project: a.label, kind: 'launch' })}>
+                  <span className="feature-icon sm"><Icon name={a.icon ?? 'globe'} size="1.05em" /></span>
+                  <span className="grow">
+                    <strong>{a.label}</strong>
+                    <small>{a.text.split(':')[0].split('.')[0]}</small>
+                  </span>
+                  <Icon name="external" size="0.95em" className="launch-go" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
       <section id="features" className="band band--a">
         <div className="pub-wrap">
           <header className="section-head">
@@ -390,12 +424,39 @@ export default function Landing({ onNavigate, onSection, theme }) {
         </div>
       </section>
 
+      <section id="workflows" className="band band--a">
+        <div className="pub-wrap">
+          <header className="section-head">
+            <span className="section-kicker">Automations</span>
+            <h2>Say one sentence. <span className="grad-text">Azarvis runs the workflow.</span></h2>
+            <p>Like Jarvis: one request becomes several steps, done in order. Press <b>Run it now</b> to try any of them here, without an account.</p>
+          </header>
+          <Workflows onNavigate={onNavigate} />
+        </div>
+      </section>
+
       <section id="how" className="band band--b">
         <div className="pub-wrap">
           <header className="section-head">
             <span className="section-kicker">How it works</span>
-            <h2>Up and running in three steps</h2>
+            <h2>From your voice to a finished task, in <span className="grad-text">five stages</span></h2>
+            <p>One sentence goes through five separate parts of Azarvis. Here is what each one does with a real request.</p>
           </header>
+          <ol className="pipeline">
+            {PIPELINE.map((s, i) => (
+              <li key={s.title} className="stage" style={{ '--hue': s.hue }}>
+                <div className="stage-top">
+                  <span className="feature-icon"><Icon name={s.icon} size="1.25em" /></span>
+                  <span className="stage-num">Stage {i + 1}</span>
+                </div>
+                <h3>{s.title}</h3>
+                <p>{s.text}</p>
+                <p className="stage-example">{s.example}</p>
+                <ul className="stage-tech">{s.tech.map((t) => <li key={t}>{t}</li>)}</ul>
+              </li>
+            ))}
+          </ol>
+          <h3 className="setup-title">Get started in three steps</h3>
           <ol className="steps">
             {STEPS.map((s, i) => (
               <li key={s.title} className="step" style={{ '--hue': s.hue }}>
