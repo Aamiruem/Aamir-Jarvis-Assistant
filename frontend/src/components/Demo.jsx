@@ -1,5 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { DEMO_TASKS_KEY, fmtTime, readDemoTasks, respond, SAMPLE_TASKS, speak as speakText } from '../brain.js';
 import { Icon } from '../icons.jsx';
+import { useListen } from '../useListen.js';
 import { toast } from '../ui.jsx';
 import FeedbackForm from './FeedbackForm.jsx';
 import SiteFooter from './SiteFooter.jsx';
@@ -27,43 +29,15 @@ const LOCKED = [
 const ALL = [...SECTIONS, ...LOCKED];
 
 // ---------- Chat: scripted answers ----------
-const SUGGESTIONS = ['What can you do?', 'What time is it?', 'Explain overfitting simply', 'Tell me a joke', 'Draft a LinkedIn post'];
+const SUGGESTIONS = ['Remind me to call mom at 6 pm', 'What can you do?', 'Open the notes', 'Explain overfitting simply', 'Tell me a joke', 'Dark mode'];
 
-function scriptedReply(text) {
-  const t = text.toLowerCase();
-  const now = new Date();
-  if (/\b(time|date|day is it|today)\b/.test(t))
-    return `It's ${now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} on ${now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}.`;
-  if (/what can you do|help|feature|capabilit/.test(t))
-    return 'Here is what I do in the full app:\n• Answer anything out loud, hands-free ("Hey Azarvis")\n• Set reminders and read them to you each morning\n• Find things in your study notes and documents\n• Write drafts for Gmail, LinkedIn, Instagram and YouTube\n• Train ML models on your CSV files\n\nIn this demo, try Tasks, Notes and Automate from the menu.';
-  if (/overfit/.test(t))
-    return 'Overfitting is when a model memorises its training data instead of learning the pattern.\n\nThink of a student who memorises last year\'s answers: perfect on old papers, lost on new questions. You spot it when the training score is high but the score on unseen data is low. Fixes: more data, a simpler model, regularisation, or cross-validation.';
-  if (/machine learning|\bml\b|\bai\b/.test(t))
-    return 'Machine learning is teaching a computer from examples instead of rules: show it many houses with prices and it learns to estimate the price of a new one. The Notes section has full chapters on this, from basics to advanced.';
-  if (/joke|funny/.test(t)) return 'Why did the neural network break up with the decision tree?\nIt felt the tree was too quick to split.';
-  if (/remind|reminder|alarm/.test(t))
-    return 'In your account I would set that reminder and say it out loud on time. Here in the demo, open Tasks and add it: it stays saved in this browser.';
-  if (/email|draft|linkedin|post|instagram|youtube|gmail/.test(t))
-    return 'Open Automate in the menu: pick Gmail, LinkedIn, Instagram or YouTube, type the topic and you get a ready draft to copy. Azarvis never sends anything on its own.';
-  if (/weather|news|stock/.test(t)) return 'Live data like weather and news needs the Azarvis server, so it is not in the demo. Create a free account and ask me again.';
-  if (/who (are|made|built|created)|about you|your name/.test(t))
-    return "I'm Azarvis, a personal AI voice assistant built by Aamir Hussain Azad. My answers in the full app come from Claude by Anthropic.";
-  if (/^(hi|hello|hey|namaste|good (morning|afternoon|evening))\b/.test(t)) return 'Hello! I am Azarvis. Ask me what I can do, or pick one of the suggestions below.';
-  if (/thank/.test(t)) return 'You are welcome! If you liked the demo, the feedback button at the bottom of the menu helps a lot.';
-  return 'In the demo I only know a few sample answers. Try one of the suggestions, or create a free account and I will answer anything with Claude, out loud.';
-}
-
-function speak(text) {
-  if (!('speechSynthesis' in window)) return toast('This browser cannot read text aloud', 'error');
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text.replace(/[•\n]+/g, ' '));
-  u.rate = 1.02;
-  window.speechSynthesis.speak(u);
-}
+// Answers come from brain.js (shared with the website's hero), which can also act: add a task,
+// open a section, switch the theme.
+const speak = (text) => speakText(text) || toast('This browser cannot read text aloud', 'error');
 
 const GREETING = { role: 'bot', text: 'Hi, I am Azarvis. This is the demo, so my answers are scripted. Ask me something, or tap a suggestion.' };
 
-function DemoChat({ seed, onSeedUsed }) {
+function DemoChat({ seed, onSeedUsed, onAction }) {
   // seed: a question handed over from Home, asked as soon as the chat opens.
   const [messages, setMessages] = useState(() => (seed ? [GREETING, { role: 'user', text: seed }] : [GREETING]));
   const [pending, setPending] = useState(seed || null); // the question waiting for its answer
@@ -88,10 +62,11 @@ function DemoChat({ seed, onSeedUsed }) {
   useEffect(() => {
     if (!pending) return;
     const t = setTimeout(() => {
-      const reply = scriptedReply(pending);
+      const { text: reply, action } = respond(pending);
       setMessages((m) => [...m, { role: 'bot', text: reply }]);
       setPending(null);
       if (aloudRef.current) speak(reply);
+      if (action) onAction(action);
     }, 650 + Math.min(pending.length * 12, 600));
     return () => clearTimeout(t);
   }, [pending]);
@@ -103,6 +78,17 @@ function DemoChat({ seed, onSeedUsed }) {
     setMessages((m) => [...m, { role: 'user', text: q }]);
     setPending(q);
   };
+  // Speak instead of typing: what you say appears in the box, then is sent (answers are read aloud).
+  const voice = useListen((said) => {
+    setAloud(true);
+    send(said);
+  });
+  useEffect(() => {
+    if (voice.listening) setInput(voice.transcript);
+  }, [voice.transcript, voice.listening]);
+  useEffect(() => {
+    if (voice.error) toast(voice.error, 'error');
+  }, [voice.error]);
 
   return (
     <div className="demo-chat">
@@ -139,10 +125,17 @@ function DemoChat({ seed, onSeedUsed }) {
         ))}
       </div>
       <form className="demo-chat-input" onSubmit={(e) => { e.preventDefault(); send(input); }}>
-        <button type="button" className="icon-btn" onClick={() => toast('Voice needs a free account: the demo has typing only', 'error')} aria-label="Voice input (needs an account)" title="Voice input needs an account">
+        <button
+          type="button"
+          className={`icon-btn demo-mic ${voice.listening ? 'on' : ''}`}
+          onClick={voice.listening ? voice.stop : voice.start}
+          aria-pressed={voice.listening}
+          aria-label={voice.listening ? 'Stop listening' : 'Speak to Azarvis'}
+          title={voice.supported ? (voice.listening ? 'Listening… tap to stop' : 'Speak to Azarvis') : 'Voice input needs Chrome, Edge or Safari'}
+        >
           <Icon name="mic" />
         </button>
-        <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask Azarvis…" aria-label="Message Azarvis" maxLength={300} />
+        <input value={input} onChange={(e) => setInput(e.target.value)} placeholder={voice.listening ? 'Listening… speak now' : 'Ask Azarvis, or tap the mic…'} aria-label="Message Azarvis" maxLength={300} />
         <button className="btn primary" disabled={!input.trim() || typing} aria-label="Send">
           <Icon name="send" size="1em" />
         </button>
@@ -152,31 +145,11 @@ function DemoChat({ seed, onSeedUsed }) {
 }
 
 // ---------- Tasks: saved in this browser ----------
-const TASK_KEY = 'azarvis-demo-tasks';
-const SAMPLE_TASKS = () => [
-  { id: 1, text: 'Submit the ML assignment', time: '18:00', done: false },
-  { id: 2, text: 'Revise chapter 3: decision trees', time: '20:30', done: false },
-  { id: 3, text: 'Try the Azarvis demo', time: '', done: true },
-];
-const readTasks = () => {
-  try {
-    const saved = JSON.parse(localStorage.getItem(TASK_KEY));
-    return Array.isArray(saved) ? saved : SAMPLE_TASKS();
-  } catch {
-    return SAMPLE_TASKS();
-  }
-};
-const fmtTime = (hhmm) => {
-  if (!hhmm) return '';
-  const [h, m] = hhmm.split(':').map(Number);
-  return new Date(2000, 0, 1, h, m).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-};
-
 function useDemoTasks() {
-  const [tasks, setTasks] = useState(readTasks);
+  const [tasks, setTasks] = useState(readDemoTasks);
   useEffect(() => {
     try {
-      localStorage.setItem(TASK_KEY, JSON.stringify(tasks));
+      localStorage.setItem(DEMO_TASKS_KEY, JSON.stringify(tasks));
     } catch {}
   }, [tasks]);
   return [tasks, setTasks];
@@ -401,7 +374,7 @@ function FeedbackDialog({ onClose }) {
   );
 }
 
-export default function Demo({ section, onSection, onNavigate }) {
+export default function Demo({ section, onSection, onNavigate, theme }) {
   const current = ALL.find((s) => s.id === section) ?? SECTIONS[0];
   const [tasks, setTasks] = useDemoTasks();
   const [seed, setSeed] = useState(null);
@@ -412,6 +385,16 @@ export default function Demo({ section, onSection, onNavigate }) {
   const go = (id) => {
     onSection(id);
     contentRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  };
+  // What the chat asked for: a real task, another section, another page, the theme.
+  const runAction = (action) => {
+    if (action.type === 'task') {
+      setTasks((ts) => [{ id: Date.now(), done: false, time: '', ...action.task }, ...ts]);
+      toast(action.task.time ? `Reminder set for ${fmtTime(action.task.time)}` : 'Task added');
+    } else if (action.type === 'demo' && action.section !== 'chat') setTimeout(() => go(action.section), 900);
+    else if (action.type === 'page') setTimeout(() => onNavigate(action.page), 900);
+    else if (action.type === 'scroll') setTimeout(() => onNavigate('home', '', action.id), 900);
+    else if (action.type === 'theme') theme?.setChoice(action.mode);
   };
   const ask = (text) => {
     setSeed(text);
@@ -472,7 +455,7 @@ export default function Demo({ section, onSection, onNavigate }) {
           )}
 
           {current.id === 'home' && <DemoHome tasks={tasks} onGo={go} onAsk={ask} />}
-          {current.id === 'chat' && <DemoChat seed={seed} onSeedUsed={() => setSeed(null)} />}
+          {current.id === 'chat' && <DemoChat seed={seed} onSeedUsed={() => setSeed(null)} onAction={runAction} />}
           {current.id === 'tasks' && <DemoTasks tasks={tasks} setTasks={setTasks} />}
           {current.id === 'automate' && <DemoAutomate />}
           {current.id === 'notes' && (

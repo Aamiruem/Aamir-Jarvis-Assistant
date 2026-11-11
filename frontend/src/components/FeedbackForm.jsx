@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { track } from '../analytics.js';
 import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { CONTACT_EMAIL } from '../siteLinks.js';
@@ -33,6 +34,7 @@ export default function FeedbackForm({ page = 'landing', compact = false }) {
     setState({ status: 'sending', error: '' });
     try {
       await api.sendFeedback({ ...form, rating: form.rating || null, page });
+      track('feedback_sent', { category: form.category, rating: form.rating || 0, page });
       setState({ status: 'sent', error: '' });
     } catch (err) {
       // 4xx: the server answered (validation, too many) → show its message. Otherwise it's unreachable.

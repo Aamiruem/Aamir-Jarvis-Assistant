@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { pageView, track } from '../analytics.js';
 import { Icon } from '../icons.jsx';
 import { Toaster } from '../ui.jsx';
 import Landing from './Landing.jsx';
@@ -12,6 +13,12 @@ import ThemeMenu from './ThemeMenu.jsx';
 
 const Demo = lazy(() => import('./Demo.jsx'));
 const PAGES = ['home', 'login', 'signup', 'demo'];
+const META = {
+  home: ['Azarvis – AI Voice Assistant by Aamir Hussain Azad', 'Azarvis is a personal AI voice assistant by Aamir Hussain Azad, powered by Claude: talk naturally and it handles reminders, tasks, study notes, documents and your computer, hands-free. Try the live demo.'],
+  demo: ['Live demo · Azarvis AI Voice Assistant', 'Try Azarvis without an account: talk to it, set reminders, browse the AI/ML study notes and write email and social media drafts in the live demo.'],
+  signup: ['Create your free account · Azarvis', 'Create a free Azarvis account in a minute and talk to your personal AI voice assistant on your laptop or phone.'],
+  login: ['Sign in · Azarvis', 'Sign in to Azarvis with your password or a passkey (Face ID, Touch ID, Windows Hello or fingerprint).'],
+};
 
 const readUrl = () => {
   const q = new URLSearchParams(window.location.search);
@@ -143,15 +150,25 @@ export default function PublicSite({ theme, onAuth }) {
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
+  // Search engines and link previews: each page has its own title, description and canonical
+  // address; Google Analytics gets a page view per page (the site is one HTML file).
   useEffect(() => {
-    const titles = { home: 'Azarvis – AI Voice Assistant by Aamir Hussain Azad', login: 'Sign in · Azarvis', signup: 'Create account · Azarvis', demo: 'Live demo · Azarvis' };
-    document.title = titles[page];
+    const [title, description] = META[page];
+    document.title = title;
+    document.querySelector('meta[name="description"]')?.setAttribute('content', description);
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) canonical.href = new URL(urlFor(page), canonical.href).href;
+    pageView(title);
+    if (page === 'demo') track('demo_open', { section: section || 'home' });
+    if (page === 'signup') track('sign_up_start');
   }, [page]);
 
-  const navigate = useCallback((next, nextSection = '') => {
+  // scrollTo: an element id on the new page (e.g. "projects" on Home) to scroll to after it renders.
+  const navigate = useCallback((next, nextSection = '', scrollTo = '') => {
     window.history.pushState(null, '', urlFor(next, nextSection));
     setRoute({ page: next, section: nextSection });
     window.scrollTo({ top: 0 });
+    if (scrollTo) setTimeout(() => document.getElementById(scrollTo)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   }, []);
 
   // Demo tabs change the address without adding a Back step for every click.
@@ -181,13 +198,13 @@ export default function PublicSite({ theme, onAuth }) {
       <PublicNav page={page} theme={theme} onNavigate={navigate} onSection={scrollToSection} />
 
       <main className="pub-main" id="top">
-        {page === 'home' && <Landing onNavigate={navigate} />}
+        {page === 'home' && <Landing onNavigate={navigate} onSection={scrollToSection} theme={theme} />}
         {(page === 'login' || page === 'signup') && (
           <Login key={page} initialStep={page === 'signup' ? 'register' : 'login'} onAuth={signedIn} onDemo={() => navigate('demo')} onHome={() => navigate('home')} />
         )}
         {page === 'demo' && (
           <Suspense fallback={<div className="tab-loading"><div className="orb pulse" /></div>}>
-            <Demo section={section} onSection={setDemoSection} onNavigate={navigate} />
+            <Demo section={section} onSection={setDemoSection} onNavigate={navigate} theme={theme} />
           </Suspense>
         )}
       </main>

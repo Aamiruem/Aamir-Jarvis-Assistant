@@ -59,3 +59,17 @@ export const SOCIAL = [
   { href: 'https://leetcode.com/u/Aamiruem/', label: 'LeetCode', icon: 'code', brand: '#ffa116' },
   { href: `mailto:${CONTACT_EMAIL}`, label: 'Email', icon: 'mail', brand: '#ea4335' },
 ];
+
+// GitHub account whose public repositories the website's Projects section loads live.
+export const GITHUB_USER = 'Aamiruem';
+
+// Live apps shown first in the Projects section (platform = where it is hosted). Repositories
+// whose GitHub "homepage" points at a live site are added to these automatically.
+export const LIVE_APPS = [
+  { label: 'Azarvis Voice App', href: 'https://azarvis-app.vercel.app/', platform: 'vercel', text: 'This assistant: voice, chat, tasks, notes and automations.', repo: 'Aamir-Jarvis-Assistant' },
+  { label: 'Azarvis Dashboard', href: 'https://azarvis-ai.vercel.app/', platform: 'vercel', text: 'Next.js dashboard and landing page for Azarvis.', repo: 'Aamir-Jarvis-Assistant' },
+  { label: 'Portfolio', href: PORTFOLIO_URL, platform: 'vercel', text: 'Aamir Hussain Azad: AI/ML engineer and full-stack developer.', repo: 'Aamir_Portfolio' },
+  { label: 'Crop Yield Prediction', href: PROJECTS[0].href, platform: 'streamlit', text: 'Indian crop optimization and yield prediction for farmers, with ML.', repo: 'Indian-Crop-Optimization-Production' },
+  { label: 'Retail Sales Analytics', href: PROJECTS[1].href, platform: 'streamlit', text: 'Retail sales and customer analytics dashboard.', repo: 'Retail-sales-customer' },
+  { label: 'Mansik Santulan', href: PROJECTS[2].href, platform: 'render', text: 'Machine-learning scores for mental balance (mansik santulan).', repo: 'Mansik-Santulan-Scores' },
+];
