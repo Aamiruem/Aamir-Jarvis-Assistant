@@ -251,6 +251,15 @@ async def analyze_text(text: str) -> dict:
     return await _call("POST", "/nlp/analyze", json={"text": text})
 
 
+@mcp.tool(title="Read emotions", annotations=READ)
+async def read_emotions(text: str) -> dict:
+    """Read how a message feels, the way Azarvis does before it answers: the emotion and its
+    intensity (e.g. frustrated 0.8), what the writer needs (fix, learn, act, decide, vent...),
+    the tone and approach to answer with, and a voice style. Use it to answer people more humanly.
+    Looks only: it does not change the user's conversation mood."""
+    return await _call("POST", "/mind/understand", json={"text": text, "track": False})
+
+
 @mcp.tool(title="Mark notifications read", annotations=SET)
 async def mark_notifications_read(ids: list[int]) -> dict:
     """Mark the given reminder notifications as read."""

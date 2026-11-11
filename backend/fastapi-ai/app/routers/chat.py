@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field
 from app.agent.agent import run_agent
 from app.db import sql
 from app.llm.claude import note_api_error
+from app.mind import understand
 from app.nlp.analyzer import analyze
 from app.security import Caller, get_caller
 
@@ -60,17 +61,30 @@ def _friendly_error(e: Exception) -> str:
     return f"{type(e).__name__}: {e}"
 
 
+def _mind_event(insight) -> dict:
+    """What the browser may show and use: the reading, the plan and the voice style (not the full prompt)."""
+    e = insight.emotion
+    return {
+        "emotion": e.emotion, "label": e.label, "intensity": e.intensity, "valence": e.valence,
+        "need": insight.need, "tone": insight.tone, "realizations": insight.realizations,
+        "voice": insight.voice, "trend": insight.mood.trend, "crisis": e.crisis,
+    }
+
+
 @router.post("/stream")
 async def chat_stream(req: ChatRequest, caller: Caller = Depends(get_caller)):
     """Server-Sent Events stream of agent events (used by the Node gateway / React UI / CLI)."""
     started = time.perf_counter()
     nlp = analyze(req.message)
+    insight = understand(caller.user_id, req.message, nlp["intent"])
 
     async def events():
         yield f"data: {json.dumps({'type': 'nlp', **nlp})}\n\n"
+        # How the user seems and how Azarvis will answer (the browser uses "voice" to set the spoken tone).
+        yield f"data: {json.dumps({'type': 'mind', **_mind_event(insight)})}\n\n"
         done = None
         try:
-            async for ev in run_agent(req.message, [h.model_dump() for h in req.history], caller.user_id, fast=req.voice):
+            async for ev in run_agent(req.message, [h.model_dump() for h in req.history], caller.user_id, fast=req.voice, guidance=insight.guidance()):
                 if ev["type"] == "done":
                     done = ev
                 yield f"data: {json.dumps(ev, default=str)}\n\n"
@@ -90,8 +104,9 @@ async def chat(req: ChatRequest, caller: Caller = Depends(get_caller)):
     """Non-streaming variant (used by Streamlit and the MCP server)."""
     started = time.perf_counter()
     nlp = analyze(req.message)
+    insight = understand(caller.user_id, req.message, nlp["intent"])
     reply, tools, done, errors = "", [], None, []
-    async for ev in run_agent(req.message, [h.model_dump() for h in req.history], caller.user_id, fast=req.voice):
+    async for ev in run_agent(req.message, [h.model_dump() for h in req.history], caller.user_id, fast=req.voice, guidance=insight.guidance()):
         if ev["type"] == "text":
             reply += ev["text"]
         elif ev["type"] == "tool":
@@ -101,4 +116,4 @@ async def chat(req: ChatRequest, caller: Caller = Depends(get_caller)):
         elif ev["type"] == "done":
             done = ev
     _log(caller, req, nlp, started, done)
-    return {"reply": reply or " ".join(errors), "tools": tools, "nlp": nlp, "usage": (done or {}).get("usage")}
+    return {"reply": reply or " ".join(errors), "tools": tools, "nlp": nlp, "mind": _mind_event(insight), "usage": (done or {}).get("usage")}

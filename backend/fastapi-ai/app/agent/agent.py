@@ -66,12 +66,14 @@ units the way people say them aloud. If you need a tool, call it straight away w
 If the request is unclear, ask one short question back."""
 
 
-def _user_context(user_id: str, voice: bool = False) -> str:
+def _user_context(user_id: str, voice: bool = False, guidance: str | None = None) -> str:
     """Per-request context, kept separate from the static prompt so that one stays cacheable."""
     now = now_local()
     lines = [f"Current time: {now.isoformat(timespec='minutes')} ({now.strftime('%A')}, {settings.default_timezone})."]
     if voice:
         lines.append(VOICE_STYLE)
+    if guidance:  # from app/mind: how the user seems and how to answer (see routers/chat.py)
+        lines.append(guidance)
     memories = sql.list_memories(user_id, limit=50)
     if memories:
         lines.append("What you remember about the user (id: fact):")
@@ -88,7 +90,7 @@ def _clean_history(history: list[dict]) -> list[dict]:
 
 
 async def run_agent(
-    user_message: str, history: list[dict] | None = None, user_id: str = "local", fast: bool = False
+    user_message: str, history: list[dict] | None = None, user_id: str = "local", fast: bool = False, guidance: str | None = None
 ) -> AsyncIterator[dict]:
     client = get_client()
     ctx = ToolContext(user_id=user_id)
@@ -101,7 +103,7 @@ async def run_agent(
 
     system = [
         {"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}},
-        {"type": "text", "text": await asyncio.to_thread(_user_context, user_id, fast)},
+        {"type": "text", "text": await asyncio.to_thread(_user_context, user_id, fast, guidance)},
     ]
     params = {**base_params(max_tokens=32000), "system": system, "tools": tools}
     if fast:  # voice: a quick answer matters more than deep thinking

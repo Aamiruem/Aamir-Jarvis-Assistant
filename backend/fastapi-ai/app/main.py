@@ -27,7 +27,7 @@ from app.llm.claude import key_status
 from app.system_control import current_os
 from app.nlp.intent import get_classifier
 from app.rag.store import get_store
-from app.routers import chat, misc, mllab, pcwatch, rag, study_notes, system
+from app.routers import chat, mind, misc, mllab, pcwatch, rag, study_notes, system
 from app.pc_watcher import watch_loop
 from app.scheduler import reminder_loop
 from app.security import require_internal_key
@@ -82,6 +82,7 @@ app.include_router(system.router, dependencies=protected)
 app.include_router(mllab.router, dependencies=protected)
 app.include_router(pcwatch.router, dependencies=protected)
 app.include_router(study_notes.router, dependencies=protected)
+app.include_router(mind.router, dependencies=protected)
 
 
 @app.get("/health")

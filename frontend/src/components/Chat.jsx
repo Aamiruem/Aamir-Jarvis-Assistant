@@ -348,6 +348,10 @@ export default function Chat({ userId, history, conversationId, onConversation, 
             onConversation(ev.id);
           } else if (ev.type === 'nlp') {
             patchLast((m) => ({ ...m, intent: ev.intent }));
+          } else if (ev.type === 'mind') {
+            // How the user seems and how Azarvis answers: the voice follows the tone.
+            out?.setStyle(ev.voice);
+            patchLast((m) => ({ ...m, mind: ev }));
           } else if (ev.type === 'status') {
             patchLast((m) => ({ ...m, status: ev.message }));
           } else if (ev.type === 'text') {
@@ -480,6 +484,11 @@ export default function Chat({ userId, history, conversationId, onConversation, 
                 <button className="icon-btn" title="Read aloud" aria-label="Read reply aloud" onClick={() => speech.speak(m.content)}><Icon name="volume" size="1em" /></button>
                 <button className="icon-btn" title="Share" aria-label="Share reply" onClick={() => shareReply(m.content)}><Icon name="share" size="1em" /></button>
                 {m.intent && <span className="meta">intent: {m.intent}</span>}
+                {m.mind && m.mind.emotion !== 'neutral' && (
+                  <span className={`meta mind-chip mind-chip--${m.mind.emotion}`} title={[`Replying in a ${m.mind.tone} tone.`, ...(m.mind.realizations || [])].join(' ')}>
+                    sensed: {m.mind.label} · {m.mind.voice?.style} voice
+                  </span>
+                )}
               </div>
             )}
             </div>

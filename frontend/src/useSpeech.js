@@ -277,6 +277,9 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang =
     let finished = false;
     let onEnd = null;
     let watch = null;
+    // The reply's tone from the AI service (app/mind): multipliers on the user's own voice settings,
+    // e.g. a little slower and lower when the user is stressed, brighter when they are excited.
+    let style = { rate: 1, pitch: 1 };
 
     const finish = () => {
       if (finished) return;
@@ -302,6 +305,8 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang =
     const utter = (text) => {
       if (!synth) return;
       const u = applyVoice(new SpeechSynthesisUtterance(text), voiceRef.current, lang);
+      u.rate = Math.min(2, Math.max(0.5, u.rate * style.rate));
+      u.pitch = Math.min(2, Math.max(0, u.pitch * style.pitch));
       u.onend = u.onerror = () => {
         if (interrupted) return;
         done += 1;
@@ -317,6 +322,11 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang =
       synth.speak(u);
     };
     const handle = {
+      /** Sets how the rest of this reply sounds ({ rate, pitch } multipliers, clamped to a gentle range). */
+      setStyle(next) {
+        const within = (v) => (Number.isFinite(v) ? Math.min(1.2, Math.max(0.8, v)) : 1);
+        style = { rate: within(next?.rate), pitch: within(next?.pitch) };
+      },
       push(text) {
         if (interrupted || ended || !text) return;
         buffer += text;

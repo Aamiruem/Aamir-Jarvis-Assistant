@@ -1348,3 +1348,8 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
 .voice-slider-value { color: var(--accent); font-variant-numeric: tabular-nums; font-size: 13px; }
 .voice-slider input[type='range'] { width: 100%; accent-color: var(--accent); }
 .voice-slider-ends { display: flex; justify-content: space-between; }
+
+/* Chat: what Azarvis sensed in the message (from the AI service's emotion model) and the voice it used. */
+.mind-chip { --c: 220; display: inline-flex; align-items: center; gap: 4px; padding: 1px 9px; border-radius: 999px; color: hsl(var(--c) 80% var(--badge-l, 70%)); background: hsl(var(--c) 80% 55% / 0.12); border: 1px solid hsl(var(--c) 80% 60% / 0.3); cursor: help; }
+.mind-chip--frustration { --c: 0; } .mind-chip--anxiety { --c: 30; } .mind-chip--sadness { --c: 215; } .mind-chip--distress { --c: 345; }
+.mind-chip--confusion { --c: 45; } .mind-chip--curiosity { --c: 175; } .mind-chip--joy { --c: 140; } .mind-chip--excitement { --c: 285; } .mind-chip--gratitude { --c: 320; }

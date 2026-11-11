@@ -6,7 +6,7 @@
    shared pieces (buttons, inputs, cards) follow too. */
 
 .pub {
-  --gutter: clamp(14px, 3.2vw, 40px);
+  --gutter: clamp(14px, 3.6vw, 64px);
   --bg: #0b0d12;
   --band-a: #0b0d12;
   --band-b: #10131a;
@@ -78,7 +78,7 @@
 }
 .pub-bg { display: none; }
 .pub-main { flex: 1; }
-.pub-wrap { width: min(1360px, calc(100% - 2 * var(--gutter))); margin-inline: auto; }
+.pub-wrap { width: min(1680px, calc(100% - 2 * var(--gutter))); margin-inline: auto; }
 .pub h1, .pub h2, .pub h3 { color: var(--text); }
 .pub .card { background: var(--surface); border-color: var(--border); backdrop-filter: none; }
 .pub .btn-lg { padding: 13px 22px; font-size: 15.5px; border-radius: 13px; font-weight: 600; }
@@ -117,7 +117,7 @@
   transition: box-shadow 0.2s;
 }
 .pub-nav--scrolled { box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); }
-.pub-nav-inner { width: min(1360px, calc(100% - 2 * var(--gutter))); margin-inline: auto; height: 62px; display: flex; align-items: center; gap: 14px; }
+.pub-nav-inner { width: min(1680px, calc(100% - 2 * var(--gutter))); margin-inline: auto; height: 62px; display: flex; align-items: center; gap: 14px; }
 .pub-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; flex: none; }
 .pub-logo img { border-radius: 10px; box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35); }
 .pub-logo span { display: flex; flex-direction: column; font: 800 20px/1 Inter, system-ui, sans-serif; letter-spacing: -0.01em; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -140,7 +140,7 @@
 .pub-cta { padding: 9px 16px; }
 .pub-burger { display: none; color: var(--text); }
 .pub-drawer {
-  width: min(1360px, calc(100% - 2 * var(--gutter))); margin: 0 auto; padding: 4px 0 16px; display: flex; flex-direction: column;
+  width: min(1680px, calc(100% - 2 * var(--gutter))); margin: 0 auto; padding: 4px 0 16px; display: flex; flex-direction: column;
   border-top: 1px solid var(--border); animation: pub-drop 0.18s ease-out;
 }
 .pub-drawer > button { display: flex; justify-content: space-between; align-items: center; padding: 13px 4px; font-size: 16px; color: var(--text); border-radius: 0; border-bottom: 1px solid var(--border); }
@@ -185,7 +185,7 @@
 
 /* Right side: the artwork stage, and the assistant console overlapping its base. */
 .hero-side { position: relative; display: flex; flex-direction: column; align-items: center; }
-.hero-art { position: relative; width: 100%; max-width: 520px; aspect-ratio: 530 / 540; perspective: 1100px; }
+.hero-art { position: relative; width: 100%; max-width: min(600px, 100%); aspect-ratio: 530 / 540; perspective: 1100px; }
 .hero-art-glow { position: absolute; inset: 12% 8% 10%; border-radius: 50%; background: radial-gradient(closest-side, rgba(99, 102, 241, 0.5), rgba(139, 92, 246, 0.2) 55%, transparent); filter: blur(30px); animation: art-glow 6s ease-in-out infinite; }
 @keyframes art-glow { 50% { opacity: 0.6; transform: scale(0.94); } }
 .hero-art-tilt { position: relative; height: 100%; transform-style: preserve-3d; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1); }
@@ -605,12 +605,12 @@ button.hv-float:hover { border-color: #a78bfa; background: rgba(30, 27, 75, 0.85
 .demo-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .demo-modal-head h2 { margin: 0; font: 700 19px/1.2 Inter, system-ui, sans-serif; letter-spacing: 0; }
 @keyframes pub-fade { from { opacity: 0; } }
-.demo > .site-foot--compact { width: min(1360px, calc(100% - 2 * var(--gutter))); margin: 20px auto 0; border-top: 1px solid var(--border); padding-inline: 4px; }
+.demo > .site-foot--compact { width: min(1680px, calc(100% - 2 * var(--gutter))); margin: 20px auto 0; border-top: 1px solid var(--border); padding-inline: 4px; }
 
 /* ---------- Footer on the public website (always dark) ---------- */
 .pub .site-foot--public {
   position: relative; max-width: none; margin-top: 0; border-top: none;
-  padding-inline: max(var(--gutter), calc((100% - 1360px) / 2));
+  padding-inline: max(var(--gutter), calc((100% - 1680px) / 2));
   background:
     radial-gradient(40% 60% at 90% 0%, rgba(99, 102, 241, 0.16), transparent 70%),
     radial-gradient(35% 50% at 0% 100%, rgba(34, 211, 238, 0.1), transparent 70%),

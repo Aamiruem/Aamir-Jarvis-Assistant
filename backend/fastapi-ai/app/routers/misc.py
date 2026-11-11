@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 
 from app.cv import vision
 from app.db import sql
+from app.mind.state import tracker as mood_tracker
 from app.mllab import registry as mllab_registry
 from app.nlp.analyzer import analyze
 from app.nlp.intent import get_classifier
@@ -197,6 +198,7 @@ async def delete_my_data(caller: Caller = Depends(get_caller)):
         "rag_chunks": get_store().delete_user(caller.user_id),
         "files": delete_user_files(caller.user_id),
         "ml_models": mllab_registry.delete_user(caller.user_id) or "deleted",
+        "mood": mood_tracker.clear(caller.user_id) or "forgotten",
     }
 
 
