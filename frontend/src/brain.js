@@ -145,6 +145,8 @@ export function respond(input) {
       action: { type: 'memory', fact: memory },
     };
   }
+  if (/\b(battery|charg(er|ing)|system (info|details|status)|device (info|details)|my (pc|device|computer|laptop|phone)|cpu|ram|internet speed|network status)\b/.test(t))
+    return { text: 'Here are your live device details: battery and charger, network, CPU and memory, with AI insights.', action: { type: 'demo', section: 'system' } };
   if (/what do you (know|remember)|what('s| is) my name|who am i\b/.test(t)) {
     const facts = readDemoMemory();
     const name = memoryName(facts);

@@ -17,6 +17,7 @@ const DemoMlLab = lab('DemoMlLab');
 const DemoKnowledge = lab('DemoKnowledge');
 const DemoVision = lab('DemoVision');
 const DemoMemory = lab('DemoMemory');
+const DeviceCard = lazy(() => import('./DeviceCard.jsx'));
 
 const SECTIONS = [
   { id: 'home', label: 'Home', icon: 'home', hue: 205 },
@@ -30,6 +31,7 @@ const TOOLS = [
   { id: 'knowledge', label: 'Knowledge', icon: 'book', hue: 265 },
   { id: 'vision', label: 'Vision', icon: 'eye', hue: 330 },
   { id: 'memory', label: 'Memory', icon: 'brain', hue: 280 },
+  { id: 'system', label: 'My device', icon: 'cpu', hue: 205 },
 ];
 const ALL = [...SECTIONS, ...TOOLS];
 const BLURB = {
@@ -41,6 +43,7 @@ const BLURB = {
   knowledge: 'Add documents, then ask questions and get answers from them.',
   vision: 'Describe images and get greeted when you walk into the room.',
   memory: 'What Azarvis remembers about you. See and delete all of it.',
+  system: 'Live battery, charger, network and CPU of this device, with AI insights.',
 };
 
 // ---------- Chat: scripted answers ----------
@@ -364,6 +367,14 @@ function DemoHome({ tasks, name, onGo, onAsk }) {
           <p className="muted">Nothing left for today.</p>
         )}
       </div>
+      <div className="demo-today">
+        <div className="demo-today-head">
+          <h3 className="demo-sub">Your device · live</h3>
+        </div>
+        <Suspense fallback={<div className="tab-loading"><div className="orb pulse" /></div>}>
+          <DeviceCard compact onOpen={() => onGo('system')} />
+        </Suspense>
+      </div>
     </div>
   );
 }
@@ -481,6 +492,7 @@ export default function Demo({ section, onSection, onNavigate, theme }) {
               {current.id === 'knowledge' && <DemoKnowledge />}
               {current.id === 'vision' && <DemoVision />}
               {current.id === 'memory' && <DemoMemory facts={facts} setFacts={setFacts} onAsk={ask} />}
+              {current.id === 'system' && <DeviceCard />}
             </Suspense>
           )}
         </section>

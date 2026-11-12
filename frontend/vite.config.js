@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import net from 'node:net';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
@@ -170,9 +171,15 @@ function seo(env) {
   };
 }
 
+// Windows: VS Code can start terminals in "c:\..." (lower-case drive). Vite then keys some files
+// by "c:/…" and others by "C:/…", and the build fails ("No matching HTML proxy module found").
+// An explicit root with an upper-case drive letter keeps every path the same.
+export const ROOT = fileURLToPath(new URL('.', import.meta.url)).replace(/^[a-z]:/, (d) => d.toUpperCase());
+
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), 'VITE_');
+  const env = loadEnv(mode, ROOT, 'VITE_');
   return {
+    root: ROOT,
     plugins: [react(), seo(env), liveApiFallback()],
     server: {
       port: 5173,

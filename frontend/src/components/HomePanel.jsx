@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { readAlertsAloud, setReadAlertsAloud } from '../alerts.js';
 import { api } from '../api.js';
 import { useNow, useVisibleInterval } from '../hooks.js';
@@ -7,6 +7,8 @@ import { speechSupported } from '../useSpeech.js';
 import { applyVoice, currentVoice } from '../voiceSettings.js';
 import { AiNotice, aiProblemOf } from './AiNotice.jsx';
 import './HomePanel.css';
+
+const DeviceCard = lazy(() => import('./DeviceCard.jsx'));
 
 // Command Center: the first screen after sign-in. Everything on it is live data from the
 // Express API and the AI service (health, tasks, reminders, notifications, memories, stats).
@@ -394,7 +396,7 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
           <button className="cc-link" onClick={() => onOpenTab('memory')}>View memory <Icon name="chevron" size="1em" /></button>
         </Panel>
 
-        <Panel icon="cpu" title="Your PC">
+        <Panel icon="cpu" title="Your device">
           {pc === undefined ? (
             <div className="cc-rings">
               {['CPU', 'RAM', 'Disk'].map((l) => <div key={l} className="cc-ring-wrap"><div className="cc-ring skeleton" /><small>{l}</small></div>)}
@@ -412,17 +414,11 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
               </p>
             </>
           ) : (
-            <div className="cc-rings">
-              <Ring label="Tasks done" value={done} max={tasks.length} hue={150} text={tasks.length ? `${Math.round((done / tasks.length) * 100)}%` : '—'} />
-              <Ring label="Messages" value={stats?.total_messages ?? 0} max={100} hue={190} text={stats?.total_messages ?? '—'} />
-              <Ring
-                label="Avg reply"
-                value={stats?.avg_latency_ms ?? 0}
-                max={10_000}
-                hue={265}
-                text={stats?.avg_latency_ms ? `${(stats.avg_latency_ms / 1000).toFixed(1)}s` : '—'}
-              />
-            </div>
+            // No Azarvis service on this computer (e.g. the live website): read the device from
+            // the browser instead (battery, charger, network, CPU), and offer the full Device tab.
+            <Suspense fallback={<div className="cc-rings" />}>
+              <DeviceCard compact onOpen={() => onOpenTab('device')} />
+            </Suspense>
           )}
         </Panel>
 

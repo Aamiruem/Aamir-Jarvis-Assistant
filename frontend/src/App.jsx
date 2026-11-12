@@ -32,6 +32,7 @@ const AdminPanel = lazy(() => import('./components/AdminPanel.jsx'));
 const AutomatePanel = lazy(() => import('./components/AutomatePanel.jsx'));
 const MlLabPanel = lazy(() => import('./components/MlLabPanel.jsx'));
 const NotesPanel = lazy(() => import('./components/NotesPanel.jsx'));
+const DevicePanel = lazy(() => import('./components/DevicePanel.jsx'));
 
 // Each tab has its own color (--hue), used for its icon in the top bar and the sidebar.
 const TABS = [
@@ -44,6 +45,7 @@ const TABS = [
   { id: 'memory', label: 'Memory', icon: 'brain', hue: 330 },
   { id: 'knowledge', label: 'Knowledge', icon: 'book', hue: 265 },
   { id: 'vision', label: 'Vision', icon: 'eye', hue: 160 },
+  { id: 'device', label: 'Device', icon: 'cpu', hue: 205, isNew: true },
   { id: 'contacts', label: 'Contacts', icon: 'contacts', hue: 280 },
   { id: 'account', label: 'Account', icon: 'user', hue: 220 },
   { id: 'admin', label: 'Admin', icon: 'shield', hue: 0, adminOnly: true },
@@ -443,6 +445,7 @@ export default function App() {
             {tab === 'mllab' && <MlLabPanel />}
             {tab === 'notes' && <NotesPanel target={notesTarget} />}
             {tab === 'vision' && <VisionPanel />}
+            {tab === 'device' && <DevicePanel />}
             {tab === 'knowledge' && <KnowledgePanel />}
             {tab === 'tasks' && <TasksPanel />}
             {tab === 'memory' && <MemoryPanel />}
