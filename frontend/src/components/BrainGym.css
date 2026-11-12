@@ -81,3 +81,19 @@
   .bg-levels { justify-content: space-between; }
   .bg-lvl { flex: 1; padding: 8px 6px; }
 }
+
+/* Schulte Table */
+.bg-schulte { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 8px; width: min(100%, 420px); }
+.bg-cell { aspect-ratio: 1; display: grid; place-items: center; border-radius: 12px; border: 1px solid var(--border-strong, var(--border)); background: var(--surface, var(--panel)); color: var(--text); font: 800 clamp(16px, 4.5vw, 26px)/1 Inter, system-ui, sans-serif; cursor: pointer; transition: transform 0.08s, background 0.15s, opacity 0.2s; }
+.bg-cell:hover { transform: scale(1.04); border-color: var(--accent); }
+.bg-cell.got { opacity: 0.32; background: color-mix(in srgb, var(--accent) 22%, var(--surface, var(--panel))); cursor: default; }
+.bg-cell.bad { background: #ef4444; color: #fff; animation: bg-shake 0.25s; }
+@keyframes bg-shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+/* Logic Sequence */
+.bg-sequence { margin: 0; font: 800 clamp(22px, 5.2vw, 38px)/1.2 Inter, system-ui, sans-serif; letter-spacing: 0.01em; text-align: center; }
+.bg-sequence b { color: var(--accent); }
+.bg-reveal { margin: 0; font-size: 14px; color: var(--muted); }
+.bg-reveal b { color: var(--text); }
+.bg-choice.right { background: #22c55e; border-color: #22c55e; color: #052e16; }
+.bg-choice.wrong { background: #ef4444; border-color: #ef4444; color: #fff; }

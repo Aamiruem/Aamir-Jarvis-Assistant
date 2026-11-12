@@ -7,11 +7,13 @@ import {
   gridSize,
   LEVELS,
   levelMult,
+  logicProblem,
   mathProblem,
   memorySequence,
   nBackLevel,
   nBackSequence,
   rate,
+  schulteGrid,
   scoreGame,
   spanDigits,
   spanFlashMs,
@@ -332,12 +334,118 @@ function ReactionGame({ onFinish }) {
   );
 }
 
-const GAME_COMPONENTS = { memory: MemoryGame, nback: NBackGame, math: MathGame, stroop: StroopGame, span: SpanGame, reaction: ReactionGame };
+// ---------- Schulte Table (visual search) ----------
+function SchulteGame({ seed, level, onFinish }) {
+  const { size, n, cells } = useMemo(() => schulteGrid(level, seed), [level, seed]);
+  const [next, setNext] = useState(1);
+  const [wrong, setWrong] = useState(null);
+  const startedAt = useRef(0);
+  const done = useRef(false);
+
+  useEffect(() => {
+    startedAt.current = performance.now();
+  }, []);
+
+  const tap = (value) => {
+    if (done.current) return;
+    if (value !== next) {
+      setWrong(value);
+      setTimeout(() => setWrong(null), 250);
+      return;
+    }
+    if (value >= n) {
+      done.current = true;
+      onFinish({ ms: Math.round(performance.now() - startedAt.current), count: n });
+      return;
+    }
+    setNext(value + 1);
+  };
+
+  return (
+    <div className="bg-stage">
+      <div className="bg-hud"><span>Find <b>{next}</b></span><span>{next - 1} / {n}</span></div>
+      <p className="bg-instruction">Tap the numbers in order, 1 → {n}, as fast as you can</p>
+      <div className="bg-schulte" style={{ '--cols': size }}>
+        {cells.map((value) => (
+          <button
+            key={value}
+            type="button"
+            className={`bg-cell ${value < next ? 'got' : ''} ${wrong === value ? 'bad' : ''}`}
+            onClick={() => tap(value)}
+          >
+            {value}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------- Logic Sequence (reasoning) ----------
+function LogicGame({ seed, level, onFinish }) {
+  const [n, setN] = useState(0);
+  const [left, setLeft] = useState(60);
+  const [correct, setCorrect] = useState(0);
+  const wrong = useRef(0);
+  const [flash, setFlash] = useState(null); // { value, ok }
+  const p = useMemo(() => logicProblem(level, seed + n * 613), [level, seed, n]);
+  const done = useRef(false);
+
+  useEffect(() => {
+    if (left <= 0) {
+      if (!done.current) {
+        done.current = true;
+        onFinish({ correct, wrong: wrong.current });
+      }
+      return undefined;
+    }
+    const t = setTimeout(() => setLeft((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [left, correct, onFinish]);
+
+  const answer = (value) => {
+    if (done.current || flash) return;
+    const ok = value === p.answer;
+    if (ok) setCorrect((x) => x + 1);
+    else wrong.current += 1;
+    setFlash({ value, ok });
+    setTimeout(() => {
+      setFlash(null);
+      setN((x) => x + 1);
+    }, ok ? 300 : 900);
+  };
+
+  return (
+    <div className="bg-stage">
+      <div className="bg-hud"><span>⏱ {left}s</span><span>✓ {correct}</span><span>✗ {wrong.current}</span></div>
+      <p className="bg-instruction">What number comes next?</p>
+      <p className="bg-sequence">{p.terms.join('  ,  ')}  ,  <b>?</b></p>
+      {flash && !flash.ok && <p className="bg-reveal">It was <b>{p.answer}</b> · {p.rule}</p>}
+      <div className="bg-choices bg-choices--wrap">
+        {p.options.map((o) => (
+          <button
+            key={o}
+            type="button"
+            className={`bg-choice ${flash && o === flash.value ? (flash.ok ? 'right' : 'wrong') : ''} ${flash && o === p.answer ? 'right' : ''}`}
+            onClick={() => answer(o)}
+          >
+            {o}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const GAME_COMPONENTS = { memory: MemoryGame, nback: NBackGame, math: MathGame, stroop: StroopGame, span: SpanGame, reaction: ReactionGame, schulte: SchulteGame, logic: LogicGame };
 
 const GUIDE = [
   ['Warm up daily', 'A few minutes every day beats an hour once a week. Keep your streak alive.'],
   ['Push the level', 'When a game feels easy, go up a level. Your brain only grows at the edge of hard.'],
   ['N-Back is king', 'Dual N-Back is the most researched brain trainer. Start at 1, add a level when you pass 80%.'],
+  ['Widen your gaze', 'In Schulte Table, hold your eyes on the centre and find numbers with your side vision. It speeds up reading too.'],
+  ['Find the rule', 'In Logic Sequence, check the gaps first (do they add? multiply? grow?). Say the rule out loud before you answer.'],
+  ['Mix it up', 'Train a different skill each day — memory, focus, reasoning, speed — so your whole brain gets a workout.'],
   ['Rest matters', 'Sleep turns practice into skill. A tired brain scores worse, so play when fresh.'],
 ];
 
