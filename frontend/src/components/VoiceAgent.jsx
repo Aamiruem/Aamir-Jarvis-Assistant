@@ -83,7 +83,13 @@ export default function VoiceAgent({ onClose, onAsk, embedded = false }) {
 
   const runCapability = (id) => {
     stopSpeaking();
-    handleUser(CAP_DEMO[id] || 'Tell me more.');
+    let cur = convoRef.current;
+    if (!cur || cur.expect === 'end') cur = startConversation();
+    if (cur.step === 'greet') cur = advance(cur, 'Yes'); // connect the call first
+    const next = advance(cur, CAP_DEMO[id] || 'Tell me more.');
+    setConvo(next);
+    say(next.say);
+    if (next.expect === 'end') stop();
   };
 
   const q = convo?.qualified || qualify({});

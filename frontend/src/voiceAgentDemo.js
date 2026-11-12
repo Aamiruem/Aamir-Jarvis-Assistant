@@ -114,12 +114,14 @@ export function qualify(lead) {
 const STEPS = ['greet', 'country', 'budget', 'intake', 'offer', 'done'];
 
 export function startConversation() {
+  const say = 'Hi! This is Azarvis from the study-abroad desk — thanks for your interest. Is now an okay time for a quick two-minute chat about your plans?';
   return {
     step: 'greet',
     lead: { country: null, budget: null, intake: null, booked: false },
-    say: 'Hi! This is Azarvis from the study-abroad desk — thanks for your interest. Is now an okay time for a quick two-minute chat about your plans?',
+    say,
     expect: 'yesno',
-    history: [],
+    history: [{ who: 'agent', text: say }],
+    qualified: qualify({ country: null, budget: null, intake: null, booked: false }),
   };
 }
 
