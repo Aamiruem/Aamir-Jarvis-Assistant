@@ -43,6 +43,7 @@ const writeHint = (on) => {
 };
 if (typeof window !== 'undefined') (readHint() ? loadHome : loadPublic)().catch(() => {});
 const Spinner = () => <div className="center-screen"><div className="orb pulse" /></div>;
+const voiceSupported = typeof window !== 'undefined' && Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
 const VisionPanel = lazy(() => import('./components/VisionPanel.jsx'));
 const KnowledgePanel = lazy(() => import('./components/KnowledgePanel.jsx'));
 const TasksPanel = lazy(() => import('./components/TasksPanel.jsx'));
@@ -128,6 +129,7 @@ export default function App() {
   const [conversations, setConversations] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [quickActionsOpen, setQuickActionsOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [paletteUsed, setPaletteUsed] = useState(false); // the palette's code loads the first time it opens
   useEffect(() => {
@@ -156,6 +158,7 @@ export default function App() {
       setActiveId(null);
       setPrompt({ id: Date.now(), handsFree: true, wake: arrival, ...plan });
       setTab('chat');
+      setMenuOpen(false);
     },
     [user],
   );
@@ -251,6 +254,10 @@ export default function App() {
     setPrompt({ id: Date.now(), text, send, handsFree });
     setTab('chat');
   };
+  const quickAsk = (text, send) => {
+    setMenuOpen(false);
+    ask(text, send);
+  };
   const openConversation = (id) => {
     setActiveId(id);
     setTab('chat');
@@ -324,6 +331,33 @@ export default function App() {
         <button className="side-new" onClick={newChat}>
           <span className="side-new-plus"><Icon name="plus" size="1em" /></span> New chat
         </button>
+        <button className="side-voice" onClick={() => startSession()} disabled={!voiceSupported} title={voiceSupported ? 'Start a hands-free voice session with Azarvis' : 'Voice input needs a supported browser such as Chrome or Edge'}>
+          <span className="side-voice-icon"><Icon name="mic" size="1.1em" /></span>
+          <span className="side-voice-copy"><strong>Talk to Azarvis</strong><small>{voiceSupported ? 'Hands-free voice control' : 'Voice unavailable'}</small></span>
+          <span className={`side-voice-live ${voiceSupported ? '' : 'off'}`}><i /> {voiceSupported ? 'Ready' : 'Off'}</span>
+        </button>
+        <section className={`side-quick ${quickActionsOpen ? 'open' : ''}`}>
+          <button className="side-quick-toggle" onClick={() => setQuickActionsOpen((open) => !open)} aria-expanded={quickActionsOpen} aria-controls="side-quick-grid">
+            <span><Icon name="zap" size="1.05em" /> Quick actions</span>
+            <Icon name="chevron" size="1em" className="side-quick-chevron" />
+          </button>
+          {quickActionsOpen && (
+            <div className="side-quick-grid" id="side-quick-grid" role="group" aria-label="AI shortcuts">
+              <button onClick={() => quickAsk('Plan my day from my open tasks and reminders. Tell me what to do first, what needs follow-up, and what can wait.', true)}>
+                <Icon name="sun" /><span><strong>Plan my day</strong><small>Tasks and reminders</small></span>
+              </button>
+              <button onClick={() => quickAsk('Remind me to ', false)}>
+                <Icon name="alarm" /><span><strong>Set a reminder</strong><small>Choose a time by voice</small></span>
+              </button>
+              <button onClick={() => quickAsk('Research ', false)}>
+                <Icon name="search" /><span><strong>Research a topic</strong><small>Find current sources</small></span>
+              </button>
+              <button onClick={() => quickAsk('Write an email to ', false)}>
+                <Icon name="mail" /><span><strong>Draft an email</strong><small>Review before sending</small></span>
+              </button>
+            </div>
+          )}
+        </section>
         <nav className="side-nav" aria-label="Main">
           {tabs
             .filter((t) => SIDEBAR_TABS.includes(t.id))

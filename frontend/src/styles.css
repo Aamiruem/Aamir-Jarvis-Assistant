@@ -1411,6 +1411,48 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .wa-steps .grow { display: grid; gap: 2px; min-width: 0; }
 .wa-steps small { overflow-wrap: anywhere; }
 .wa-try { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
+
+/* Sidebar launchpad: voice first, then four useful one-tap AI workflows. */
+.side-voice {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 34%, var(--side-line)); border-radius: 15px;
+  background: linear-gradient(110deg, color-mix(in srgb, var(--accent) 11%, var(--side-card)), color-mix(in srgb, var(--violet) 10%, var(--side-card)));
+  color: var(--text); text-align: left; cursor: pointer; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.side-voice:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--accent); box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 15%, transparent); }
+.side-voice:disabled { opacity: .62; cursor: not-allowed; }
+.side-voice-icon { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 12px; color: #fff; background: linear-gradient(145deg, #08b7c9, #4f65e8 70%, #8554e8); box-shadow: 0 4px 12px rgba(79, 102, 232, .24); }
+.side-voice-copy { display: grid; gap: 1px; flex: 1; min-width: 0; }
+.side-voice-copy strong { font-size: 13.5px; line-height: 1.2; }
+.side-voice-copy small { color: var(--side-text); font-size: 11px; line-height: 1.25; }
+.side-voice-live { display: inline-flex; align-items: center; gap: 5px; flex: none; color: #16a673; font-size: 10px; font-weight: 700; }
+.side-voice-live i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; animation: side-live 1.8s ease-in-out infinite; }
+.side-voice-live.off { color: var(--muted); }
+@keyframes side-live { 50% { opacity: .45; } }
+.side-quick { border: 1px solid transparent; border-radius: 13px; transition: background .18s ease, border-color .18s ease; }
+.side-quick.open { padding: 3px; border-color: var(--side-line); background: var(--side-card); }
+.side-quick-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 7px 8px; border: 0; border-radius: 10px; background: transparent; color: var(--side-text); cursor: pointer; font-size: 12.5px; font-weight: 700; }
+.side-quick-toggle > span { display: inline-flex; align-items: center; gap: 7px; }
+.side-quick-toggle > span .icon { color: #edaa35; }
+.side-quick-toggle:hover { background: var(--side-hover); color: var(--text); }
+.side-quick-chevron { color: var(--side-icon); transition: transform .18s ease; }
+.side-quick.open .side-quick-chevron { transform: rotate(90deg); }
+.side-quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 2px; animation: side-actions-in .16s ease-out; }
+@keyframes side-actions-in { from { opacity: 0; transform: translateY(-3px); } }
+.side-quick-grid button { display: flex; align-items: flex-start; gap: 7px; min-width: 0; min-height: 48px; padding: 7px; border: 1px solid transparent; border-radius: 10px; background: color-mix(in srgb, var(--side-card) 72%, transparent); color: var(--side-text); text-align: left; cursor: pointer; transition: border-color .15s ease, background .15s ease, transform .15s ease; }
+.side-quick-grid button:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--accent) 32%, var(--side-line)); background: var(--side-hover); color: var(--text); }
+.side-quick-grid button > .icon { flex: none; margin-top: 2px; color: var(--accent); font-size: 13px; }
+.side-quick-grid button:nth-child(2) > .icon { color: #e9a630; }
+.side-quick-grid button:nth-child(3) > .icon { color: #ae85f5; }
+.side-quick-grid button:nth-child(4) > .icon { color: #ec72a9; }
+.side-quick-grid button span { display: grid; gap: 2px; min-width: 0; }
+.side-quick-grid strong { overflow: hidden; font-size: 10.5px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+.side-quick-grid small { color: var(--side-icon); font-size: 9px; line-height: 1.2; }
+@media (prefers-reduced-motion: reduce) {
+  .side-voice-live i { animation: none; }
+  .side-quick-grid { animation: none; }
+  .side-voice, .side-quick-chevron, .side-quick-grid button { transition: none; }
+}
 .wa-try code { padding: 3px 8px; border-radius: 8px; font-size: 12.5px; background: var(--panel-2); border: 1px solid var(--border); }
 
 /* Account → Voice: the neural Jarvis voice */
