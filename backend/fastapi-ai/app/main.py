@@ -27,7 +27,7 @@ from app.llm.claude import key_status
 from app.system_control import current_os
 from app.nlp.intent import get_classifier
 from app.rag.store import get_store
-from app.routers import chat, mind, misc, mllab, pcwatch, rag, study_notes, system
+from app.routers import chat, local_bridge, mind, misc, mllab, pcwatch, rag, study_notes, system
 from app.pc_watcher import watch_loop
 from app.scheduler import reminder_loop
 from app.security import require_internal_key
@@ -74,7 +74,18 @@ async def access_log(request: Request, call_next):
     return response
 
 
+@app.middleware("http")
+async def local_bridge_preflight(request: Request, call_next):
+    """The website's CORS / Private Network Access preflight for /local/device (see local_bridge.py).
+    Added after CORSMiddleware, so it runs first: that middleware only knows the gateway's origins."""
+    if request.method == "OPTIONS" and local_bridge.is_bridge_path(request.url.path):
+        return local_bridge.preflight(request)
+    return await call_next(request)
+
+
 protected = [Depends(require_internal_key)]
+# No internal key: read-only, this PC only, allowed websites only (checked in the router).
+app.include_router(local_bridge.router)
 app.include_router(chat.router, dependencies=protected)
 app.include_router(rag.router, dependencies=protected)
 app.include_router(misc.router, dependencies=protected)

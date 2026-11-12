@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     # Security / networking
     internal_api_key: str = "change-me-internal-key"
     cors_origins: str = "http://localhost:5173,http://localhost:3000,http://localhost:8501"
+    # Local bridge (app/routers/local_bridge.py): these websites may read this PC's read-only
+    # device details (CPU, memory, disk, battery, wired/Wi-Fi) from the browser. "" turns it off.
+    local_bridge_origins: str = "https://azarvis-app.vercel.app,https://azarvis-ai.vercel.app,http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173"
 
     @property
     def sqlalchemy_url(self) -> str:
