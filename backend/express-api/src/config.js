@@ -59,6 +59,20 @@ export const config = {
     maxResends: num(process.env.OTP_MAX_RESENDS, 3),
   },
 
+  // WhatsApp Jarvis (routes/whatsapp.js): the official WhatsApp Cloud API by Meta (free tier).
+  // Meta calls /api/whatsapp/webhook; the Azarvis AI service on the owner's PC pulls the messages
+  // from /api/whatsapp/relay/* with WHATSAPP_RELAY_KEY. Only WHATSAPP_OWNER_NUMBER can give commands.
+  whatsapp: {
+    token: (process.env.WHATSAPP_TOKEN || '').trim(),
+    phoneNumberId: (process.env.WHATSAPP_PHONE_NUMBER_ID || '').trim(),
+    verifyToken: (process.env.WHATSAPP_VERIFY_TOKEN || '').trim(),
+    appSecret: (process.env.WHATSAPP_APP_SECRET || '').trim(), // signs every webhook call (X-Hub-Signature-256)
+    ownerNumber: (process.env.WHATSAPP_OWNER_NUMBER || '').replace(/\D/g, ''),
+    relayKey: (process.env.WHATSAPP_RELAY_KEY || '').trim(),
+    apiVersion: process.env.WHATSAPP_API_VERSION || 'v21.0',
+    graphUrl: (process.env.WHATSAPP_GRAPH_URL || 'https://graph.facebook.com').replace(/\/$/, ''), // tests point this at a fake
+  },
+
   notifications: {
     // console: OTPs are printed in the server terminal (development)
     // smtp:    email via SMTP (e.g. Gmail App Password), SMS via Twilio if set (else terminal)

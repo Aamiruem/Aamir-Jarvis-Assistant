@@ -40,6 +40,7 @@ function memoryRepos(dataDir) {
     feedback: new memory.InMemoryFeedbackRepository(opts('feedback')),
     passkeys: new memory.InMemoryPasskeyRepository(opts('passkeys')),
     challenges: new memory.InMemoryChallengeRepository(), // minutes-long, never saved to a file
+    whatsapp: new memory.InMemoryWhatsAppRepository(opts('whatsapp')),
   };
 }
 
@@ -54,6 +55,7 @@ function mongoRepos() {
     feedback: new mongo.MongoFeedbackRepository(),
     passkeys: new mongo.MongoPasskeyRepository(),
     challenges: new mongo.MongoChallengeRepository(),
+    whatsapp: new mongo.MongoWhatsAppRepository(),
   };
 }
 

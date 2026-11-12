@@ -19,6 +19,7 @@ import { createChatRouter } from './routes/chat.js';
 import { createConversationRouter } from './routes/conversations.js';
 import { createFeedbackRouter } from './routes/feedback.js';
 import { createUserNotesRouter } from './routes/user-notes.js';
+import { createWhatsAppRouter } from './routes/whatsapp.js';
 
 /**
  * Builds the Express app from a container (see container.js). It doesn't connect to MongoDB
@@ -91,6 +92,8 @@ export function createApp(container) {
     }),
   );
 
+  // WhatsApp Jarvis: before express.json(), because the webhook's signature is over the raw body.
+  if (container.whatsapp) app.use('/api/whatsapp', createWhatsAppRouter({ repo: container.whatsapp, settings: container.whatsappSettings || config.whatsapp, cloud: container.whatsappCloud }));
   app.use(express.json({ limit: '1mb' }));
   app.use('/api/auth', createAuthRouter({ authService: container.authService, passkeyService: container.passkeyService, requireAuth, settings: container.settings, limit }));
   const { users, conversations, sessions, audit, notes, feedback } = container;

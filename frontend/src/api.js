@@ -190,6 +190,9 @@ export const api = {
   },
 
   systemStatus: () => request('/ai/system/status'),
+  whatsappStatus: () => request('/ai/whatsapp/status'),
+  whatsappTest: () => request('/ai/whatsapp/test', { method: 'POST' }),
+  whatsappServer: () => request('/whatsapp/status'),
   systemAction: (action, target) => request('/ai/system/action', { method: 'POST', body: { action, target } }),
 
   contacts: (q = '') => request(`/ai/contacts${q ? `?q=${encodeURIComponent(q)}` : ''}`),

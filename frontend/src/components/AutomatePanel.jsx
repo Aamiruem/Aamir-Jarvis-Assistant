@@ -145,6 +145,72 @@ function PcWatcherCard() {
   );
 }
 
+// WhatsApp Jarvis: message Azarvis on WhatsApp (text or voice notes) and it works on this PC,
+// then replies "✅ Done". Status from the AI service on this PC + the API on Vercel.
+const WA_EXAMPLES = ['remind me to call mom at 6 pm', 'pc status', 'open youtube', 'tasks', 'done 1', 'write a LinkedIn post about my ML project'];
+
+function WhatsAppCard() {
+  const [pc, setPc] = useState(null);
+  const [server, setServer] = useState(null);
+  const [error, setError] = useState('');
+  const load = () => {
+    api.whatsappStatus().then(setPc).catch((e) => setError(e.message));
+    api.whatsappServer().then(setServer).catch(() => setServer(null));
+  };
+  useEffect(load, []);
+  const ready = pc?.configured && server?.configured;
+  const live = ready && pc?.connected;
+  const test = async () => {
+    try {
+      await api.whatsappTest();
+      toast('Test message sent: check WhatsApp on your phone');
+      load();
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  };
+  const steps = [
+    ['Your number', Boolean(pc?.owner), pc?.owner || 'WHATSAPP_OWNER_NUMBER in .env'],
+    ['Meta WhatsApp app (free)', Boolean(server?.configured), server?.configured ? 'Connected on the server' : 'Run npm run whatsapp:setup'],
+    ['This PC connected', Boolean(pc?.connected), pc?.connected ? `Checking for messages every few seconds · ${pc.handled} handled` : pc?.last_error || 'Restart npm run dev after the setup'],
+    ['Voice notes (optional)', Boolean(pc?.voice_notes), pc?.voice_notes ? 'Understood with Whisper' : 'Add a free GROQ_API_KEY'],
+  ];
+  return (
+    <section className="card watcher wa-card" aria-labelledby="wa-title">
+      <div className="watcher-head">
+        <span className="badge-icon lg" style={{ '--hue': 142 }}><Icon name="whatsapp" /></span>
+        <div className="grow">
+          <h3 id="wa-title">WhatsApp Jarvis {live ? <span className="tool-chip wa-live">● Live</span> : <span className="tool-chip">Setup</span>}</h3>
+          <p className="muted">
+            Message Azarvis on WhatsApp, or send a voice note. It does the work on this PC and replies when it's done: "⏳ On it…",
+            then "✅ Done". Reminders and PC alerts come to your WhatsApp too. Only your number can give commands; when anyone else
+            writes, Azarvis asks you first and sends nothing without your yes.
+          </p>
+        </div>
+      </div>
+      {error && <p className="error">{error}</p>}
+      <ul className="wa-steps">
+        {steps.map(([label, ok, detail]) => (
+          <li key={label} className={ok ? 'ok' : ''}>
+            <Icon name={ok ? 'check' : 'clock'} size="1em" />
+            <span className="grow"><strong>{label}</strong><small className="muted">{detail}</small></span>
+          </li>
+        ))}
+      </ul>
+      <div className="wa-try">
+        <span className="muted small">Try sending:</span>
+        {WA_EXAMPLES.map((t) => <code key={t}>{t}</code>)}
+      </div>
+      <div className="watcher-foot">
+        {!ready && <span className="muted small">One command sets it up: <Copyable text="npm run whatsapp:setup" /></span>}
+        <button type="button" className="btn sm" disabled={!ready} onClick={test}>
+          <Icon name="whatsapp" size="1em" /> Send a test message
+        </button>
+      </div>
+    </section>
+  );
+}
+
 export default function AutomatePanel({ onAsk, onOpenTab }) {
   const [lan, setLan] = useState(null); // null = loading, [] = none found
   useEffect(() => {
@@ -177,6 +243,7 @@ export default function AutomatePanel({ onAsk, onOpenTab }) {
       </section>
 
       <PcWatcherCard />
+      <WhatsAppCard />
 
       <h3 className="section-title"><Icon name="zap" /> One-click automations</h3>
       <ul className="recipe-grid">

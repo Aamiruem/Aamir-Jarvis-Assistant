@@ -48,6 +48,8 @@ class Settings(BaseSettings):
     whatsapp_relay_key: str = ""
     whatsapp_owner_number: str = ""
     whatsapp_user_id: str = ""
+    azarvis_user_id: str = ""   # your account id (Account tab); also used by the CLI / MCP server
+    jarvis_user_id: str = ""    # older name of the same setting
     whatsapp_poll_seconds: float = 3.0
     groq_api_key: str = ""
 

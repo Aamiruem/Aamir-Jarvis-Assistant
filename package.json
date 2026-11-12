@@ -8,6 +8,7 @@
     "set-key": "node scripts/set-api-key.mjs",
     "doctor": "node scripts/doctor.mjs",
     "test": "cd backend/express-api && npm test && cd ../fastapi-ai && python -m pytest -q",
-    "install-shortcut": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows/install-shortcut.ps1"
+    "install-shortcut": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/windows/install-shortcut.ps1",
+    "whatsapp:setup": "node scripts/whatsapp-setup.mjs"
   }
 }

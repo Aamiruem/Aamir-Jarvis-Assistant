@@ -295,3 +295,38 @@ export class InMemoryChallengeRepository extends InMemoryRepository {
     this._deleteWhere((c) => c.expiresAt < now);
   }
 }
+
+/** WhatsApp messages queued for the owner's PC, plus a few state values (see models/WhatsApp.js). */
+export class InMemoryWhatsAppRepository extends InMemoryRepository {
+  constructor(opts) {
+    super(opts);
+    this.state = new Map();
+  }
+
+  /** Saves an incoming message; null when WhatsApp delivered the same message before. */
+  async saveIncoming(msg) {
+    if (this.where((m) => m.waId === msg.waId).length) return null;
+    const { receivedAt, ...rest } = msg;
+    return this.create({ ...rest, status: 'pending', deliveredAt: null, createdAt: receivedAt || new Date() });
+  }
+
+  /** The oldest waiting messages, now marked delivered (each is handed out once). */
+  async claimPending(limit = 20) {
+    const rows = this.where((m) => m.status === 'pending').sort((a, b) => a.createdAt - b.createdAt).slice(0, limit);
+    for (const r of rows) await this.update(r.id, { status: 'delivered', deliveredAt: new Date() });
+    return rows;
+  }
+
+  /** Did this number write to us since `since`? (WhatsApp only allows free-form replies within 24 h.) */
+  async wroteSince(from, since) {
+    return this.where((m) => m.from === from && m.createdAt >= since).length > 0;
+  }
+
+  async getState(key) {
+    return this.state.has(key) ? structuredClone(this.state.get(key)) : null;
+  }
+
+  async setState(key, value) {
+    this.state.set(key, structuredClone(value));
+  }
+}

@@ -1385,3 +1385,15 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
 
 /* Agent Studio tab: the studio needs the full width. */
 .panel.studio-panel { max-width: 1440px; }
+
+/* Automate → WhatsApp Jarvis */
+.wa-card { border-color: hsl(142 70% 45% / 0.35); background: linear-gradient(160deg, hsl(142 70% 45% / 0.1), var(--panel) 55%); }
+.wa-live { color: #22c55e; border-color: rgba(34, 197, 94, 0.45); }
+.wa-steps { list-style: none; padding: 0; margin: 14px 0 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px; }
+.wa-steps li { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--border); }
+.wa-steps li > .icon { margin-top: 3px; color: var(--muted); flex: none; }
+.wa-steps li.ok > .icon { color: #22c55e; }
+.wa-steps .grow { display: grid; gap: 2px; min-width: 0; }
+.wa-steps small { overflow-wrap: anywhere; }
+.wa-try { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
+.wa-try code { padding: 3px 8px; border-radius: 8px; font-size: 12.5px; background: var(--panel-2); border: 1px solid var(--border); }

@@ -81,7 +81,7 @@ async def _handle(bot: Bot, msg: dict) -> None:
 async def whatsapp_loop() -> None:
     if not configured():
         return
-    user_id = settings.whatsapp_user_id or await asyncio.to_thread(sql.most_active_user)
+    user_id = settings.whatsapp_user_id or settings.azarvis_user_id or settings.jarvis_user_id or await asyncio.to_thread(sql.most_active_user)
     bot = Bot(relay=Relay(settings.whatsapp_relay_url, settings.whatsapp_relay_key), user_id=user_id)
     STATUS.update(enabled=True, user_id=user_id)
     log.info("WhatsApp Jarvis is on (tasks of user %s)", user_id)

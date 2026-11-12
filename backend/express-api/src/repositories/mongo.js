@@ -8,6 +8,7 @@ import { WebAuthnChallenge } from '../models/WebAuthnChallenge.js';
 import { AuditLog, OtpChallenge, Session } from '../models/Security.js';
 import { User } from '../models/User.js';
 import { UserNote } from '../models/UserNote.js';
+import { WhatsAppMessage, WhatsAppState } from '../models/WhatsApp.js';
 
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -265,4 +266,44 @@ export class MongoChallengeRepository extends MongoRepository {
   }
 
   async purgeExpired() {} // MongoDB's TTL index does this
+}
+
+/** WhatsApp messages queued for the owner's PC, plus a few state values (see models/WhatsApp.js). */
+export class MongoWhatsAppRepository extends MongoRepository {
+  constructor() {
+    super(WhatsAppMessage);
+  }
+
+  async saveIncoming(msg) {
+    try {
+      const { receivedAt: _ignored, ...rest } = msg; // MongoDB stamps createdAt itself
+      return await this.create({ ...rest, status: 'pending' });
+    } catch (err) {
+      if (err?.code === 11000) return null; // the same message delivered twice
+      throw err;
+    }
+  }
+
+  async claimPending(limit = 20) {
+    const out = [];
+    for (let i = 0; i < limit; i++) {
+      // findOneAndUpdate: two pulls at once can never get the same message.
+      const doc = await this.model.findOneAndUpdate({ status: 'pending' }, { status: 'delivered', deliveredAt: new Date() }, { sort: { createdAt: 1 }, new: true }).lean();
+      if (!doc) break;
+      out.push(MongoRepository.toPlain(doc));
+    }
+    return out;
+  }
+
+  async wroteSince(from, since) {
+    return (await this.model.exists({ from, createdAt: { $gte: since } })) !== null;
+  }
+
+  async getState(key) {
+    return (await WhatsAppState.findOne({ key }).lean())?.value ?? null;
+  }
+
+  async setState(key, value) {
+    await WhatsAppState.updateOne({ key }, { value }, { upsert: true });
+  }
 }
