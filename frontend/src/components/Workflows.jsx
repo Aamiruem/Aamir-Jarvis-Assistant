@@ -14,6 +14,11 @@ const inMinutes = (m) => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 const nowText = () => new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+// Whatever the user said, greet them for the actual time of day.
+const greeting = () => {
+  const h = new Date().getHours();
+  return h < 5 ? 'Still up? Hello!' : h < 12 ? 'Good morning!' : h < 17 ? 'Good afternoon!' : 'Good evening!';
+};
 
 const WORKFLOWS = [
   {
@@ -34,7 +39,7 @@ const WORKFLOWS = [
       const open = readDemoTasks().filter((t) => !t.done);
       const first = open.find((t) => t.time) || open[0];
       const lines = [
-        `Good morning! It’s ${nowText()}.`,
+        `${greeting()} It’s ${nowText()}.`,
         open.length ? `You have ${open.length} thing${open.length > 1 ? 's' : ''} on your list.` : 'Your list is clear today.',
         ...open.slice(0, 3).map((t) => `• ${t.text}${t.time ? ` at ${fmtTime(t.time)}` : ''}`),
         first ? `Top priority: ${first.text}.` : 'A good day to start something new.',

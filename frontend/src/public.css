@@ -378,6 +378,7 @@ button.hv-float:hover { border-color: #a78bfa; background: rgba(30, 27, 75, 0.85
 .proj-platform--pages, .proj-platform--web { color: #fff; background: #6366f1; }
 .proj-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
 .proj-status i { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; }
+.proj-status--live { color: #10b981; } .proj-status--live i { background: #10b981; }
 .proj-status--online { color: #10b981; } .proj-status--online i { background: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.22); animation: kicker-dot 2s ease-in-out infinite; }
 .proj-status--waking { color: #f59e0b; } .proj-status--waking i { background: #f59e0b; }
 .proj-status--offline { color: #ef4444; } .proj-status--offline i { background: #ef4444; }

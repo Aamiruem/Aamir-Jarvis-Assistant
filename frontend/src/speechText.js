@@ -59,7 +59,7 @@ export function pauseFor(text, settled) {
   return settled ? 750 : 1250;
 }
 
-const words = (s) => (s || '').toLowerCase().match(/[a-z0-9ऀ-ॿ']+/g) || [];
+const words = (s) => (s || '').toLowerCase().match(/[a-z0-9ऀ-ॿ']+/g) || []; // Latin + Devanagari (Hindi)
 
 /**
  * True when what the microphone heard is (mostly) Azarvis's own voice coming out of the

@@ -121,10 +121,15 @@ function useOnline(url, enabled) {
 }
 
 // A cross-site check can only see that the server answered, not whether the page itself works.
-const STATUS = { checking: 'Checking…', online: 'Responding', waking: 'Waking up', offline: 'Unreachable' };
+const STATUS = { checking: 'Checking…', online: 'Responding', waking: 'Waking up', offline: 'Unreachable', live: 'Live app' };
+// Streamlit apps send a first visit through a sign-in cookie step that a check from another site
+// can't complete (it ends in "too many redirects"), although the app opens fine for visitors.
+const UNCHECKABLE = new Set(['streamlit']);
 
 function LiveCard({ app, visible }) {
-  const status = useOnline(app.href, visible);
+  const checkable = !UNCHECKABLE.has(app.platform);
+  const checked = useOnline(app.href, visible && checkable);
+  const status = checkable ? checked : 'live';
   const p = PLATFORMS[app.platform] ?? PLATFORMS.web;
   return (
     <li className="proj-live" style={{ '--pc': p.color }}>

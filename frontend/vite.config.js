@@ -2,6 +2,11 @@ import net from 'node:net';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
 
+// The local API the dev server forwards /api to. AZARVIS_API_URL picks another one (e.g. a
+// second, throwaway API for testing while your normal one keeps running on 4000).
+const LOCAL_API = new URL(process.env.AZARVIS_API_URL || 'http://localhost:4000');
+const LOCAL_PORT = Number(LOCAL_API.port || 80);
+
 /**
  * Development only. When the local API (localhost:4000) isn't running, typically because only
  * the frontend was started ("npm run dev" inside frontend/), /api requests go to the LIVE
@@ -19,7 +24,7 @@ function liveApiFallback() {
   let warned = false;
   const probe = () =>
     new Promise((resolve) => {
-      const s = net.connect(4000, '127.0.0.1');
+      const s = net.connect(LOCAL_PORT, LOCAL_API.hostname === 'localhost' ? '127.0.0.1' : LOCAL_API.hostname);
       const done = (up) => {
         s.destroy();
         resolve(up);
@@ -56,13 +61,13 @@ function liveApiFallback() {
         if (seenLocal) {
           res.statusCode = 503;
           res.setHeader('content-type', 'application/json');
-          res.end(JSON.stringify({ error: 'The local Azarvis API (localhost:4000) stopped. Start it again ("npm run dev" in the main project folder), then try again.', code: 'LOCAL_API_DOWN' }));
+          res.end(JSON.stringify({ error: `The local Azarvis API (${LOCAL_API.host}) stopped. Start it again ("npm run dev" in the main project folder), then try again.`, code: 'LOCAL_API_DOWN' }));
           return;
         }
         if (!warned) {
           warned = true;
           server.config.logger.warn(
-            `\n  Local API (localhost:4000) is not running, so /api uses the LIVE API: ${live}\n` +
+            `\n  Local API (${LOCAL_API.host}) is not running, so /api uses the LIVE API: ${live}\n` +
               '  Accounts you create are real. For a local API, run "npm run dev" in the main project folder.\n',
           );
         }
@@ -173,7 +178,7 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       // Only with "npm run dev -- --phone": reachable from other devices on the home Wi-Fi.
       host: process.env.JARVIS_PHONE === '1' ? true : 'localhost',
-      proxy: { '/api': 'http://localhost:4000' },
+      proxy: { '/api': LOCAL_API.origin },
     },
     build: {
       target: 'es2022',
