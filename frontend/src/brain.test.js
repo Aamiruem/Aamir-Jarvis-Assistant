@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseReminder, parseTime, respond } from './brain.js';
+import { parseMemory, parseReminder, parseTime, respond } from './brain.js';
 
 describe('parseTime', () => {
   it('reads common spoken and typed times', () => {
@@ -36,6 +36,20 @@ describe('respond', () => {
     expect(respond('open arvixa store').action).toEqual({ type: 'link', href: 'https://arvixa-store.vercel.app/' });
     expect(respond('show me real estate in Gurgaon').action.href).toBe('https://gratia-estates.vercel.app/');
     expect(respond('open the interview coach').action.href).toContain('real-time-conversession');
+  });
+  it('opens every demo section', () => {
+    expect(respond('open ML Lab').action).toEqual({ type: 'demo', section: 'mllab' });
+    expect(respond('show my documents').action).toEqual({ type: 'demo', section: 'knowledge' });
+    expect(respond('open the camera').action).toEqual({ type: 'demo', section: 'vision' });
+    expect(respond('open memory').action).toEqual({ type: 'demo', section: 'memory' });
+    expect(respond('open the notes').action).toEqual({ type: 'demo', section: 'notes' });
+  });
+  it('remembers facts and names, but leaves reminders alone', () => {
+    expect(respond('My name is riya').action).toEqual({ type: 'memory', fact: { kind: 'name', text: 'Riya' } });
+    expect(respond('Remember that my exam is on Friday').action).toEqual({ type: 'memory', fact: { kind: 'fact', text: 'Your exam is on Friday' } });
+    expect(respond('remember I like masala tea.').action.fact.text).toBe('You like masala tea');
+    expect(parseMemory("don't forget to drink water")).toBeNull();
+    expect(respond('remind me to drink water at 5 pm').action.type).toBe('task');
   });
   it('answers questions without an action', () => {
     expect(respond('what time is it').action).toBeUndefined();

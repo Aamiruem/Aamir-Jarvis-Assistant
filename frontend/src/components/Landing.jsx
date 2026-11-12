@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { track } from '../analytics.js';
 import { fmtTime, respond, saveDemoTask, speak } from '../brain.js';
 import { Icon } from '../icons.jsx';
-import { LIVE_APPS, PORTFOLIO_URL, REPO_URL } from '../siteLinks.js';
+import { CONTACT_EMAIL, LIVE_APPS, PORTFOLIO_URL, REPO_URL, SOCIAL } from '../siteLinks.js';
 import { useListen } from '../useListen.js';
 import FeedbackForm from './FeedbackForm.jsx';
 import Projects from './Projects.jsx';
@@ -19,9 +19,9 @@ const FEATURES = [
   { icon: 'tasks', hue: 38, title: 'Tasks & reminders', text: '“Remind me at 6 pm” just works. Azarvis reads today’s reminders when you start your day.', demo: 'tasks' },
   { icon: 'notes', hue: 48, title: 'Notes & courses', text: '86 AI/ML study chapters and 244 lectures, with search, practice cards and reading progress.', demo: 'notes' },
   { icon: 'rocket', hue: 300, title: 'Automate', text: 'Drafts for Gmail, LinkedIn, Instagram and YouTube. You review and send them yourself.', demo: 'automate' },
-  { icon: 'book', hue: 265, title: 'Knowledge base', text: 'Upload PDFs and documents, search them, and let Azarvis answer from what they say.' },
-  { icon: 'flask', hue: 160, title: 'ML Lab', text: 'Train models on your own CSV files and see honest scores, measured on rows held back from training.' },
-  { icon: 'eye', hue: 335, title: 'Vision & Room Watch', text: 'Describe photos and screenshots, and get greeted when you walk into the room.' },
+  { icon: 'book', hue: 265, title: 'Knowledge base', text: 'Upload PDFs and documents, search them, and let Azarvis answer from what they say.', demo: 'knowledge' },
+  { icon: 'flask', hue: 160, title: 'ML Lab', text: 'Train models on your own CSV files and see honest scores, measured on rows held back from training.', demo: 'mllab' },
+  { icon: 'eye', hue: 335, title: 'Vision & Room Watch', text: 'Describe photos and screenshots, and get greeted when you walk into the room.', demo: 'vision' },
 ];
 
 // What happens to one request, stage by stage: each is a separate part of the system.
@@ -47,7 +47,7 @@ const SECURITY = [
 ];
 
 export const FAQ = [
-  ['Do I need an account to try Azarvis?', 'No. Talk to Azarvis right on this page, or open the demo to look around the app with sample data: chat, add tasks, browse the real study notes and write drafts. Nothing in the demo is sent to a server; tasks you add stay in your browser.'],
+  ['Do I need an account to try Azarvis?', 'No. Talk to Azarvis right on this page, or open the demo, the front page of this site, to use every feature with sample data: chat, tasks, the real study notes, drafts, ML Lab, documents, vision and memory. Nothing in the demo is sent to a server; what you add stays in your browser.'],
   ['Which AI powers Azarvis?', 'Answers come from Claude by Anthropic. Azarvis adds the voice, your reminders, your documents and your notes around it.'],
   ['Does Azarvis send emails or posts on its own?', 'No. Automate writes drafts. You read them and send them yourself, so nothing goes out without your yes.'],
   ['Can I sign in without a password?', 'Yes, with a passkey. Sign in once, open Account, and add a passkey on each device you use. After that, Face ID, Touch ID, Windows Hello or your fingerprint opens Azarvis on that device. The secret key never leaves the device.'],
@@ -56,11 +56,22 @@ export const FAQ = [
   ['Who built Azarvis?', 'Aamir Hussain Azad, an AI/ML engineer and full-stack developer from India. The source code and his other projects are on GitHub.'],
 ];
 
+// Feedback section: other ways to get in touch. [icon, hue, label, shown value, link]
+const REACH = [
+  ['mail', 0, 'Email', CONTACT_EMAIL, `mailto:${CONTACT_EMAIL}`],
+  ['github', 230, 'GitHub issue', 'Report a bug or request a feature', `${REPO_URL}/issues`],
+  ['linkedin', 210, 'LinkedIn', 'Aamir Hussain Azad', SOCIAL.find((s) => s.label === 'LinkedIn')?.href ?? PORTFOLIO_URL],
+];
+
 const DEMO_TILES = [
   ['chat', 'chat', 190, 'Chat', 'Ask by voice or text; answers are read aloud.'],
   ['tasks', 'tasks', 38, 'Tasks', 'Add, tick off and delete reminders; they stay in your browser.'],
   ['notes', 'notes', 48, 'Notes', 'Browse the real AI/ML study notes and courses.'],
   ['automate', 'rocket', 300, 'Automate', 'Write a draft email or post in one click.'],
+  ['mllab', 'flask', 160, 'ML Lab', 'Train a model on a CSV and see its real score.'],
+  ['knowledge', 'book', 265, 'Knowledge', 'Ask questions and get answers from documents.'],
+  ['vision', 'eye', 330, 'Vision', 'Describe an image; Room Watch greets you.'],
+  ['memory', 'brain', 280, 'Memory', 'Tell it your name and goals; see what it keeps.'],
 ];
 
 // Brand colors for the "works with" strip.
@@ -389,7 +400,7 @@ export default function Landing({ onNavigate, onSection, theme }) {
               <span className="section-kicker">Live demo</span>
               <h2>Look around before you sign up</h2>
               <p>
-                The demo is the real app layout with sample data. Click through every section, talk to the chat, add tasks and read the notes. Nothing is sent to a server.
+                The demo is the real app layout with sample data, and every section works: talk to the chat, add tasks, train a model, ask your documents and read the notes. Nothing is sent to a server.
               </p>
               <button type="button" className="btn primary btn-lg" onClick={() => onNavigate('demo')}>
                 <Icon name="sparkles" size="1.05em" /> Open the demo
@@ -525,9 +536,23 @@ export default function Landing({ onNavigate, onSection, theme }) {
                 <li><Icon name="check" size="1em" /> Takes under a minute</li>
                 <li><Icon name="check" size="1em" /> Reply by email if you want one</li>
               </ul>
-              <p className="small">
-                Prefer GitHub? <a href={`${REPO_URL}/issues`} target="_blank" rel="noopener noreferrer">Open an issue</a> · <a href={PORTFOLIO_URL} target="_blank" rel="noopener noreferrer">Portfolio</a>
-              </p>
+              <div className="feedback-reach">
+                <span className="feedback-reach-title">Other ways to reach Aamir</span>
+                <ul>
+                  {REACH.map(([icon, hue, label, value, href]) => (
+                    <li key={label}>
+                      <a href={href} target={href.startsWith('mailto:') ? undefined : '_blank'} rel="noopener noreferrer" style={{ '--hue': hue }}>
+                        <span className="feature-icon sm"><Icon name={icon} size="1em" /></span>
+                        <span className="grow">
+                          <strong>{label}</strong>
+                          <small>{value}</small>
+                        </span>
+                        <Icon name="external" size="0.9em" className="feedback-reach-go" />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
             <div className="feedback-card">
               <FeedbackForm page="landing" />

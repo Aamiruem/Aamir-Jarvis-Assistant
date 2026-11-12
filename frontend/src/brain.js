@@ -68,6 +68,38 @@ export function saveDemoTask(task) {
   } catch {}
 }
 
+// ---------- Memory: what the demo remembers about the visitor (this browser only) ----------
+export const DEMO_MEMORY_KEY = 'azarvis-demo-memory';
+
+export const SAMPLE_MEMORY = () => [
+  { id: 1, kind: 'goal', text: 'Learn machine learning, one chapter a day' },
+  { id: 2, kind: 'preference', text: 'Likes short answers, read aloud' },
+  { id: 3, kind: 'fact', text: 'Studies best in the evening' },
+];
+
+export function readDemoMemory() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(DEMO_MEMORY_KEY));
+    return Array.isArray(saved) ? saved : SAMPLE_MEMORY();
+  } catch {
+    return SAMPLE_MEMORY();
+  }
+}
+
+/** The visitor's name, when they told the demo ("my name is Riya"). */
+export const memoryName = (facts) => facts.find((f) => f.kind === 'name')?.text ?? '';
+
+/** "remember that I like tea" / "my name is Riya" -> { kind, text }, or null */
+export function parseMemory(input) {
+  const t = input.trim().replace(/^(hey |ok )?azarvis,?\s*/i, '');
+  const name = t.match(/^(?:hi,?\s*|hello,?\s*)?(?:my name is|call me|i am called)\s+(\p{L}[\p{L}' -]{0,30}?)[.!]*$/iu);
+  if (name) return { kind: 'name', text: name[1].trim().replace(/^\p{L}/u, (c) => c.toUpperCase()) };
+  const m = t.match(/^(?:please\s+)?(?:remember|note|don't forget)\s+(?:that\s+)?(.{3,160}?)[.!]*$/i);
+  if (!m || /^(to|me)\b/i.test(m[1])) return null; // "remember to…" is a reminder, not a fact
+  const text = m[1].replace(/^i\b/i, 'You').replace(/^my\b/i, 'Your');
+  return { kind: 'fact', text: text.charAt(0).toUpperCase() + text.slice(1) };
+}
+
 // "open the notes", "take me to projects"...
 const PLACES = [
   // Aamir's live projects (opened in a new tab).
@@ -76,6 +108,10 @@ const PLACES = [
   [/\b(gratia|real estate|property|properties|flats?|house prices?)\b/, { type: 'link', href: site('Gratia Estates') }, 'Opening Gratia Estates for real estate in Gurgaon.'],
   [/\b(crop|farm\w*)\b/, { type: 'link', href: site('Crop Yield Prediction') }, 'Opening the crop yield prediction app.'],
   [/\b(tasks?|to-?dos?|reminders)\b/, { type: 'demo', section: 'tasks' }, 'Opening your tasks in the demo.'],
+  [/\b(ml ?lab|machine learning lab|train(ing)? a model)\b/, { type: 'demo', section: 'mllab' }, 'Opening ML Lab. Pick a dataset and train a model, right in your browser.'],
+  [/\b(knowledge|documents?|docs)\b/, { type: 'demo', section: 'knowledge' }, 'Opening Knowledge, where I search your documents.'],
+  [/\b(vision|camera|room watch|photos?|images?)\b/, { type: 'demo', section: 'vision' }, 'Opening Vision. Show me an image.'],
+  [/\b(memory|memories)\b/, { type: 'demo', section: 'memory' }, 'Opening Memory: everything I remember about you.'],
   [/\b(notes?|courses?|study)\b/, { type: 'demo', section: 'notes' }, 'Opening the study notes.'],
   [/\b(automate|automation|drafts?|posts?)\b/, { type: 'demo', section: 'automate' }, 'Opening Automate, where drafts are written.'],
   [/\bchat\b/, { type: 'demo', section: 'chat' }, 'Opening the chat.'],
@@ -102,6 +138,20 @@ export function respond(input) {
       action: { type: 'task', task: reminder },
     };
   }
+  const memory = parseMemory(raw);
+  if (memory) {
+    return {
+      text: memory.kind === 'name' ? `Nice to meet you, ${memory.text}! I'll remember your name.` : `Got it. I'll remember: “${memory.text}”. You can see and delete it in Memory.`,
+      action: { type: 'memory', fact: memory },
+    };
+  }
+  if (/what do you (know|remember)|what('s| is) my name|who am i\b/.test(t)) {
+    const facts = readDemoMemory();
+    const name = memoryName(facts);
+    const rest = facts.filter((f) => f.kind !== 'name').map((f) => `• ${f.text}`);
+    if (!name && !rest.length) return { text: "I don't remember anything about you yet. Say “remember that I like tea” or “my name is …”." };
+    return { text: `${name ? `Your name is ${name}.` : "I don't know your name yet."}${rest.length ? `\n\nI also remember:\n${rest.join('\n')}` : ''}` };
+  }
   if (/\b(dark|night) (mode|theme)\b/.test(t)) return { text: 'Switching to the dark theme.', action: { type: 'theme', mode: 'dark' } };
   if (/\b(light|day) (mode|theme)\b/.test(t)) return { text: 'Switching to the light theme.', action: { type: 'theme', mode: 'light' } };
   if (/\b(open|show|go to|take me to|see)\b/.test(t)) {
@@ -112,7 +162,7 @@ export function respond(input) {
     return { text: `It's ${now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} on ${now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}.` };
   if (/what can you do|help|feature|capabilit/.test(t))
     return {
-      text: 'In the full app I answer anything out loud, set reminders, find things in your notes and documents, write drafts for Gmail and LinkedIn, and control your computer.\n\nHere, try: “Remind me to call mom at 6 pm”, “Open the notes” or “Dark mode”.',
+      text: 'In the full app I answer anything out loud, set reminders, find things in your notes and documents, write drafts for Gmail and LinkedIn, and control your computer.\n\nHere every section works: try “Remind me to call mom at 6 pm”, “My name is …”, “Open ML Lab” or “Dark mode”.',
     };
   if (/overfit/.test(t))
     return { text: "Overfitting is when a model memorises its training data instead of learning the pattern: perfect on old examples, lost on new ones.\n\nYou spot it when the training score is high but the score on unseen data is low. Fixes: more data, a simpler model, regularisation or cross-validation." };
@@ -126,7 +176,7 @@ export function respond(input) {
     return { text: "I'm Azarvis, a personal AI voice assistant built by Aamir Hussain Azad. In the full app my answers come from Claude by Anthropic." };
   if (/^(hi|hello|hey|namaste|good (morning|afternoon|evening))\b/.test(t)) return { text: 'Hello! I am Azarvis. Try “Remind me to drink water at 5 pm” or “Open the notes”.' };
   if (/thank/.test(t)) return { text: 'You are welcome! If you liked it, the feedback form helps a lot.' };
-  return { text: 'Here I know a few things: reminders (“remind me at 6 pm to…”), opening pages (“open the notes”), the time and the theme. Create a free account and I will answer anything, out loud.' };
+  return { text: 'Here I know a few things: reminders (“remind me at 6 pm to…”), remembering facts (“remember that…”), opening sections (“open ML Lab”), the time and the theme. Create a free account and I will answer anything, out loud.' };
 }
 
 /** Reads text aloud with the browser's own voice. Returns false when it can't. */

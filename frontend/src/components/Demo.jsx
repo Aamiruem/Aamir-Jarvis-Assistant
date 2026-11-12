@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { DEMO_TASKS_KEY, fmtTime, readDemoTasks, respond, SAMPLE_TASKS, speak as speakText } from '../brain.js';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { DEMO_MEMORY_KEY, DEMO_TASKS_KEY, fmtTime, memoryName, readDemoMemory, readDemoTasks, respond, SAMPLE_TASKS, speak as speakText } from '../brain.js';
 import { Icon } from '../icons.jsx';
 import { useListen } from '../useListen.js';
 import { toast } from '../ui.jsx';
@@ -7,11 +7,17 @@ import FeedbackForm from './FeedbackForm.jsx';
 import SiteFooter from './SiteFooter.jsx';
 
 // The demo: the app's layout with sample data, open to anyone, no account and no server.
-// Chat answers come from a small script, tasks live in this browser (localStorage), Notes is
-// the real notes library (static files), Automate fills a template. Sections that need the
-// server (ML Lab, Knowledge, Vision, Memory) explain what they do and link to sign-up.
+// It is the first thing a visitor sees (the website's front page). Chat answers come from a
+// small script, tasks and memories live in this browser (localStorage), Notes is the real notes
+// library (static files), Automate fills a template, and ML Lab, Knowledge and Vision run in the
+// browser too (demoLab.js): every section works without signing up.
 
 const NotesPanel = lazy(() => import('./NotesPanel.jsx'));
+const lab = (name) => lazy(() => import('./DemoLab.jsx').then((m) => ({ default: m[name] })));
+const DemoMlLab = lab('DemoMlLab');
+const DemoKnowledge = lab('DemoKnowledge');
+const DemoVision = lab('DemoVision');
+const DemoMemory = lab('DemoMemory');
 
 const SECTIONS = [
   { id: 'home', label: 'Home', icon: 'home', hue: 205 },
@@ -20,16 +26,26 @@ const SECTIONS = [
   { id: 'notes', label: 'Notes', icon: 'notes', hue: 45 },
   { id: 'automate', label: 'Automate', icon: 'rocket', hue: 300 },
 ];
-const LOCKED = [
-  { id: 'mllab', label: 'ML Lab', icon: 'flask', hue: 160, title: 'Train models on your own data', points: ['Upload a CSV and pick the column to predict', 'Scores measured on rows held back from training', 'Keep your models and an experiment log'] },
-  { id: 'knowledge', label: 'Knowledge', icon: 'book', hue: 265, title: 'Answers from your documents', points: ['Upload PDFs, Word files and text', 'Search across everything you added', 'Ask in chat and Azarvis answers from them'] },
-  { id: 'vision', label: 'Vision', icon: 'eye', hue: 330, title: 'Azarvis can see', points: ['Describe photos and screenshots', 'Read text out of images', 'Room Watch: greets you when you walk in'] },
-  { id: 'memory', label: 'Memory', icon: 'brain', hue: 280, title: 'Remembers what matters to you', points: ['Your name, goals and preferences', 'Facts you ask it to remember', 'See and delete everything it knows'] },
+const TOOLS = [
+  { id: 'mllab', label: 'ML Lab', icon: 'flask', hue: 160 },
+  { id: 'knowledge', label: 'Knowledge', icon: 'book', hue: 265 },
+  { id: 'vision', label: 'Vision', icon: 'eye', hue: 330 },
+  { id: 'memory', label: 'Memory', icon: 'brain', hue: 280 },
 ];
-const ALL = [...SECTIONS, ...LOCKED];
+const ALL = [...SECTIONS, ...TOOLS];
+const BLURB = {
+  home: 'AI voice assistant by Aamir Hussain Azad. Every section works here, no login needed.',
+  chat: 'Ask anything. In the demo the answers are scripted.',
+  tasks: 'Tasks and reminders, saved in this browser.',
+  automate: 'Write drafts for email and social media.',
+  mllab: 'Train a model on a CSV and see honest scores, right in your browser.',
+  knowledge: 'Add documents, then ask questions and get answers from them.',
+  vision: 'Describe images and get greeted when you walk into the room.',
+  memory: 'What Azarvis remembers about you. See and delete all of it.',
+};
 
 // ---------- Chat: scripted answers ----------
-const SUGGESTIONS = ['Remind me to call mom at 6 pm', 'What can you do?', 'Open the notes', 'Explain overfitting simply', 'Tell me a joke', 'Dark mode'];
+const SUGGESTIONS = ['Remind me to call mom at 6 pm', 'What can you do?', 'My name is Aamir', 'What do you know about me?', 'Open ML Lab', 'Explain overfitting simply', 'Tell me a joke', 'Dark mode'];
 
 // Answers come from brain.js (shared with the website's hero), which can also act: add a task,
 // open a section, switch the theme.
@@ -284,8 +300,19 @@ function DemoAutomate() {
   );
 }
 
+// ---------- Memory: saved in this browser (the chat reads it through brain.js) ----------
+function useDemoMemory() {
+  const [facts, setFacts] = useState(readDemoMemory);
+  useEffect(() => {
+    try {
+      localStorage.setItem(DEMO_MEMORY_KEY, JSON.stringify(facts));
+    } catch {}
+  }, [facts]);
+  return [facts, setFacts];
+}
+
 // ---------- Home ----------
-function DemoHome({ tasks, onGo, onAsk }) {
+function DemoHome({ tasks, name, onGo, onAsk }) {
   const hour = new Date().getHours();
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const today = tasks.filter((t) => !t.done).slice(0, 3);
@@ -294,14 +321,18 @@ function DemoHome({ tasks, onGo, onAsk }) {
     ['tasks', 'tasks', 38, 'Add a reminder', 'Tasks are saved in this browser', () => onGo('tasks')],
     ['notes', 'notes', 45, 'Study notes', 'Browse the real AI/ML library', () => onGo('notes')],
     ['automate', 'rocket', 300, 'Write a post', 'Gmail, LinkedIn, Instagram, YouTube', () => onGo('automate')],
+    ['mllab', 'flask', 160, 'Train a model', 'Predict prices or results from a CSV', () => onGo('mllab')],
+    ['knowledge', 'book', 265, 'Ask your documents', 'Answers with the source passage', () => onGo('knowledge')],
+    ['vision', 'eye', 330, 'Describe an image', 'And Room Watch with your camera', () => onGo('vision')],
+    ['memory', 'brain', 280, 'What it remembers', 'Your name, goals and preferences', () => onGo('memory')],
   ];
   return (
     <div className="demo-home">
       <div className="demo-hello">
         <div className="orb demo-hello-orb" aria-hidden="true" />
         <div>
-          <h2>{greet}, guest</h2>
-          <p className="muted">This is Azarvis with sample data. Pick something to try.</p>
+          <h2>{greet}, {name || 'guest'}</h2>
+          <p className="muted">This is Azarvis with sample data. Every feature works, no account needed. Pick something to try.</p>
         </div>
       </div>
       <ul className="demo-actions">
@@ -338,23 +369,6 @@ function DemoHome({ tasks, onGo, onAsk }) {
   );
 }
 
-function Locked({ item, onNavigate }) {
-  return (
-    <div className="demo-locked" style={{ '--hue': item.hue }}>
-      <span className="badge-icon lg"><Icon name={item.icon} /></span>
-      <h2>{item.title}</h2>
-      <ul>
-        {item.points.map((p) => <li key={p}><Icon name="check" size="1em" /> {p}</li>)}
-      </ul>
-      <p className="muted">{item.label} works with your own files and data, so it needs the Azarvis server and a free account.</p>
-      <div className="demo-locked-cta">
-        <button type="button" className="btn primary" onClick={() => onNavigate('signup')}>Create free account</button>
-        <button type="button" className="btn" onClick={() => onNavigate('login')}>Sign in</button>
-      </div>
-    </div>
-  );
-}
-
 function FeedbackDialog({ onClose }) {
   useEffect(() => {
     const esc = (e) => e.key === 'Escape' && onClose();
@@ -377,10 +391,10 @@ function FeedbackDialog({ onClose }) {
 export default function Demo({ section, onSection, onNavigate, theme }) {
   const current = ALL.find((s) => s.id === section) ?? SECTIONS[0];
   const [tasks, setTasks] = useDemoTasks();
+  const [facts, setFacts] = useDemoMemory();
   const [seed, setSeed] = useState(null);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const contentRef = useRef(null);
-  const locked = useMemo(() => LOCKED.find((l) => l.id === current.id), [current.id]);
 
   const go = (id) => {
     onSection(id);
@@ -391,6 +405,9 @@ export default function Demo({ section, onSection, onNavigate, theme }) {
     if (action.type === 'task') {
       setTasks((ts) => [{ id: Date.now(), done: false, time: '', ...action.task }, ...ts]);
       toast(action.task.time ? `Reminder set for ${fmtTime(action.task.time)}` : 'Task added');
+    } else if (action.type === 'memory') {
+      const f = { id: Date.now(), ...action.fact };
+      setFacts((fs) => (f.kind === 'name' ? [f, ...fs.filter((x) => x.kind !== 'name')] : [f, ...fs]));
     } else if (action.type === 'demo' && action.section !== 'chat') setTimeout(() => go(action.section), 900);
     else if (action.type === 'page') setTimeout(() => onNavigate(action.page), 900);
     else if (action.type === 'scroll') setTimeout(() => onNavigate('home', '', action.id), 900);
@@ -406,7 +423,6 @@ export default function Demo({ section, onSection, onNavigate, theme }) {
     <button key={s.id} type="button" className={`demo-link ${current.id === s.id ? 'active' : ''}`} style={{ '--hue': s.hue }} onClick={() => go(s.id)} aria-current={current.id === s.id ? 'page' : undefined}>
       <span className="side-ico"><Icon name={s.icon} size="1.15em" /></span>
       <span className="grow">{s.label}</span>
-      {LOCKED.includes(s) && <Icon name="key" size="0.85em" className="demo-link-lock" />}
     </button>
   );
 
@@ -414,7 +430,7 @@ export default function Demo({ section, onSection, onNavigate, theme }) {
     <div className="demo">
       <div className="demo-banner pub-wrap">
         <span className="demo-banner-pill"><Icon name="sparkles" size="0.95em" /> Demo mode</span>
-        <span className="demo-banner-text">Sample data. Nothing is sent to a server; tasks you add stay in this browser.</span>
+        <span className="demo-banner-text">No login needed. Try every feature with sample data; nothing is sent to a server and what you add stays in this browser.</span>
         <span className="demo-banner-cta">
           <button type="button" className="btn sm" onClick={() => setFeedbackOpen(true)}><Icon name="chat" size="0.95em" /> Feedback</button>
           <button type="button" className="btn primary sm" onClick={() => onNavigate('signup')}>Create free account</button>
@@ -424,10 +440,10 @@ export default function Demo({ section, onSection, onNavigate, theme }) {
       <div className="demo-layout pub-wrap">
         <aside className="demo-side" aria-label="Demo sections">
           <nav className="demo-nav">
-            <span className="demo-nav-title">Try it</span>
+            <span className="demo-nav-title">Assistant</span>
             {SECTIONS.map(link)}
-            <span className="demo-nav-title">With an account</span>
-            {LOCKED.map(link)}
+            <span className="demo-nav-title">AI tools</span>
+            {TOOLS.map(link)}
           </nav>
           <div className="demo-side-card">
             <strong>Enjoying the demo?</strong>
@@ -442,20 +458,14 @@ export default function Demo({ section, onSection, onNavigate, theme }) {
           <header className="demo-head">
             <span className="badge-icon lg"><Icon name={current.icon} /></span>
             <div className="grow">
-              <h1>{current.label}</h1>
-              <p className="muted">
-                {{
-                  home: 'Your day at a glance.',
-                  chat: 'Ask anything. In the demo the answers are scripted.',
-                  tasks: 'Tasks and reminders, saved in this browser.',
-                  automate: 'Write drafts for email and social media.',
-                }[current.id] ?? 'Available with a free account.'}
-              </p>
+              {/* The site's front page: its heading names the product for search engines. */}
+              <h1>{current.id === 'home' ? 'Azarvis' : current.label}</h1>
+              <p className="muted">{BLURB[current.id]}</p>
             </div>
           </header>
           )}
 
-          {current.id === 'home' && <DemoHome tasks={tasks} onGo={go} onAsk={ask} />}
+          {current.id === 'home' && <DemoHome tasks={tasks} name={memoryName(facts)} onGo={go} onAsk={ask} />}
           {current.id === 'chat' && <DemoChat seed={seed} onSeedUsed={() => setSeed(null)} onAction={runAction} />}
           {current.id === 'tasks' && <DemoTasks tasks={tasks} setTasks={setTasks} />}
           {current.id === 'automate' && <DemoAutomate />}
@@ -466,7 +476,14 @@ export default function Demo({ section, onSection, onNavigate, theme }) {
               </Suspense>
             </div>
           )}
-          {locked && <Locked item={locked} onNavigate={onNavigate} />}
+          {TOOLS.some((t) => t.id === current.id) && (
+            <Suspense fallback={<div className="tab-loading"><div className="orb pulse" /></div>}>
+              {current.id === 'mllab' && <DemoMlLab />}
+              {current.id === 'knowledge' && <DemoKnowledge />}
+              {current.id === 'vision' && <DemoVision />}
+              {current.id === 'memory' && <DemoMemory facts={facts} setFacts={setFacts} onAsk={ask} />}
+            </Suspense>
+          )}
         </section>
       </div>
 

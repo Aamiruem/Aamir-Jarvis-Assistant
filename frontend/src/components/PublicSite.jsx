@@ -11,12 +11,14 @@ import ThemeMenu from './ThemeMenu.jsx';
 // Everything a visitor sees before signing in: the website (Home), Sign in / Sign up, and the
 // Demo, which shows the app with sample data and needs no account.
 // The page lives in the address (?page=demo&section=chat), so Back/Forward and shared links work.
+// "/" is the website (home); the demo (?page=demo) lets anyone try every feature without signing in.
 
 const Demo = lazy(() => import('./Demo.jsx'));
 const PAGES = ['home', 'login', 'signup', 'demo'];
+const FRONT = 'home'; // the page at "/" (no ?page=)
 const META = {
-  home: ['Azarvis – AI Voice Assistant by Aamir Hussain Azad', 'Azarvis is a personal AI voice assistant by Aamir Hussain Azad, powered by Claude: talk naturally and it handles reminders, tasks, study notes, documents and your computer, hands-free. Try the live demo.'],
-  demo: ['Live demo · Azarvis AI Voice Assistant', 'Try Azarvis without an account: talk to it, set reminders, browse the AI/ML study notes and write email and social media drafts in the live demo.'],
+  home: ['Azarvis – AI Voice Assistant by Aamir Hussain Azad', 'Azarvis is a personal AI voice assistant by Aamir Hussain Azad, powered by Claude: talk naturally and it handles reminders, tasks, study notes, documents and your computer, hands-free. See every feature and how it works.'],
+  demo: ['Live demo · Azarvis AI Voice Assistant by Aamir Hussain Azad', 'Azarvis by Aamir Hussain Azad is a personal AI voice assistant powered by Claude. Try every feature free, no login: chat by voice, reminders, study notes, ML Lab, documents, vision and memory.'],
   signup: ['Create your free account · Azarvis', 'Create a free Azarvis account in a minute and talk to your personal AI voice assistant on your laptop or phone.'],
   login: ['Sign in · Azarvis', 'Sign in to Azarvis with your password or a passkey (Face ID, Touch ID, Windows Hello or fingerprint).'],
 };
@@ -24,13 +26,13 @@ const META = {
 const readUrl = () => {
   const q = new URLSearchParams(window.location.search);
   const page = q.get('page');
-  return { page: PAGES.includes(page) ? page : 'home', section: q.get('section') || '' };
+  return { page: PAGES.includes(page) ? page : FRONT, section: q.get('section') || '' };
 };
 const urlFor = (page, section) => {
   const q = new URLSearchParams(window.location.search);
   q.delete('page');
   q.delete('section');
-  if (page !== 'home') q.set('page', page);
+  if (page !== FRONT) q.set('page', page);
   if (section && page === 'demo') q.set('section', section);
   const s = q.toString();
   return `${window.location.pathname}${s ? `?${s}` : ''}`;
@@ -76,7 +78,7 @@ function PublicNav({ page, theme, onNavigate, onSection }) {
           onClick={(e) => {
             e.preventDefault();
             setOpen(false);
-            onNavigate('home');
+            onNavigate(FRONT);
           }}
           aria-label="Azarvis home"
         >
@@ -199,7 +201,7 @@ export default function PublicSite({ theme, onAuth }) {
   );
 
   const signedIn = (user) => {
-    window.history.replaceState(null, '', urlFor('home'));
+    window.history.replaceState(null, '', urlFor(FRONT));
     onAuth(user);
   };
 
