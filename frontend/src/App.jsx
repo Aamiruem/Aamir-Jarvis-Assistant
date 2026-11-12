@@ -33,12 +33,14 @@ const AutomatePanel = lazy(() => import('./components/AutomatePanel.jsx'));
 const MlLabPanel = lazy(() => import('./components/MlLabPanel.jsx'));
 const NotesPanel = lazy(() => import('./components/NotesPanel.jsx'));
 const DevicePanel = lazy(() => import('./components/DevicePanel.jsx'));
+const StudioPanel = lazy(() => import('./components/StudioPanel.jsx'));
 
 // Each tab has its own color (--hue), used for its icon in the top bar and the sidebar.
 const TABS = [
   { id: 'home', label: 'Home', icon: 'home', hue: 205 },
   { id: 'chat', label: 'Chat', icon: 'chat', hue: 190 },
   { id: 'automate', label: 'Automate', icon: 'rocket', hue: 300 },
+  { id: 'studio', label: 'Agent Studio', icon: 'workflow', hue: 85, isNew: true },
   { id: 'mllab', label: 'ML Lab', icon: 'flask', hue: 160 },
   { id: 'notes', label: 'Notes', icon: 'notes', hue: 45, isNew: true },
   { id: 'tasks', label: 'Tasks', icon: 'tasks', hue: 38 },
@@ -446,6 +448,7 @@ export default function App() {
             {tab === 'notes' && <NotesPanel target={notesTarget} />}
             {tab === 'vision' && <VisionPanel />}
             {tab === 'device' && <DevicePanel />}
+            {tab === 'studio' && <StudioPanel onAsk={(text) => ask(text, true)} />}
             {tab === 'knowledge' && <KnowledgePanel />}
             {tab === 'tasks' && <TasksPanel />}
             {tab === 'memory' && <MemoryPanel />}

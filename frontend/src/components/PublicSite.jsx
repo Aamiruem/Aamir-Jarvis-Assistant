@@ -14,11 +14,13 @@ import ThemeMenu from './ThemeMenu.jsx';
 // "/" is the website (home); the demo (?page=demo) lets anyone try every feature without signing in.
 
 const Demo = lazy(() => import('./Demo.jsx'));
-const PAGES = ['home', 'login', 'signup', 'demo'];
+const AgentStudio = lazy(() => import('./AgentStudio.jsx'));
+const PAGES = ['home', 'login', 'signup', 'demo', 'studio'];
 const FRONT = 'home'; // the page at "/" (no ?page=)
 const META = {
   home: ['Azarvis – AI Voice Assistant by Aamir Hussain Azad', 'Azarvis is a personal AI voice assistant by Aamir Hussain Azad, powered by Claude: talk naturally and it handles reminders, tasks, study notes, documents and your computer, hands-free. See every feature and how it works.'],
   demo: ['Live demo · Azarvis AI Voice Assistant by Aamir Hussain Azad', 'Azarvis by Aamir Hussain Azad is a personal AI voice assistant powered by Claude. Try every feature free, no login: chat by voice, reminders, study notes, ML Lab, documents, vision and memory.'],
+  studio: ['Agent Studio · Azarvis AI by Aamir Hussain Azad', 'Talk to Azarvis for three minutes or type your idea: a manager and eight AI specialists write a week of content and design 9 images, or diagnose a problem and plan the fix. Free, no login.'],
   signup: ['Create your free account · Azarvis', 'Create a free Azarvis account in a minute and talk to your personal AI voice assistant on your laptop or phone.'],
   login: ['Sign in · Azarvis', 'Sign in to Azarvis with your password or a passkey (Face ID, Touch ID, Windows Hello or fingerprint).'],
 };
@@ -103,6 +105,9 @@ function PublicNav({ page, theme, onNavigate, onSection }) {
             <span>by Aamir</span>
           </a>
           <ThemeMenu theme={theme} />
+          <button type="button" className={`pub-studio-link ${page === 'studio' ? 'active' : ''}`} onClick={act(() => onNavigate('studio'))}>
+            <Icon name="workflow" size="1em" /> Agent Studio
+          </button>
           <button type="button" className={`pub-demo-link ${page === 'demo' ? 'active' : ''}`} onClick={act(() => onNavigate('demo'))}>
             <Icon name="sparkles" size="1em" /> Try demo
           </button>
@@ -138,6 +143,9 @@ function PublicNav({ page, theme, onNavigate, onSection }) {
             </button>
           ))}
           <div className="pub-drawer-cta">
+            <button type="button" className="btn pub-drawer-studio" onClick={act(() => onNavigate('studio'))}>
+              <Icon name="workflow" size="1em" /> Agent Studio: voice + AI team
+            </button>
             <button type="button" className="btn" onClick={act(() => onNavigate('demo'))}>
               <Icon name="sparkles" size="1em" /> Try the demo (no login)
             </button>
@@ -215,6 +223,20 @@ export default function PublicSite({ theme, onAuth }) {
         {(page === 'login' || page === 'signup') && (
           <Login key={page} initialStep={page === 'signup' ? 'register' : 'login'} onAuth={signedIn} onDemo={() => navigate('demo')} onHome={() => navigate('home')} />
         )}
+        {page === 'studio' && (
+          <Suspense fallback={<div className="tab-loading"><div className="orb pulse" /></div>}>
+            <div className="pub-wrap studio-page">
+              <header className="studio-head">
+                <span className="studio-logo"><Icon name="workflow" size="1.3em" /></span>
+                <div>
+                  <h1>Agent Studio <span className="grad-text">· Azarvis + team</span></h1>
+                  <p>Talk for three minutes, or type your idea. Get a week of content and 9 designed images, or a full fix plan for any problem. No login.</p>
+                </div>
+              </header>
+              <AgentStudio />
+            </div>
+          </Suspense>
+        )}
         {page === 'demo' && (
           <Suspense fallback={<div className="tab-loading"><div className="orb pulse" /></div>}>
             <Demo section={section} onSection={setDemoSection} onNavigate={navigate} theme={theme} />
@@ -227,6 +249,7 @@ export default function PublicSite({ theme, onAuth }) {
           cta
           onOpenTab={(tab) => navigate('demo', tab)}
           onDemo={() => navigate('demo')}
+          onStudio={() => navigate('studio')}
           onSignup={() => navigate('signup')}
           onFeedback={() => scrollToSection('feedback')}
         />

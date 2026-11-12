@@ -108,6 +108,7 @@ const PLACES = [
   [/\b(gratia|real estate|property|properties|flats?|house prices?)\b/, { type: 'link', href: site('Gratia Estates') }, 'Opening Gratia Estates for real estate in Gurgaon.'],
   [/\b(crop|farm\w*)\b/, { type: 'link', href: site('Crop Yield Prediction') }, 'Opening the crop yield prediction app.'],
   [/\b(tasks?|to-?dos?|reminders)\b/, { type: 'demo', section: 'tasks' }, 'Opening your tasks in the demo.'],
+  [/\b(agent studio|studio|content engine|agents?|ai team|content team)\b/, { type: 'page', page: 'studio' }, 'Opening Agent Studio: talk to me and my team builds it.'],
   [/\b(ml ?lab|machine learning lab|train(ing)? a model)\b/, { type: 'demo', section: 'mllab' }, 'Opening ML Lab. Pick a dataset and train a model, right in your browser.'],
   [/\b(knowledge|documents?|docs)\b/, { type: 'demo', section: 'knowledge' }, 'Opening Knowledge, where I search your documents.'],
   [/\b(vision|camera|room watch|photos?|images?)\b/, { type: 'demo', section: 'vision' }, 'Opening Vision. Show me an image.'],

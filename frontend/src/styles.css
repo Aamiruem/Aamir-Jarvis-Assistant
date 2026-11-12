@@ -72,6 +72,9 @@
   --glow-2: rgba(79, 70, 229, 0.1);
   --glow-3: rgba(147, 51, 234, 0.08);
   --dots: rgba(51, 65, 120, 0.07);
+  --surface: #ffffff;
+  --surface-2: #f1f4fa;
+  --border-strong: rgba(51, 65, 120, 0.2);
   color-scheme: light;
 }
 
@@ -1356,6 +1359,10 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
   --glow-3: rgba(236, 72, 153, 0.03);
   --dots: transparent;
   --shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
+  /* Card surfaces shared with the website (DeviceCard, Agent Studio). */
+  --surface: #151820;
+  --surface-2: #1b1f29;
+  --border-strong: rgba(255, 255, 255, 0.15);
 }
 
 /* Account → Voice */

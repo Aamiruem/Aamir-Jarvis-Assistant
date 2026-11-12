@@ -454,6 +454,11 @@ export default function Demo({ section, onSection, onNavigate, theme }) {
             {SECTIONS.map(link)}
             <span className="demo-nav-title">AI tools</span>
             {TOOLS.map(link)}
+            <button type="button" className="demo-link demo-link--studio" style={{ '--hue': 85 }} onClick={() => onNavigate('studio')}>
+              <span className="side-ico"><Icon name="workflow" size="1.15em" /></span>
+              <span className="grow">Agent Studio</span>
+              <Icon name="external" size="0.85em" />
+            </button>
           </nav>
           <div className="demo-side-card">
             <strong>Enjoying the demo?</strong>

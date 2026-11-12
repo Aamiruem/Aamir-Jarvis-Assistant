@@ -50,7 +50,7 @@ function Item({ link, onOpenTab }) {
   );
 }
 
-export default function SiteFooter({ compact = false, onOpenTab, cta = false, onDemo, onSignup, onFeedback }) {
+export default function SiteFooter({ compact = false, onOpenTab, cta = false, onDemo, onStudio, onSignup, onFeedback }) {
   if (compact) {
     return (
       <footer className="site-foot site-foot--compact">
@@ -80,6 +80,7 @@ export default function SiteFooter({ compact = false, onOpenTab, cta = false, on
             </div>
           </div>
           <div className="site-foot-cta-btns">
+            {onStudio && <button type="button" className="btn site-foot-studio" onClick={onStudio}><Icon name="workflow" size="1em" /> Agent Studio</button>}
             {onDemo && <button type="button" className="btn" onClick={onDemo}><Icon name="sparkles" size="1em" /> Try without login</button>}
             {onSignup && <button type="button" className="btn primary" onClick={onSignup}>Create free account</button>}
           </div>
