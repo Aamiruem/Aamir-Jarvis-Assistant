@@ -224,6 +224,28 @@ def list_notifications(user_id: str, unread_only: bool = False, limit: int = 30)
         return [n.to_dict() for n in s.scalars(q.order_by(Notification.created_at.desc()).limit(limit))]
 
 
+def notifications_after(user_id: str, after_id: int, limit: int = 20) -> list[dict]:
+    """Notifications newer than after_id, oldest first (WhatsApp forwards each one once)."""
+    with SessionLocal() as s:
+        q = select(Notification).where(Notification.user_id == user_id, Notification.id > after_id)
+        return [n.to_dict() for n in s.scalars(q.order_by(Notification.id).limit(limit))]
+
+
+def last_notification_id() -> int:
+    with SessionLocal() as s:
+        return s.scalar(select(func.max(Notification.id))) or 0
+
+
+def most_active_user() -> str:
+    """The user who chats with Azarvis most on this PC (the owner, on a personal install)."""
+    with SessionLocal() as s:
+        row = s.execute(select(ChatLog.user_id, func.count()).group_by(ChatLog.user_id).order_by(func.count().desc()).limit(1)).first()
+        if row:
+            return row[0]
+        row = s.execute(select(Task.user_id, func.count()).group_by(Task.user_id).order_by(func.count().desc()).limit(1)).first()
+        return row[0] if row else "local"
+
+
 def mark_notifications_read(user_id: str, ids: list[int]) -> int:
     with SessionLocal.begin() as s:
         rows = s.scalars(select(Notification).where(Notification.user_id == user_id, Notification.id.in_(ids))).all()
