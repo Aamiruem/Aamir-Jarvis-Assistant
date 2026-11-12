@@ -196,9 +196,13 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (!id.includes('node_modules')) return;
             if (/[\/](react|react-dom|scheduler)[\/]/.test(id)) return 'react';
+            // Passkey sign-in is the only library the first screen needs: alone, so it stays tiny.
+            if (/[\/]@simplewebauthn[\/]/.test(id)) return 'passkeys';
             // Formulas and tables are only needed by Notes: keep them out of what Chat downloads.
             if (/[\/](katex|rehype-katex|remark-math|remark-gfm|micromark-extension-(math|gfm[^\/]*)|mdast-util-(math|gfm[^\/]*)|hast-util-from-dom|hast-util-to-text|unist-util-find-after|ccount|escape-string-regexp|markdown-table)[\/]/.test(id)) return 'notes-vendor';
-            return 'vendor';
+            // Everything else is the Markdown renderer (Chat, Notes): loaded with those screens, never
+            // on the first page. (One shared "vendor" chunk used to pull all of it into the start.)
+            return 'markdown';
           },
         },
       },

@@ -1,18 +1,13 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { api, auth, onSessionExpired } from './api.js';
-import HomePanel from './components/HomePanel.jsx';
 import { sessionPlan } from './session.js';
 import { useRoomWatch } from './useRoomWatch.js';
-import PublicSite from './components/PublicSite.jsx';
 import SiteFooter from './components/SiteFooter.jsx';
-import CommandPalette from './components/CommandPalette.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
 import ThemeMenu from './components/ThemeMenu.jsx';
 import { Icon } from './icons.jsx';
 import { useTheme } from './theme.js';
 import { toast, Toaster } from './ui.jsx';
-import WelcomePrompt from './components/WelcomePrompt.jsx';
-import InstallDialog from './components/InstallDialog.jsx';
 import { share, useInstall } from './pwa.js';
 
 // Aamir Hussain Azad's portfolio: linked from the top bar and the command palette.
@@ -22,6 +17,32 @@ import { PORTFOLIO_URL } from './siteLinks.js';
 // downloaded the first time it's opened (Chat is fetched early while the browser is idle).
 const loadChat = () => import('./components/Chat.jsx');
 const Chat = lazy(loadChat);
+// The website and the signed-in app are separate downloads: a visitor never loads the app's
+// screens, a signed-in user never loads the landing page. While the session check runs, the
+// screen this browser most likely needs is already downloading (hint saved at sign-in).
+const loadPublic = () => import('./components/PublicSite.jsx');
+const loadHome = () => import('./components/HomePanel.jsx');
+const PublicSite = lazy(loadPublic);
+const HomePanel = lazy(loadHome);
+const CommandPalette = lazy(() => import('./components/CommandPalette.jsx'));
+const WelcomePrompt = lazy(() => import('./components/WelcomePrompt.jsx'));
+const InstallDialog = lazy(() => import('./components/InstallDialog.jsx'));
+const SIGNED_IN_HINT = 'azarvis-signed-in';
+const readHint = () => {
+  try {
+    return localStorage.getItem(SIGNED_IN_HINT) === '1';
+  } catch {
+    return false;
+  }
+};
+const writeHint = (on) => {
+  try {
+    if (on) localStorage.setItem(SIGNED_IN_HINT, '1');
+    else localStorage.removeItem(SIGNED_IN_HINT);
+  } catch {}
+};
+if (typeof window !== 'undefined') (readHint() ? loadHome : loadPublic)().catch(() => {});
+const Spinner = () => <div className="center-screen"><div className="orb pulse" /></div>;
 const VisionPanel = lazy(() => import('./components/VisionPanel.jsx'));
 const KnowledgePanel = lazy(() => import('./components/KnowledgePanel.jsx'));
 const TasksPanel = lazy(() => import('./components/TasksPanel.jsx'));
@@ -99,12 +120,19 @@ const welcomeShown = () => {
 export default function App() {
   const [user, setUser] = useState(null);
   const [checking, setChecking] = useState(true);
+  useEffect(() => {
+    if (!checking) writeHint(Boolean(user)); // next visit: download this screen while signing in
+  }, [user, checking]);
   const [tab, setTab] = useState(startTab);
   const [prompt, setPrompt] = useState(null); // { id, text, send, handsFree } handed from Home to Chat
   const [conversations, setConversations] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteUsed, setPaletteUsed] = useState(false); // the palette's code loads the first time it opens
+  useEffect(() => {
+    if (paletteOpen) setPaletteUsed(true);
+  }, [paletteOpen]);
   const [navQuery, setNavQuery] = useState(''); // the navbar search box: Enter sends it to Chat
   const [paletteQuery, setPaletteQuery] = useState('');
   const [installHelp, setInstallHelp] = useState(false);
@@ -204,9 +232,9 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [user]);
 
-  if (checking) return <div className="center-screen"><div className="orb pulse" /></div>;
+  if (checking) return <Spinner />;
   // Signed out: the public website (landing page, sign in / sign up, and the demo without an account).
-  if (!user) return <PublicSite theme={theme} onAuth={(u) => setUser(u)} />;
+  if (!user) return <Suspense fallback={<Spinner />}><PublicSite theme={theme} onAuth={(u) => setUser(u)} /></Suspense>;
 
   const tabs = TABS.filter((t) => !t.adminOnly || user.role === 'admin');
 
@@ -460,6 +488,8 @@ export default function App() {
         </section>
       </main>
 
+      {paletteUsed && (
+      <Suspense fallback={null}>
       <CommandPalette
         open={paletteOpen}
         initialQuery={paletteQuery}
@@ -468,6 +498,8 @@ export default function App() {
         conversations={conversations}
         actions={{ openTab: setTab, ask, newChat, startSession, install: installApp, share: shareJarvis, openPortfolio: () => window.open(PORTFOLIO_URL, '_blank', 'noopener,noreferrer'), openNotes: (chapter, heading) => { setNotesTarget({ chapter, heading, at: Date.now() }); setTab('notes'); }, openConversation, openContacts, toggleTheme: () => theme.setChoice(theme.mode === 'dark' ? 'light' : 'dark') }}
       />
+      </Suspense>
+      )}
       <nav className="bottom-nav" aria-label="Main (phone)">
         {tabs.filter((t) => BOTTOM_TABS.includes(t.id)).map((t) => (
           <button key={t.id} className={tab === t.id ? 'active' : ''} style={{ '--hue': t.hue }} onClick={() => go(t.id)} aria-current={tab === t.id ? 'page' : undefined}>
@@ -480,8 +512,9 @@ export default function App() {
           <span>More</span>
         </button>
       </nav>
-      {installHelp && <InstallDialog onClose={() => setInstallHelp(false)} />}
+      {installHelp && <Suspense fallback={null}><InstallDialog onClose={() => setInstallHelp(false)} /></Suspense>}
       {welcome && (
+        <Suspense fallback={null}>
         <WelcomePrompt
           name={user.name}
           autoStart={autoStart}
@@ -492,6 +525,7 @@ export default function App() {
           }}
           onClose={closeWelcome}
         />
+        </Suspense>
       )}
       <Toaster />
     </div>
