@@ -1,0 +1,68 @@
+/* Neural Network algorithms cheatsheet inside ML Lab. Fast client-side search + category
+   filter; each card has an inline-SVG diagram tinted by its category --hue. Theme-aware. */
+.na { display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
+.na-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between; }
+.na-title { margin: 0; font-size: 19px; display: flex; align-items: center; gap: 8px; }
+.na-count { font-family: Rajdhani, Inter, sans-serif; font-weight: 800; font-size: 26px; color: var(--accent); line-height: 1; }
+.na-sub { margin: 4px 0 0; font-size: 13px; color: var(--muted); max-width: 60ch; }
+
+.na-search { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; background: var(--field, rgba(0,0,0,0.25)); border: 1px solid var(--border); min-width: 220px; }
+.na-search .icon { color: var(--muted); }
+.na-search input { flex: 1; min-width: 0; background: none; border: none; color: var(--text); font: inherit; outline: none; }
+.na-clear { background: none; border: none; color: var(--muted); cursor: pointer; display: grid; place-items: center; padding: 2px; }
+
+.na-cats { display: flex; flex-wrap: wrap; gap: 8px; }
+.na-cat {
+  --hue: 190;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 13px; font-weight: 600;
+  background: var(--panel-2, rgba(120,130,160,0.12)); border: 1px solid var(--border); color: var(--text);
+}
+.na-cat small { font-size: 11px; opacity: 0.6; }
+.na-cat:hover { border-color: hsl(var(--hue) 85% 60% / 0.5); }
+.na-cat.on { background: hsl(var(--hue) 85% 55% / 0.2); border-color: hsl(var(--hue) 85% 60% / 0.6); color: hsl(var(--hue) 90% 72%); }
+:root[data-theme='light'] .na-cat.on { color: hsl(var(--hue) 80% 36%); }
+
+.na-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.na-card {
+  --hue: 190;
+  display: flex; flex-direction: column;
+  border-radius: 14px; overflow: hidden;
+  background: var(--panel-solid); border: 1px solid var(--border);
+  transition: transform 0.14s, border-color 0.14s, box-shadow 0.14s;
+}
+.na-card:hover { transform: translateY(-3px); border-color: hsl(var(--hue) 85% 60% / 0.5); box-shadow: 0 12px 26px hsl(var(--hue) 80% 25% / 0.28); }
+.na-card.open { border-color: hsl(var(--hue) 85% 60% / 0.7); }
+.na-card-main { text-align: left; cursor: pointer; background: none; border: none; padding: 0 14px 12px; display: flex; flex-direction: column; gap: 7px; color: inherit; }
+
+.na-diawrap {
+  margin: 0 -14px 4px; padding: 10px;
+  color: hsl(var(--hue) 90% 68%);
+  background: linear-gradient(150deg, hsl(var(--hue) 80% 45% / 0.18), hsl(var(--hue) 80% 30% / 0.04));
+  border-bottom: 1px solid hsl(var(--hue) 80% 55% / 0.25);
+}
+:root[data-theme='light'] .na-diawrap { color: hsl(var(--hue) 75% 40%); }
+.na-dia { display: block; width: 100%; height: 58px; }
+
+.na-card-top { display: flex; align-items: center; gap: 7px; }
+.na-num { font-family: Rajdhani, Inter, sans-serif; font-weight: 800; font-size: 15px; color: hsl(var(--hue) 90% 68%); min-width: 18px; }
+.na-card-top strong { font-size: 15px; flex: 1; }
+.na-cat-tag { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: hsl(var(--hue) 90% 70%); background: hsl(var(--hue) 85% 55% / 0.14); padding: 2px 7px; border-radius: 6px; }
+:root[data-theme='light'] .na-num, :root[data-theme='light'] .na-cat-tag { color: hsl(var(--hue) 75% 38%); }
+.na-tag { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+.na-formula { font-size: 11.5px; background: var(--field, rgba(0,0,0,0.25)); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; align-self: flex-start; color: var(--text); }
+.na-points { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.na-points li { display: flex; align-items: center; gap: 6px; font-size: 12.5px; }
+.na-points .icon { color: hsl(var(--hue) 90% 65%); flex: none; }
+.na-use { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+.na-use b { color: var(--text); }
+
+.na-actions { display: flex; gap: 8px; padding: 0 14px 14px; flex-wrap: wrap; }
+.na-actions button { display: inline-flex; align-items: center; gap: 5px; padding: 7px 12px; border-radius: 9px; font-size: 12.5px; font-weight: 600; cursor: pointer; background: hsl(var(--hue) 85% 55% / 0.14); border: 1px solid hsl(var(--hue) 85% 60% / 0.4); color: hsl(var(--hue) 90% 72%); }
+.na-actions button:hover { background: hsl(var(--hue) 85% 55% / 0.26); }
+:root[data-theme='light'] .na-actions button { color: hsl(var(--hue) 75% 36%); }
+
+.na-empty { color: var(--muted); font-size: 14px; padding: 16px 0; }
+
+@media (prefers-reduced-motion: reduce) { .na-card:hover { transform: none; } }
+@media (max-width: 480px) { .na-grid { grid-template-columns: 1fr; } }

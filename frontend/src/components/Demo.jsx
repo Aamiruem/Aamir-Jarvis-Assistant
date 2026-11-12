@@ -500,7 +500,7 @@ export default function Demo({ section, onSection, onNavigate, theme }) {
           {TOOLS.some((t) => t.id === current.id) && (
             <Suspense fallback={<div className="tab-loading"><div className="orb pulse" /></div>}>
               {current.id === 'voice' && <VoiceAgent embedded onAsk={ask} />}
-              {current.id === 'mllab' && <DemoMlLab />}
+              {current.id === 'mllab' && <DemoMlLab onAsk={ask} />}
               {current.id === 'knowledge' && <DemoKnowledge />}
               {current.id === 'vision' && <DemoVision />}
               {current.id === 'memory' && <DemoMemory facts={facts} setFacts={setFacts} onAsk={ask} />}

@@ -577,7 +577,7 @@ export default function App() {
               />
             )}
             {tab === 'automate' && <AutomatePanel onAsk={ask} onOpenTab={setTab} />}
-            {tab === 'mllab' && <MlLabPanel />}
+            {tab === 'mllab' && <MlLabPanel onAsk={(text) => ask(text, true)} />}
             {tab === 'notes' && <NotesPanel target={notesTarget} />}
             {tab === 'vision' && <VisionPanel />}
             {tab === 'device' && <DevicePanel />}

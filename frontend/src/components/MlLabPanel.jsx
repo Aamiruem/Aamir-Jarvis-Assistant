@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { EmptyState, PageHeader, toast } from '../ui.jsx';
+import NeuralAlgos from './NeuralAlgos.jsx';
 
 // ML Lab: the house price project, training on your own CSV files, your models and the experiment
 // log. Every score shown was measured on rows the model never saw while training.
@@ -440,7 +441,7 @@ function RunsLog({ runs }) {
   );
 }
 
-export default function MlLabPanel() {
+export default function MlLabPanel({ onAsk }) {
   const [models, setModels] = useState([]);
   const [runs, setRuns] = useState([]);
   const refresh = () => {
@@ -468,6 +469,8 @@ export default function MlLabPanel() {
       <YourModels models={models} onChange={refresh} />
       {runs.length > 0 && <h3 className="section-title"><Icon name="timeline" /> Experiment log</h3>}
       <RunsLog runs={runs} />
+      <h3 className="section-title"><Icon name="brain" /> Neural network algorithms</h3>
+      <NeuralAlgos onAsk={onAsk} />
     </div>
   );
 }

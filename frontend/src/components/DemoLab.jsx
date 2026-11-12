@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { speak } from '../brain.js';
+import NeuralAlgos from './NeuralAlgos.jsx';
 import {
   analyzePixels,
   bestSentences,
@@ -57,7 +58,7 @@ function Note({ children }) {
 // ---------- ML Lab ----------
 const LOG_KEY = 'azarvis-demo-mllab-log';
 
-export function DemoMlLab() {
+export function DemoMlLab({ onAsk }) {
   const [source, setSource] = useState({ id: 'houses', name: 'houses.csv' });
   const [data, setData] = useState(() => sampleDataset('houses'));
   const [target, setTarget] = useState('price_lakh');
@@ -247,6 +248,9 @@ export function DemoMlLab() {
         </div>
       )}
       <Note>Your CSV is read and trained on in this browser. It is never uploaded.</Note>
+      <div className="lab-card">
+        <NeuralAlgos onAsk={onAsk} />
+      </div>
     </div>
   );
 }
