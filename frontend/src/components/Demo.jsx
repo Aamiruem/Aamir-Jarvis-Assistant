@@ -7,10 +7,9 @@ import FeedbackForm from './FeedbackForm.jsx';
 import SiteFooter from './SiteFooter.jsx';
 
 // The demo: the app's layout with sample data, open to anyone, no account and no server.
-// It is the first thing a visitor sees (the website's front page). Chat answers come from a
-// small script, tasks and memories live in this browser (localStorage), Notes is the real notes
-// library (static files), Automate fills a template, and ML Lab, Knowledge and Vision run in the
-// browser too (demoLab.js): every section works without signing up.
+// Chat answers come from a small script, tasks and memories live in this browser (localStorage),
+// Notes is the real notes library (static files), Automate fills a template, and ML Lab,
+// Knowledge and Vision run in the browser too (demoLab.js): every section works without signing up.
 
 const NotesPanel = lazy(() => import('./NotesPanel.jsx'));
 const lab = (name) => lazy(() => import('./DemoLab.jsx').then((m) => ({ default: m[name] })));
@@ -458,7 +457,7 @@ export default function Demo({ section, onSection, onNavigate, theme }) {
           <header className="demo-head">
             <span className="badge-icon lg"><Icon name={current.icon} /></span>
             <div className="grow">
-              {/* The site's front page: its heading names the product for search engines. */}
+              {/* Home names the product, so the demo's heading reads "Azarvis". */}
               <h1>{current.id === 'home' ? 'Azarvis' : current.label}</h1>
               <p className="muted">{BLURB[current.id]}</p>
             </div>

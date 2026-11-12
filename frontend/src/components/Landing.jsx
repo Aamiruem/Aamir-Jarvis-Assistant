@@ -47,7 +47,7 @@ const SECURITY = [
 ];
 
 export const FAQ = [
-  ['Do I need an account to try Azarvis?', 'No. Talk to Azarvis right on this page, or open the demo, the front page of this site, to use every feature with sample data: chat, tasks, the real study notes, drafts, ML Lab, documents, vision and memory. Nothing in the demo is sent to a server; what you add stays in your browser.'],
+  ['Do I need an account to try Azarvis?', 'No. Talk to Azarvis right on this page, or open the demo to use every feature with sample data: chat, tasks, the real study notes, drafts, ML Lab, documents, vision and memory. Nothing in the demo is sent to a server; what you add stays in your browser.'],
   ['Which AI powers Azarvis?', 'Answers come from Claude by Anthropic. Azarvis adds the voice, your reminders, your documents and your notes around it.'],
   ['Does Azarvis send emails or posts on its own?', 'No. Automate writes drafts. You read them and send them yourself, so nothing goes out without your yes.'],
   ['Can I sign in without a password?', 'Yes, with a passkey. Sign in once, open Account, and add a passkey on each device you use. After that, Face ID, Touch ID, Windows Hello or your fingerprint opens Azarvis on that device. The secret key never leaves the device.'],
