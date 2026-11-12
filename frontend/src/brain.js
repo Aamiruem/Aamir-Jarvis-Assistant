@@ -113,6 +113,7 @@ const PLACES = [
   [/\b(knowledge|documents?|docs)\b/, { type: 'demo', section: 'knowledge' }, 'Opening Knowledge, where I search your documents.'],
   [/\b(vision|camera|room watch|photos?|images?)\b/, { type: 'demo', section: 'vision' }, 'Opening Vision. Show me an image.'],
   [/\b(memory|memories)\b/, { type: 'demo', section: 'memory' }, 'Opening Memory: everything I remember about you.'],
+  [/\b(brain gym|games?|brain (train\w*|exercise|workout)|puzzles?|let'?s play)\b/, { type: 'demo', section: 'games' }, 'Opening Brain Gym. Pick a game and train your brain.'],
   [/\b(notes?|courses?|study)\b/, { type: 'demo', section: 'notes' }, 'Opening the study notes.'],
   [/\b(automate|automation|drafts?|posts?)\b/, { type: 'demo', section: 'automate' }, 'Opening Automate, where drafts are written.'],
   [/\bchat\b/, { type: 'demo', section: 'chat' }, 'Opening the chat.'],

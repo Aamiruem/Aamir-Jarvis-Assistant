@@ -18,6 +18,7 @@ const DemoKnowledge = lab('DemoKnowledge');
 const DemoVision = lab('DemoVision');
 const DemoMemory = lab('DemoMemory');
 const DeviceCard = lazy(() => import('./DeviceCard.jsx'));
+const BrainGym = lazy(() => import('./BrainGym.jsx'));
 
 const SECTIONS = [
   { id: 'home', label: 'Home', icon: 'home', hue: 205 },
@@ -32,6 +33,7 @@ const TOOLS = [
   { id: 'vision', label: 'Vision', icon: 'eye', hue: 330 },
   { id: 'memory', label: 'Memory', icon: 'brain', hue: 280 },
   { id: 'system', label: 'My device', icon: 'cpu', hue: 205 },
+  { id: 'games', label: 'Brain Gym', icon: 'sparkles', hue: 300 },
 ];
 const ALL = [...SECTIONS, ...TOOLS];
 const BLURB = {
@@ -44,6 +46,7 @@ const BLURB = {
   vision: 'Describe images and get greeted when you walk into the room.',
   memory: 'What Azarvis remembers about you. See and delete all of it.',
   system: 'Live battery, charger, network and CPU of this device, with AI insights.',
+  games: 'Brain-training games: memory, focus, mental maths and reflexes, with a daily workout.',
 };
 
 // ---------- Chat: scripted answers ----------
@@ -498,6 +501,7 @@ export default function Demo({ section, onSection, onNavigate, theme }) {
               {current.id === 'vision' && <DemoVision />}
               {current.id === 'memory' && <DemoMemory facts={facts} setFacts={setFacts} onAsk={ask} />}
               {current.id === 'system' && <DeviceCard />}
+              {current.id === 'games' && <BrainGym onAsk={ask} />}
             </Suspense>
           )}
         </section>

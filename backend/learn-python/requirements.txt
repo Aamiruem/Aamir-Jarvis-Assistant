@@ -11,7 +11,7 @@ py-pglite>=0.5          # real PostgreSQL (PGlite) started on demand; needs Node
 fastapi>=0.115
 uvicorn[standard]>=0.32
 pydantic-settings>=2.6
-# 06-numpy / 07-pandas / 08-statistics
+# 06-numpy / 07-pandas / 08-statistics 
 numpy>=2.1
 pandas>=2.2
 scipy>=1.14

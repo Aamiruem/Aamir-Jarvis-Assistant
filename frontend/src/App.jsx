@@ -56,6 +56,7 @@ const MlLabPanel = lazy(() => import('./components/MlLabPanel.jsx'));
 const NotesPanel = lazy(() => import('./components/NotesPanel.jsx'));
 const DevicePanel = lazy(() => import('./components/DevicePanel.jsx'));
 const StudioPanel = lazy(() => import('./components/StudioPanel.jsx'));
+const GamesPanel = lazy(() => import('./components/GamesPanel.jsx'));
 
 // Each tab has its own color (--hue), used for its icon in the top bar and the sidebar.
 const TABS = [
@@ -70,12 +71,80 @@ const TABS = [
   { id: 'knowledge', label: 'Knowledge', icon: 'book', hue: 265 },
   { id: 'vision', label: 'Vision', icon: 'eye', hue: 160 },
   { id: 'device', label: 'Device', icon: 'cpu', hue: 205, isNew: true },
+  { id: 'games', label: 'Brain Gym', icon: 'sparkles', hue: 300, isNew: true },
   { id: 'contacts', label: 'Contacts', icon: 'contacts', hue: 280 },
   { id: 'account', label: 'Account', icon: 'user', hue: 220 },
   { id: 'admin', label: 'Admin', icon: 'shield', hue: 0, adminOnly: true },
 ].map((t, i) => ({ ...t, key: i + 1 })); // Alt+1 … Alt+9
 // The sidebar is the one place to switch screens (Account is the avatar at its bottom).
 const SIDEBAR_TABS = TABS.map((t) => t.id).filter((id) => id !== 'account');
+const SIDEBAR_QUICK_ACTIONS = {
+  home: [
+    { icon: 'sun', label: 'Plan my day', hint: 'Tasks and reminders', prompt: 'Plan my day from my open tasks and reminders. Tell me what to do first, what needs follow-up, and what can wait.', send: true },
+    { icon: 'plus', label: 'Create a task', hint: 'Add or schedule work', tab: 'tasks' },
+    { icon: 'mic', label: 'Talk hands-free', hint: 'Start a voice session', voice: true },
+  ],
+  chat: [
+    { icon: 'plus', label: 'New conversation', hint: 'Start fresh', fresh: true },
+    { icon: 'search', label: 'Research a topic', hint: 'Search current sources', prompt: 'Research ', send: false },
+    { icon: 'copy', label: 'Summarize clipboard', hint: 'Use copied text', prompt: 'Summarize what I copied in five clear points.', send: true },
+  ],
+  automate: [
+    { icon: 'mail', label: 'Draft an email', hint: 'Review before sending', prompt: 'Write an email to ', send: false },
+    { icon: 'calendar', label: 'Weekly review', hint: 'Wins and next steps', prompt: "Review my week: what I finished, what's still open, and the three things I should focus on next week.", send: true },
+    { icon: 'alarm', label: 'Follow up', hint: 'Set a reminder', prompt: 'Remind me to follow up with ', send: false },
+  ],
+  studio: [
+    { icon: 'workflow', label: 'Design an agent', hint: 'Define a useful workflow', prompt: 'Help me design an AI agent for ', send: false },
+    { icon: 'zap', label: 'Plan an automation', hint: 'Turn a routine into steps', prompt: 'Design a safe automation for this routine: ', send: false },
+    { icon: 'rocket', label: 'Explore automation', hint: 'Open one-click workflows', tab: 'automate' },
+  ],
+  mllab: [
+    { icon: 'flask', label: 'Choose a model', hint: 'Match model to a problem', prompt: 'Help me choose a machine-learning model for ', send: false },
+    { icon: 'chart', label: 'Explain my metrics', hint: 'Accuracy, F1, MAE and more', prompt: 'Explain these model metrics in plain language: ', send: false },
+    { icon: 'file', label: 'Prepare a dataset', hint: 'Columns and target variable', prompt: 'Help me prepare a CSV dataset for machine learning. My goal is ', send: false },
+  ],
+  notes: [
+    { icon: 'brain', label: 'Make a study quiz', hint: 'Practice a topic', prompt: 'Create a challenging quiz with answers about ', send: false },
+    { icon: 'sparkles', label: 'Explain a concept', hint: 'Simple words and examples', prompt: 'Explain this concept in simple words with a practical example: ', send: false },
+    { icon: 'book', label: 'Find my study notes', hint: 'Search uploaded material', prompt: 'Search my notes for ', send: false },
+  ],
+  tasks: [
+    { icon: 'tasks', label: 'Review open tasks', hint: 'Priorities and due dates', prompt: 'List my open tasks and help me prioritize them by due date and importance.', send: true },
+    { icon: 'plus', label: 'Add a task', hint: 'Describe the work to add', prompt: 'Add a task: ', send: false },
+    { icon: 'alarm', label: 'Set a reminder', hint: 'Choose what and when', prompt: 'Remind me to ', send: false },
+  ],
+  memory: [
+    { icon: 'brain', label: 'Recall my preferences', hint: 'See what Azarvis remembers', prompt: 'What do you remember about my preferences and goals?', send: true },
+    { icon: 'sparkles', label: 'Remember a fact', hint: 'Save a useful detail', prompt: 'Remember that ', send: false },
+    { icon: 'trash', label: 'Forget a fact', hint: 'Remove something outdated', prompt: 'Forget the memory about ', send: false },
+  ],
+  knowledge: [
+    { icon: 'search', label: 'Ask my documents', hint: 'Answers with file sources', prompt: 'Search my uploaded documents for ', send: false },
+    { icon: 'file', label: 'Summarize a document', hint: 'Use my uploaded files', prompt: 'Summarize the document about ', send: false },
+    { icon: 'globe', label: 'Research a web source', hint: 'Find current references', prompt: 'Find reliable current sources about ', send: false },
+  ],
+  vision: [
+    { icon: 'monitor', label: 'Explain my screen', hint: 'Find errors or key details', prompt: 'Look at my screen and explain what is happening. Point out any visible error and suggest a fix.', send: true },
+    { icon: 'alert', label: 'Find a screen issue', hint: 'Suggest safe next steps', prompt: 'Inspect my screen for an issue. Explain the likely cause and safe steps to fix it.', send: true },
+    { icon: 'eye', label: 'Review screen details', hint: 'Read visible text and context', prompt: 'Look at my screen and summarize the important details: ', send: false },
+  ],
+  device: [
+    { icon: 'pulse', label: 'Check PC health', hint: 'CPU, memory, disk, battery', prompt: 'Check this PC’s CPU, memory, disk space and battery. Summarize anything that may need attention.', send: true },
+    { icon: 'zap', label: 'Diagnose a slowdown', hint: 'Find likely causes', prompt: 'My computer feels slow. Check the available system status and give me safe steps to diagnose it.', send: true },
+    { icon: 'monitor', label: 'Open an app', hint: 'Launch a desktop app', prompt: 'Open ', send: false },
+  ],
+  contacts: [
+    { icon: 'search', label: 'Find a contact', hint: 'Search by name or company', prompt: 'Find contact ', send: false },
+    { icon: 'plus', label: 'Add a contact', hint: 'Save a person’s details', prompt: 'Add a contact: ', send: false },
+    { icon: 'mail', label: 'Draft a message', hint: 'Use a saved contact', prompt: 'Write an email to ', send: false },
+  ],
+  admin: [
+    { icon: 'chart', label: 'Explain usage metrics', hint: 'Latency, tokens, and intent', prompt: 'Explain how to interpret Azarvis usage metrics such as latency, tokens, and intent counts.', send: true },
+    { icon: 'shield', label: 'Role management guide', hint: 'Review access safely', prompt: 'Explain the safe process for reviewing user roles in the Azarvis admin screen.', send: true },
+    { icon: 'help', label: 'Troubleshoot the service', hint: 'Describe an admin issue', prompt: 'Help me troubleshoot this Azarvis admin issue: ', send: false },
+  ],
+};
 // Phones: the main tabs sit in a bar at the bottom, everything else is under "More" (the sidebar).
 const BOTTOM_TABS = ['home', 'chat', 'notes', 'mllab'];
 // A link like /?tab=mllab (the installed app's shortcuts) opens that tab.
@@ -240,6 +309,8 @@ export default function App() {
   if (!user) return <Suspense fallback={<Spinner />}><PublicSite theme={theme} onAuth={(u) => setUser(u)} /></Suspense>;
 
   const tabs = TABS.filter((t) => !t.adminOnly || user.role === 'admin');
+  const currentTab = TABS.find((t) => t.id === tab);
+  const sidebarActions = SIDEBAR_QUICK_ACTIONS[tab] ?? SIDEBAR_QUICK_ACTIONS.home;
 
   const logout = async () => {
     await auth.logout();
@@ -257,6 +328,12 @@ export default function App() {
   const quickAsk = (text, send) => {
     setMenuOpen(false);
     ask(text, send);
+  };
+  const runSidebarAction = (action) => {
+    if (action.voice) return startSession();
+    if (action.fresh) return newChat();
+    if (action.tab) return go(action.tab);
+    return quickAsk(action.prompt, Boolean(action.send));
   };
   const openConversation = (id) => {
     setActiveId(id);
@@ -339,22 +416,16 @@ export default function App() {
         <section className={`side-quick ${quickActionsOpen ? 'open' : ''}`}>
           <button className="side-quick-toggle" onClick={() => setQuickActionsOpen((open) => !open)} aria-expanded={quickActionsOpen} aria-controls="side-quick-grid">
             <span><Icon name="zap" size="1.05em" /> Quick actions</span>
+            <small className="side-quick-context">{currentTab?.label}</small>
             <Icon name="chevron" size="1em" className="side-quick-chevron" />
           </button>
           {quickActionsOpen && (
-            <div className="side-quick-grid" id="side-quick-grid" role="group" aria-label="AI shortcuts">
-              <button onClick={() => quickAsk('Plan my day from my open tasks and reminders. Tell me what to do first, what needs follow-up, and what can wait.', true)}>
-                <Icon name="sun" /><span><strong>Plan my day</strong><small>Tasks and reminders</small></span>
-              </button>
-              <button onClick={() => quickAsk('Remind me to ', false)}>
-                <Icon name="alarm" /><span><strong>Set a reminder</strong><small>Choose a time by voice</small></span>
-              </button>
-              <button onClick={() => quickAsk('Research ', false)}>
-                <Icon name="search" /><span><strong>Research a topic</strong><small>Find current sources</small></span>
-              </button>
-              <button onClick={() => quickAsk('Write an email to ', false)}>
-                <Icon name="mail" /><span><strong>Draft an email</strong><small>Review before sending</small></span>
-              </button>
+            <div className="side-quick-grid" id="side-quick-grid" role="group" aria-label={`${currentTab?.label ?? 'Azarvis'} quick actions`}>
+              {sidebarActions.map((action) => (
+                <button key={action.label} onClick={() => runSidebarAction(action)}>
+                  <Icon name={action.icon} /><span><strong>{action.label}</strong><small>{action.hint}</small></span>
+                </button>
+              ))}
             </div>
           )}
         </section>
@@ -511,6 +582,7 @@ export default function App() {
             {tab === 'vision' && <VisionPanel />}
             {tab === 'device' && <DevicePanel />}
             {tab === 'studio' && <StudioPanel onAsk={(text) => ask(text, true)} />}
+            {tab === 'games' && <GamesPanel onAsk={(text) => ask(text, true)} />}
             {tab === 'knowledge' && <KnowledgePanel />}
             {tab === 'tasks' && <TasksPanel />}
             {tab === 'memory' && <MemoryPanel />}

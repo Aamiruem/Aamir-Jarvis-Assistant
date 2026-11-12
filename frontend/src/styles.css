@@ -1434,6 +1434,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .side-quick-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 7px 8px; border: 0; border-radius: 10px; background: transparent; color: var(--side-text); cursor: pointer; font-size: 12.5px; font-weight: 700; }
 .side-quick-toggle > span { display: inline-flex; align-items: center; gap: 7px; }
 .side-quick-toggle > span .icon { color: #edaa35; }
+.side-quick-context { margin-left: auto; margin-right: 5px; color: var(--side-icon); font-size: 10px; font-weight: 500; }
 .side-quick-toggle:hover { background: var(--side-hover); color: var(--text); }
 .side-quick-chevron { color: var(--side-icon); transition: transform .18s ease; }
 .side-quick.open .side-quick-chevron { transform: rotate(90deg); }
