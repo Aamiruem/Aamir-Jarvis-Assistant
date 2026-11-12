@@ -45,7 +45,8 @@ if (typeof window !== 'undefined') (readHint() ? loadHome : loadPublic)().catch(
 const Spinner = () => <div className="center-screen"><div className="orb pulse" /></div>;
 const voiceSupported = typeof window !== 'undefined' && Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
 const VisionPanel = lazy(() => import('./components/VisionPanel.jsx'));
-const KnowledgePanel = lazy(() => import('./components/KnowledgePanel.jsx'));
+const KnowledgePanel = lazy(() => import('./components/KnowledgePanel.jsx')); // kept for easy restore; the 'knowledge' tab now shows the Voice Agent
+const VoiceAgent = lazy(() => import('./components/VoiceAgent.jsx'));
 const TasksPanel = lazy(() => import('./components/TasksPanel.jsx'));
 const MemoryPanel = lazy(() => import('./components/MemoryPanel.jsx'));
 const ContactsPanel = lazy(() => import('./components/ContactsPanel.jsx'));
@@ -68,7 +69,7 @@ const TABS = [
   { id: 'notes', label: 'Notes', icon: 'notes', hue: 45, isNew: true },
   { id: 'tasks', label: 'Tasks', icon: 'tasks', hue: 38 },
   { id: 'memory', label: 'Memory', icon: 'brain', hue: 330 },
-  { id: 'knowledge', label: 'Knowledge', icon: 'book', hue: 265 },
+  { id: 'knowledge', label: 'Voice Agent', icon: 'phone', hue: 205 },
   { id: 'vision', label: 'Vision', icon: 'eye', hue: 160 },
   { id: 'device', label: 'Device', icon: 'cpu', hue: 205, isNew: true },
   { id: 'games', label: 'Brain Gym', icon: 'sparkles', hue: 300, isNew: true },
@@ -120,9 +121,9 @@ const SIDEBAR_QUICK_ACTIONS = {
     { icon: 'trash', label: 'Forget a fact', hint: 'Remove something outdated', prompt: 'Forget the memory about ', send: false },
   ],
   knowledge: [
-    { icon: 'search', label: 'Ask my documents', hint: 'Answers with file sources', prompt: 'Search my uploaded documents for ', send: false },
-    { icon: 'file', label: 'Summarize a document', hint: 'Use my uploaded files', prompt: 'Summarize the document about ', send: false },
-    { icon: 'globe', label: 'Research a web source', hint: 'Find current references', prompt: 'Find reliable current sources about ', send: false },
+    { icon: 'phone', label: 'How the Voice Agent helps', hint: 'Calls, qualifies, books', prompt: 'How would an AI voice agent help my study-abroad consultancy get more enrollments?', send: true },
+    { icon: 'filter', label: 'Qualify a lead', hint: 'Country, budget, intake', prompt: 'Act as my study-abroad voice agent and qualify a lead who wants to study in Canada on a 25 lakh budget for Fall.', send: true },
+    { icon: 'globe', label: 'Answer a visa question', hint: 'Any country, 24/7', prompt: 'As a study-abroad counsellor, what visa and documents do I need for the UK?', send: true },
   ],
   vision: [
     { icon: 'monitor', label: 'Explain my screen', hint: 'Find errors or key details', prompt: 'Look at my screen and explain what is happening. Point out any visible error and suggest a fix.', send: true },
@@ -583,7 +584,7 @@ export default function App() {
             {tab === 'device' && <DevicePanel />}
             {tab === 'studio' && <StudioPanel onAsk={(text) => ask(text, true)} />}
             {tab === 'games' && <GamesPanel onAsk={(text) => ask(text, true)} />}
-            {tab === 'knowledge' && <KnowledgePanel />}
+            {tab === 'knowledge' && <VoiceAgent embedded onAsk={(text) => ask(text, true)} />}
             {tab === 'tasks' && <TasksPanel />}
             {tab === 'memory' && <MemoryPanel />}
             {tab === 'contacts' && <ContactsPanel initialQuery={contactQuery} onAsk={ask} />}

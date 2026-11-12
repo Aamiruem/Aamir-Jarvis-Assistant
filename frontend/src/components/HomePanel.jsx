@@ -13,7 +13,6 @@ import './HomePanel.css';
 import BrainGym from './BrainGym.jsx';
 
 const DeviceCard = lazy(() => import('./DeviceCard.jsx'));
-const VoiceAgent = lazy(() => import('./VoiceAgent.jsx'));
 
 // Command Center: the first screen after sign-in. Everything on it is live data from the
 // Express API and the AI service (health, tasks, reminders, notifications, memories, stats).
@@ -44,12 +43,11 @@ const VOICE_SAMPLE = 'Hello! I am Azarvis. Your voice settings are working.';
 // and a button that actually opens the feature or runs a command. Content kept relevant and
 // concrete so it reads like a product, not filler.
 const FEATURES = [
-  { motif: 'phone', hue: 205, icon: 'phone', title: 'Voice Agent', desc: 'A human-sounding AI that calls every lead in seconds — qualifies by country, budget & intake, answers visa questions 24/7 and books counselling, in any language.', action: { label: 'Start a call', voiceAgent: true } },
+  { motif: 'phone', hue: 205, icon: 'phone', title: 'Voice Agent', desc: 'A human-sounding AI that calls every lead in seconds — qualifies by country, budget & intake, answers visa questions 24/7 and books counselling, in any language.', action: { label: 'Open Voice Agent', tab: 'knowledge' } },
   { motif: 'neural', hue: 265, icon: 'brain', title: 'Neural AI brain', desc: 'Reasoning over your tasks, files and memory — not just chat. Give it a goal and it plans the steps.', action: { label: 'Open chat', tab: 'chat' } },
   { motif: 'wave', hue: 190, icon: 'mic', title: 'Jarvis voice', desc: 'A louder, clearer neural voice that reads replies aloud and listens hands-free. Pick a style in Account.', action: { label: 'Tune voice', tab: 'account' } },
   { motif: 'orbit', hue: 38, icon: 'rocket', title: 'Automations', desc: 'Chain actions into one command: reminders, files, apps and routines that run in order.', action: { label: 'Build a flow', tab: 'automate' } },
   { motif: 'camera', hue: 330, icon: 'camera', title: 'Vision AI', desc: 'Drop in a photo or screenshot and ask about it — read text, describe, extract, compare.', action: { label: 'Analyze a photo', tab: 'vision' } },
-  { motif: 'grid', hue: 150, icon: 'search', title: 'Knowledge search', desc: 'Ask your own documents in plain English. Azarvis finds the answer and cites where it came from.', action: { label: 'Search docs', tab: 'knowledge' } },
   { motif: 'shield', hue: 205, icon: 'shield', title: 'Private & yours', desc: 'Your data stays on your account and your PC. You approve every send — nothing goes out on its own.', action: { label: 'Security', tab: 'security' } },
   { motif: 'spark', hue: 300, icon: 'sparkles', title: 'Brain Gym', desc: 'Six science-based games and a daily workout to train memory, focus and speed. Keep your streak alive.', action: { label: 'Play now', game: true } },
   { motif: 'orbit', hue: 262, icon: 'flask', title: 'ML insights', desc: 'On-device signals turned into forecasts and health scores — the AI reads your machine, not just you.', action: { label: 'Open device', tab: 'device' } },
@@ -145,7 +143,6 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
   const [ask, setAsk] = useState('');
   const [aloud, setAloud] = useState(readAlertsAloud);
   const [brainGymOpen, setBrainGymOpen] = useState(false);
-  const [voiceAgentOpen, setVoiceAgentOpen] = useState(false);
   const speaking = useSpeakingNow();
 
   const loadTasks = useCallback(() => api.tasks(true).then(setTasks), []);
@@ -202,7 +199,6 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
   // or open Brain Gym. 'games' routes to the Brain Gym overlay rather than a missing tab.
   const runAction = (a) => {
     if (!a) return;
-    if (a.voiceAgent) return setVoiceAgentOpen(true);
     if (a.game || a.tab === 'games') return setBrainGymOpen(true);
     if (a.tab) return onOpenTab(a.tab);
     if (a.prompt != null) return onAsk(a.prompt, Boolean(a.send));
@@ -393,11 +389,6 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
       </div>
 
       {brainGymOpen && <BrainGym onClose={() => setBrainGymOpen(false)} />}
-      {voiceAgentOpen && (
-        <Suspense fallback={null}>
-          <VoiceAgent onClose={() => setVoiceAgentOpen(false)} onAsk={onAsk} />
-        </Suspense>
-      )}
 
       <Panel icon="zap" title="Quick actions" className="cc-commands-panel">
         <div className="cc-commands">
