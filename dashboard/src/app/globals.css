@@ -113,17 +113,47 @@
   }
   html {
     color-scheme: light;
+    scroll-behavior: smooth;
+    scroll-padding-top: 5rem;
   }
   html.dark {
     color-scheme: dark;
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    min-height: 100dvh;
+    background-image:
+      radial-gradient(50rem 30rem at 92% -8%, color-mix(in oklch, var(--primary) 8%, transparent), transparent 72%),
+      radial-gradient(42rem 28rem at -12% 22%, color-mix(in oklch, var(--chart-2) 5%, transparent), transparent 72%);
+    background-attachment: fixed;
+    text-rendering: optimizeLegibility;
   }
   h1,
   h2,
   h3 {
     @apply font-display tracking-wide;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 28%, transparent);
+  }
+  :focus-visible:not(input):not(textarea):not(select) {
+    outline: 3px solid var(--ring);
+    outline-offset: 3px;
+  }
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: color-mix(in oklch, var(--muted-foreground) 36%, transparent);
+    background-clip: padding-box;
   }
 }
 

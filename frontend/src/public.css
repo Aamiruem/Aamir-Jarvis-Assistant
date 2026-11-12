@@ -6,7 +6,7 @@
    shared pieces (buttons, inputs, cards) follow too. */
 
 .pub {
-  --gutter: clamp(14px, 3.6vw, 64px);
+  --gutter: clamp(14px, 2vw, 36px);
   --bg: #0b0d12;
   --band-a: #0b0d12;
   --band-b: #0f1218;
@@ -81,7 +81,7 @@
 }
 .pub-bg { display: none; }
 .pub-main { flex: 1; }
-.pub-wrap { width: min(1680px, calc(100% - 2 * var(--gutter))); margin-inline: auto; }
+.pub-wrap { width: min(1840px, calc(100% - 2 * var(--gutter))); margin-inline: auto; }
 .pub h1, .pub h2, .pub h3 { color: var(--text); }
 .pub .card { background: var(--surface); border-color: var(--border); backdrop-filter: none; }
 .pub .btn-lg { padding: 13px 22px; font-size: 15.5px; border-radius: 13px; font-weight: 600; }
@@ -120,7 +120,7 @@
   transition: box-shadow 0.2s;
 }
 .pub-nav--scrolled { box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); }
-.pub-nav-inner { width: min(1680px, calc(100% - 2 * var(--gutter))); margin-inline: auto; height: 62px; display: flex; align-items: center; gap: 14px; }
+.pub-nav-inner { width: min(1840px, calc(100% - 2 * var(--gutter))); margin-inline: auto; height: 62px; display: flex; align-items: center; gap: 14px; }
 .pub-logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; flex: none; }
 .pub-logo img { border-radius: 10px; box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35); }
 .pub-logo span { display: flex; flex-direction: column; font: 800 20px/1 Inter, system-ui, sans-serif; letter-spacing: -0.01em; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -753,12 +753,12 @@ button.hv-float:hover { border-color: #a78bfa; background: rgba(30, 27, 75, 0.9)
 .demo-modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .demo-modal-head h2 { margin: 0; font: 700 19px/1.2 Inter, system-ui, sans-serif; letter-spacing: 0; }
 @keyframes pub-fade { from { opacity: 0; } }
-.demo > .site-foot--compact { width: min(1680px, calc(100% - 2 * var(--gutter))); margin: 20px auto 0; border-top: 1px solid var(--border); padding-inline: 4px; }
+.demo > .site-foot--compact { width: min(1840px, calc(100% - 2 * var(--gutter))); margin: 20px auto 0; border-top: 1px solid var(--border); padding-inline: 4px; }
 
 /* ---------- Footer on the public website (always dark) ---------- */
 .pub .site-foot--public {
-  position: relative; max-width: none; margin-top: 0; border-top: none;
-  padding-inline: max(var(--gutter), calc((100% - 1680px) / 2));
+  position: relative; width: 100%; max-width: none; margin-top: 0; border-top: none;
+  padding-inline: max(var(--gutter), calc((100% - 1840px) / 2));
   background:
     radial-gradient(40% 60% at 90% 0%, rgba(99, 102, 241, 0.16), transparent 70%),
     radial-gradient(35% 50% at 0% 100%, rgba(34, 211, 238, 0.1), transparent 70%),
@@ -787,6 +787,32 @@ button.hv-float:hover { border-color: #a78bfa; background: rgba(30, 27, 75, 0.9)
 .site-foot-star { color: var(--warn); }
 .site-foot-barbtn { background: none; border: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
 .site-foot-barbtn:hover { color: var(--text); }
+
+/* Public-site interaction and readability polish, shared by the landing, auth, demo and studio pages. */
+.pub .band h2, .pub .auth-aside h2 { letter-spacing: -.02em; }
+.pub .card, .pub .feature-card, .pub .step, .pub .faq-item, .pub .demo-action {
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+.pub .feature-card:hover, .pub .step:hover, .pub .demo-action:hover {
+  transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 42%, var(--border)); box-shadow: 0 16px 32px rgba(2, 8, 23, .16);
+}
+.pub .btn, .pub .pub-links button, .pub .pub-demo-link { transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease; }
+.pub .btn:hover:not(:disabled), .pub .pub-demo-link:hover { transform: translateY(-1px); }
+.pub .section-head p { max-width: 66ch; }
+.pub .site-foot--public .site-foot-main { grid-template-columns: minmax(300px, 1.35fr) minmax(180px, .85fr) minmax(280px, 1.25fr) minmax(180px, .85fr); gap: 32px clamp(24px, 3vw, 56px); }
+.pub .site-foot--public .site-foot-brand { max-width: 400px; }
+.pub .site-foot--public .site-foot-brand p { max-width: 44ch; }
+.pub .site-foot--public .site-foot-bar { gap: 16px 28px; }
+@media (max-width: 1180px) { .pub .site-foot--public .site-foot-main { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .pub .site-foot--public .site-foot-main { grid-template-columns: 1fr 1fr; gap: 26px 18px; }
+  .pub .site-foot--public .site-foot-brand { max-width: 100%; }
+  .pub .site-foot--public .site-foot-bar { align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pub .feature-card, .pub .step, .pub .demo-action, .pub .btn, .pub .pub-demo-link { transition: none; }
+  .pub .feature-card:hover, .pub .step:hover, .pub .demo-action:hover, .pub .btn:hover, .pub .pub-demo-link:hover { transform: none; }
+}
 
 /* ---------- Admin: feedback list ---------- */
 .admin-feedback li { align-items: flex-start; }

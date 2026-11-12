@@ -121,7 +121,7 @@ export function SiteFooter({ variant = "full" }: { variant?: "full" | "compact" 
 
   return (
     <footer className="border-t bg-muted/30">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,2.5fr)]">
+      <div className="mx-auto grid w-full max-w-[1840px] gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(300px,1.2fr)_minmax(0,3fr)]">
         <div className="flex max-w-sm flex-col gap-4">
           <Link href="/" aria-label="Azarvis home" className="inline-flex w-fit items-center gap-2.5">
             <AzarvisMark className="size-8" />
@@ -176,7 +176,7 @@ export function SiteFooter({ variant = "full" }: { variant?: "full" | "compact" 
       </div>
 
       <div className="border-t">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-5 text-xs text-muted-foreground sm:px-6">
+        <div className="mx-auto flex w-full max-w-[1840px] flex-wrap items-center justify-between gap-3 px-4 py-5 text-xs text-muted-foreground sm:px-6">
           <p>© {SITE.copyrightYear} {SITE.name}. All rights reserved.</p>
           <p>Built with Claude, Next.js, React and FastAPI.</p>
           <a href="#top" className="inline-flex items-center gap-1 hover:text-foreground">

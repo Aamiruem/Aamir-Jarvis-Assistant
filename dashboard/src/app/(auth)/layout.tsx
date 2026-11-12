@@ -45,7 +45,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
 
         <div className="mt-7 rounded-2xl border border-slate-200/80 bg-white/50 p-4 shadow-sm sm:p-6">{children}</div>
       </div>
-      <div className="mx-auto mt-8 w-full max-w-6xl">
+      <div className="mx-auto mt-8 w-full max-w-[1840px]">
         <SiteFooter />
       </div>
     </main>

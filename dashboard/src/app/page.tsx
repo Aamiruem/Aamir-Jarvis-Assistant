@@ -136,7 +136,7 @@ export default function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD).replace(/</g, "\\u003c") }}
       />
       <header className="sticky top-0 z-20 border-b bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/75">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex w-full max-w-[1840px] items-center justify-between gap-2 px-4 py-3 sm:px-6">
           <Link href="/" aria-label="Azarvis home">
             <AzarvisLogo />
           </Link>
@@ -182,7 +182,7 @@ export default function LandingPage() {
       <main>
         <section aria-labelledby="hero-title" className="relative overflow-hidden">
           <div aria-hidden="true" className="hero-glow" />
-          <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-14 pb-16 sm:px-6 md:grid-cols-[1.1fr_1fr] md:pt-20 md:pb-24">
+          <div className="mx-auto grid w-full max-w-[1840px] items-center gap-12 px-4 pt-14 pb-16 sm:px-6 md:grid-cols-[1.1fr_1fr] md:pt-20 md:pb-24">
             <div>
               <p className="mb-4 inline-flex items-center gap-2 rounded-full border bg-card/70 px-3 py-1 text-xs font-medium tracking-wide text-primary">
                 <Sparkles className="size-3.5" aria-hidden="true" /> Personal AI assistant · Powered by Claude
@@ -226,7 +226,7 @@ export default function LandingPage() {
         </section>
 
         <section aria-label="Highlights" className="border-y bg-card/50">
-          <dl className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-8 text-center sm:px-6 md:grid-cols-4">
+          <dl className="mx-auto grid w-full max-w-[1840px] grid-cols-2 gap-6 px-4 py-8 text-center sm:px-6 md:grid-cols-4">
             {[
               ["20+", "built-in skills"],
               ["3", "ways to talk"],
@@ -242,7 +242,7 @@ export default function LandingPage() {
           </dl>
         </section>
 
-        <section id="features" aria-labelledby="features-title" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6">
+        <section id="features" aria-labelledby="features-title" className="mx-auto w-full max-w-[1840px] scroll-mt-20 px-4 py-20 sm:px-6">
           <p className="text-sm font-medium tracking-widest text-primary uppercase">Features</p>
           <h2 id="features-title" className="reveal mt-2 text-3xl font-bold sm:text-4xl">
             What you can do with Azarvis
@@ -263,7 +263,7 @@ export default function LandingPage() {
         </section>
 
         <section id="how-it-works" aria-labelledby="how-title" className="scroll-mt-20 border-y bg-card/50">
-          <div className="mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
+          <div className="mx-auto grid w-full max-w-[1840px] gap-12 px-4 py-20 sm:px-6 lg:grid-cols-2">
             <div>
               <p className="text-sm font-medium tracking-widest text-primary uppercase">How it works</p>
               <h2 id="how-title" className="reveal mt-2 text-3xl font-bold sm:text-4xl">
@@ -299,7 +299,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="faq" aria-labelledby="faq-title" className="mx-auto max-w-3xl scroll-mt-20 px-4 py-20 sm:px-6">
+        <section id="faq" aria-labelledby="faq-title" className="mx-auto w-full max-w-5xl scroll-mt-20 px-4 py-20 sm:px-6">
           <h2 id="faq-title" className="text-center text-3xl font-bold sm:text-4xl">
             Frequently asked questions
           </h2>
@@ -319,7 +319,7 @@ export default function LandingPage() {
         </section>
 
         <section aria-labelledby="cta-title" className="px-4 pb-20 sm:px-6">
-          <div className="reveal relative mx-auto max-w-6xl overflow-hidden rounded-3xl border bg-card px-6 py-14 text-center shadow-sm">
+          <div className="reveal relative mx-auto w-full max-w-[1840px] overflow-hidden rounded-3xl border bg-card px-6 py-14 text-center shadow-sm">
             <div aria-hidden="true" className="hero-glow" />
             <h2 id="cta-title" className="relative text-3xl font-bold sm:text-4xl">
               Ready to meet your assistant?

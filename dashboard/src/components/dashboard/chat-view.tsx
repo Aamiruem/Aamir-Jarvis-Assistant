@@ -74,7 +74,7 @@ export function ChatView() {
   };
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-9rem)] max-w-3xl flex-col">
+    <div className="mx-auto flex h-[calc(100dvh-9rem)] w-full max-w-5xl flex-col">
       <div className="flex-1 overflow-y-auto pr-1" aria-live="polite">
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
