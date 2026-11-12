@@ -22,6 +22,7 @@ const FEATURES = [
   { icon: 'book', hue: 265, title: 'Knowledge base', text: 'Upload PDFs and documents, search them, and let Azarvis answer from what they say.', demo: 'knowledge' },
   { icon: 'flask', hue: 160, title: 'ML Lab', text: 'Train models on your own CSV files and see honest scores, measured on rows held back from training.', demo: 'mllab' },
   { icon: 'eye', hue: 335, title: 'Vision & Room Watch', text: 'Describe photos and screenshots, and get greeted when you walk into the room.', demo: 'vision' },
+  { icon: 'cpu', hue: 205, title: 'Device health', text: 'Live battery and charger, Wi-Fi or cable, CPU, memory and disk, with AI forecasts and slowdown alerts.', demo: 'system' },
 ];
 
 // What happens to one request, stage by stage: each is a separate part of the system.
@@ -72,6 +73,7 @@ const DEMO_TILES = [
   ['knowledge', 'book', 265, 'Knowledge', 'Ask questions and get answers from documents.'],
   ['vision', 'eye', 330, 'Vision', 'Describe an image; Room Watch greets you.'],
   ['memory', 'brain', 280, 'Memory', 'Tell it your name and goals; see what it keeps.'],
+  ['system', 'cpu', 205, 'My device', 'Live battery, charger, network and CPU, with AI insights.'],
 ];
 
 // Brand colors for the "works with" strip.

@@ -68,7 +68,7 @@ export default function DeviceCard({ compact = false, onOpen }) {
         label="CPU"
         hue={190}
         value={d.cpu.percent}
-        text={d.cpu.percent == null ? `${d.cpu.threads ?? '—'}` : d.source === 'pc' ? `${d.cpu.percent}%` : d.cpu.pressure}
+        text={d.cpu.percent == null ? `${d.cpu.threads ?? '—'}` : d.source === 'pc' ? `${d.cpu.percent}%` : d.cpu.pressure.charAt(0).toUpperCase() + d.cpu.pressure.slice(1)}
         warn={d.cpu.percent >= 85}
         sub={d.source === 'pc' ? `${d.cpu.cores ?? '?'} cores · ${d.cpu.threads ?? '?'} threads` : d.cpu.pressure ? 'Load (browser)' : `${d.cpu.threads ?? '?'} threads`}
       />

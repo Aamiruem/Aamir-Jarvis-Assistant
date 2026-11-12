@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "node scripts/vitest.mjs run"
   },
   "dependencies": {
     "@simplewebauthn/browser": "13.3.0",

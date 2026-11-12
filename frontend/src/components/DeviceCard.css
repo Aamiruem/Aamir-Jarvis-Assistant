@@ -29,7 +29,8 @@
   transition: background 0.4s;
 }
 .dv-ring::before { content: ''; position: absolute; inset: 7px; border-radius: 50%; background: var(--surface-2); }
-.dv-ring span { position: relative; display: inline-flex; align-items: center; gap: 2px; font: 700 14px/1 Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; text-transform: capitalize; }
+.dv-ring span { position: relative; display: inline-flex; align-items: center; gap: 2px; font: 700 14px/1 Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.dv-source .link-btn { font-size: 13px; }
 .dv-ring .icon { color: var(--c); }
 .dv-meter.warn .dv-ring { --c: var(--danger); }
 .dv-meter strong { font-size: 13.5px; }

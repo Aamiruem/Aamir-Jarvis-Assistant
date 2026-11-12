@@ -8,6 +8,15 @@ import { batteryForecast, insights, latencyStats, mergeDevice, networkQuality, p
 
 export const BRIDGE_URL = 'http://127.0.0.1:8001/local/device';
 const BRIDGE_KEY = 'azarvis-pc-bridge';
+// Another port for the AI service: localStorage 'azarvis-pc-bridge-url' (this computer only).
+const bridgeUrl = () => {
+  try {
+    const custom = localStorage.getItem('azarvis-pc-bridge-url') || '';
+    return /^http:\/\/(127\.0\.0\.1|localhost):\d{2,5}\/local\/device$/.test(custom) ? custom : BRIDGE_URL;
+  } catch {
+    return BRIDGE_URL;
+  }
+};
 const PING_MS = 6000;
 const PC_MS = 3000;
 const KEEP = 60; // latency samples kept (about 6 minutes)
@@ -183,7 +192,7 @@ export function useDevice({ onEvent } = {}) {
     const read = async () => {
       if (stop) return;
       try {
-        const r = await fetch(BRIDGE_URL, { cache: 'no-store', targetAddressSpace: 'loopback' });
+        const r = await fetch(bridgeUrl(), { cache: 'no-store', targetAddressSpace: 'loopback' });
         if (!r.ok) throw new Error(String(r.status));
         const info = await r.json();
         const before = prevPc.current;
