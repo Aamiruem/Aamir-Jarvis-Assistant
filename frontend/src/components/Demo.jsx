@@ -19,6 +19,7 @@ const DemoVision = lab('DemoVision');
 const DemoMemory = lab('DemoMemory');
 const DeviceCard = lazy(() => import('./DeviceCard.jsx'));
 const BrainGym = lazy(() => import('./BrainGym.jsx'));
+const VoiceAgent = lazy(() => import('./VoiceAgent.jsx'));
 
 const SECTIONS = [
   { id: 'home', label: 'Home', icon: 'home', hue: 205 },
@@ -28,6 +29,7 @@ const SECTIONS = [
   { id: 'automate', label: 'Automate', icon: 'rocket', hue: 300 },
 ];
 const TOOLS = [
+  { id: 'voice', label: 'Voice Agent', icon: 'phone', hue: 205 },
   { id: 'mllab', label: 'ML Lab', icon: 'flask', hue: 160 },
   { id: 'knowledge', label: 'Knowledge', icon: 'book', hue: 265 },
   { id: 'vision', label: 'Vision', icon: 'eye', hue: 330 },
@@ -41,6 +43,7 @@ const BLURB = {
   chat: 'Ask anything. In the demo the answers are scripted.',
   tasks: 'Tasks and reminders, saved in this browser.',
   automate: 'Write drafts for email and social media.',
+  voice: 'A human-sounding AI calling agent for study-abroad & visa consultancies. Start a live call and watch it qualify the lead.',
   mllab: 'Train a model on a CSV and see honest scores, right in your browser.',
   knowledge: 'Add documents, then ask questions and get answers from them.',
   vision: 'Describe images and get greeted when you walk into the room.',
@@ -496,6 +499,7 @@ export default function Demo({ section, onSection, onNavigate, theme }) {
           )}
           {TOOLS.some((t) => t.id === current.id) && (
             <Suspense fallback={<div className="tab-loading"><div className="orb pulse" /></div>}>
+              {current.id === 'voice' && <VoiceAgent embedded onAsk={ask} />}
               {current.id === 'mllab' && <DemoMlLab />}
               {current.id === 'knowledge' && <DemoKnowledge />}
               {current.id === 'vision' && <DemoVision />}

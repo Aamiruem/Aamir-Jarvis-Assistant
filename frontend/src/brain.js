@@ -110,6 +110,7 @@ const PLACES = [
   [/\b(tasks?|to-?dos?|reminders)\b/, { type: 'demo', section: 'tasks' }, 'Opening your tasks in the demo.'],
   [/\b(agent studio|studio|content engine|agents?|ai team|content team)\b/, { type: 'page', page: 'studio' }, 'Opening Agent Studio: talk to me and my team builds it.'],
   [/\b(ml ?lab|machine learning lab|train(ing)? a model)\b/, { type: 'demo', section: 'mllab' }, 'Opening ML Lab. Pick a dataset and train a model, right in your browser.'],
+  [/\b(voice agent|calling agent|call agent|study abroad|visa agent|lead(s)? call)\b/, { type: 'demo', section: 'voice' }, 'Opening the Voice Agent. Press “Start a live call” and it talks like a human.'],
   [/\b(knowledge|documents?|docs)\b/, { type: 'demo', section: 'knowledge' }, 'Opening Knowledge, where I search your documents.'],
   [/\b(vision|camera|room watch|photos?|images?)\b/, { type: 'demo', section: 'vision' }, 'Opening Vision. Show me an image.'],
   [/\b(memory|memories)\b/, { type: 'demo', section: 'memory' }, 'Opening Memory: everything I remember about you.'],

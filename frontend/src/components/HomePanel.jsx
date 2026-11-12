@@ -13,6 +13,7 @@ import './HomePanel.css';
 import BrainGym from './BrainGym.jsx';
 
 const DeviceCard = lazy(() => import('./DeviceCard.jsx'));
+const VoiceAgent = lazy(() => import('./VoiceAgent.jsx'));
 
 // Command Center: the first screen after sign-in. Everything on it is live data from the
 // Express API and the AI service (health, tasks, reminders, notifications, memories, stats).
@@ -43,6 +44,7 @@ const VOICE_SAMPLE = 'Hello! I am Azarvis. Your voice settings are working.';
 // and a button that actually opens the feature or runs a command. Content kept relevant and
 // concrete so it reads like a product, not filler.
 const FEATURES = [
+  { motif: 'phone', hue: 205, icon: 'phone', title: 'Voice Agent', desc: 'A human-sounding AI that calls every lead in seconds — qualifies by country, budget & intake, answers visa questions 24/7 and books counselling, in any language.', action: { label: 'Start a call', voiceAgent: true } },
   { motif: 'neural', hue: 265, icon: 'brain', title: 'Neural AI brain', desc: 'Reasoning over your tasks, files and memory — not just chat. Give it a goal and it plans the steps.', action: { label: 'Open chat', tab: 'chat' } },
   { motif: 'wave', hue: 190, icon: 'mic', title: 'Jarvis voice', desc: 'A louder, clearer neural voice that reads replies aloud and listens hands-free. Pick a style in Account.', action: { label: 'Tune voice', tab: 'account' } },
   { motif: 'orbit', hue: 38, icon: 'rocket', title: 'Automations', desc: 'Chain actions into one command: reminders, files, apps and routines that run in order.', action: { label: 'Build a flow', tab: 'automate' } },
@@ -143,6 +145,7 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
   const [ask, setAsk] = useState('');
   const [aloud, setAloud] = useState(readAlertsAloud);
   const [brainGymOpen, setBrainGymOpen] = useState(false);
+  const [voiceAgentOpen, setVoiceAgentOpen] = useState(false);
   const speaking = useSpeakingNow();
 
   const loadTasks = useCallback(() => api.tasks(true).then(setTasks), []);
@@ -199,6 +202,7 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
   // or open Brain Gym. 'games' routes to the Brain Gym overlay rather than a missing tab.
   const runAction = (a) => {
     if (!a) return;
+    if (a.voiceAgent) return setVoiceAgentOpen(true);
     if (a.game || a.tab === 'games') return setBrainGymOpen(true);
     if (a.tab) return onOpenTab(a.tab);
     if (a.prompt != null) return onAsk(a.prompt, Boolean(a.send));
@@ -389,6 +393,11 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
       </div>
 
       {brainGymOpen && <BrainGym onClose={() => setBrainGymOpen(false)} />}
+      {voiceAgentOpen && (
+        <Suspense fallback={null}>
+          <VoiceAgent onClose={() => setVoiceAgentOpen(false)} onAsk={onAsk} />
+        </Suspense>
+      )}
 
       <Panel icon="zap" title="Quick actions" className="cc-commands-panel">
         <div className="cc-commands">
@@ -404,7 +413,7 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
         </div>
       </Panel>
 
-      <Panel icon="rocket" title="Explore Azarvis" className="cc-explore-panel" extra={<span className="cc-live">8 POWERS</span>}>
+      <Panel icon="rocket" title="Explore Azarvis" className="cc-explore-panel" extra={<span className="cc-live">{FEATURES.length} POWERS</span>}>
         <div className="cc-explore">
           {FEATURES.map((f) => (
             <button key={f.title} className="cc-feature" style={{ '--hue': f.hue }} onClick={() => runAction(f.action)}>
