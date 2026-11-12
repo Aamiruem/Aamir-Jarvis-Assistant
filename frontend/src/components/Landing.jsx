@@ -57,6 +57,12 @@ export const FAQ = [
   ['Who built Azarvis?', 'Aamir Hussain Azad, an AI/ML engineer and full-stack developer from India. The source code and his other projects are on GitHub.'],
 ];
 
+// Hero particles: [left %, top %, duration s, size scale] (fixed, so the page renders the same every time).
+const PARTICLES = [
+  [6, 70, 9, 1], [14, 30, 11, 0.7], [22, 85, 8, 1.2], [30, 12, 12, 0.8], [40, 60, 10, 0.6], [52, 90, 9, 1],
+  [61, 20, 13, 0.9], [70, 75, 8, 0.7], [78, 40, 11, 1.1], [86, 82, 10, 0.8], [93, 25, 12, 1], [97, 60, 9, 0.6],
+];
+
 // Feedback section: other ways to get in touch. [icon, hue, label, shown value, link]
 const REACH = [
   ['mail', 0, 'Email', CONTACT_EMAIL, `mailto:${CONTACT_EMAIL}`],
@@ -209,6 +215,13 @@ function HeroAssistant({ onNavigate, onSection, theme }) {
     <div className="hero-side">
       <div className="hero-art" ref={stage}>
         <div className="hero-art-glow" aria-hidden="true" />
+        {/* Motion layers: a slow halo, two tilted orbits with travelling lights, rising particles. */}
+        <div className="hero-halo" aria-hidden="true" />
+        <div className="hero-orbit hero-orbit--1" aria-hidden="true"><i /></div>
+        <div className="hero-orbit hero-orbit--2" aria-hidden="true"><i /></div>
+        <div className="hero-particles" aria-hidden="true">
+          {PARTICLES.map(([x, y, d, s], i) => <span key={i} style={{ '--x': `${x}%`, '--y': `${y}%`, '--d': `${d}s`, '--s': s }} />)}
+        </div>
         <div className="hero-art-tilt" aria-hidden="true">
           <div className="hero-art-sway">
             <img src="/hero-azarvis.webp" alt="" width="530" height="540" className="hero-art-img" fetchpriority="high" decoding="async" />
@@ -221,13 +234,31 @@ function HeroAssistant({ onNavigate, onSection, theme }) {
           <span className="hv-wave" aria-hidden="true">
             {Array.from({ length: 9 }, (_, i) => <span key={i} style={{ '--i': i }} />)}
           </span>
-          <span className="hv-status-text">{statusText}</span>
+          <span className="hv-txt">
+            <strong className="hv-status-text">{statusText}</strong>
+            <small>{state === 'listening' ? 'Listening' : state === 'speaking' ? 'Answering out loud' : 'Voice assistant · online'}</small>
+          </span>
         </div>
         <button type="button" className="hv-float hv-float--a" onClick={() => onNavigate('demo', 'tasks')}>
-          <Icon name="alarm" size="1em" /> {lastTask ? `${lastTask.time ? fmtTime(lastTask.time) : 'Task'} · ${lastTask.text}` : 'Reminder set · 6:00 pm'}
+          <span className="hv-ico" style={{ '--hue': 150 }}><Icon name="alarm" size="1em" /></span>
+          <span className="hv-txt">
+            <strong>{lastTask ? lastTask.text : 'Reminder set'}</strong>
+            <small>{lastTask ? (lastTask.time ? `Today · ${fmtTime(lastTask.time)}` : 'Added to Tasks') : 'Today · 6:00 pm'}</small>
+          </span>
         </button>
         <button type="button" className="hv-float hv-float--b" onClick={() => onNavigate('demo', 'automate')}>
-          <Icon name="mail" size="1em" /> Draft ready for Gmail
+          <span className="hv-ico" style={{ '--hue': 0 }}><Icon name="mail" size="1em" /></span>
+          <span className="hv-txt">
+            <strong>Draft ready</strong>
+            <small>Gmail · review &amp; send</small>
+          </span>
+        </button>
+        <button type="button" className="hv-float hv-float--c" onClick={() => onNavigate('studio')}>
+          <span className="hv-ico" style={{ '--hue': 85 }}><Icon name="workflow" size="1em" /></span>
+          <span className="hv-txt">
+            <strong>Agent Studio</strong>
+            <small>9 images · 8 agents</small>
+          </span>
         </button>
       </div>
 
