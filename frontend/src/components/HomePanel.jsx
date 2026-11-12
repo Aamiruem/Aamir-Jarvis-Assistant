@@ -6,7 +6,9 @@ import { Icon } from '../icons.jsx';
 import { speakOnce, stopSpeakOnce, unlockAudio } from '../neuralVoice.js';
 import { speechSupported } from '../useSpeech.js';
 import { applyVoice, currentVoice } from '../voiceSettings.js';
+import { buildInsights } from '../homeInsights.js';
 import { AiNotice, aiProblemOf } from './AiNotice.jsx';
+import HomeArt from './HomeArt.jsx';
 import './HomePanel.css';
 import BrainGym from './BrainGym.jsx';
 
@@ -36,6 +38,22 @@ const VOICE_COMMANDS = [
   { icon: 'sparkles', label: 'Explain a topic', prompt: 'Explain in very easy English, with an example: ', send: false },
 ];
 const VOICE_SAMPLE = 'Hello! I am Azarvis. Your voice settings are working.';
+
+// "Explore Azarvis" — the big capabilities, each with an AI-designed banner (HomeArt motif)
+// and a button that actually opens the feature or runs a command. Content kept relevant and
+// concrete so it reads like a product, not filler.
+const FEATURES = [
+  { motif: 'neural', hue: 265, icon: 'brain', title: 'Neural AI brain', desc: 'Reasoning over your tasks, files and memory — not just chat. Give it a goal and it plans the steps.', action: { label: 'Open chat', tab: 'chat' } },
+  { motif: 'wave', hue: 190, icon: 'mic', title: 'Jarvis voice', desc: 'A louder, clearer neural voice that reads replies aloud and listens hands-free. Pick a style in Account.', action: { label: 'Tune voice', tab: 'account' } },
+  { motif: 'orbit', hue: 38, icon: 'rocket', title: 'Automations', desc: 'Chain actions into one command: reminders, files, apps and routines that run in order.', action: { label: 'Build a flow', tab: 'automate' } },
+  { motif: 'camera', hue: 330, icon: 'camera', title: 'Vision AI', desc: 'Drop in a photo or screenshot and ask about it — read text, describe, extract, compare.', action: { label: 'Analyze a photo', tab: 'vision' } },
+  { motif: 'grid', hue: 150, icon: 'search', title: 'Knowledge search', desc: 'Ask your own documents in plain English. Azarvis finds the answer and cites where it came from.', action: { label: 'Search docs', tab: 'knowledge' } },
+  { motif: 'shield', hue: 205, icon: 'shield', title: 'Private & yours', desc: 'Your data stays on your account and your PC. You approve every send — nothing goes out on its own.', action: { label: 'Security', tab: 'security' } },
+  { motif: 'spark', hue: 300, icon: 'sparkles', title: 'Brain Gym', desc: 'Six science-based games and a daily workout to train memory, focus and speed. Keep your streak alive.', action: { label: 'Play now', game: true } },
+  { motif: 'orbit', hue: 262, icon: 'flask', title: 'ML insights', desc: 'On-device signals turned into forecasts and health scores — the AI reads your machine, not just you.', action: { label: 'Open device', tab: 'device' } },
+];
+// Vision uses a 'camera' motif that HomeArt doesn't define; fall back to 'spark' there.
+const MOTIF_FALLBACK = { camera: 'spark' };
 
 /** True while this device is speaking (a reply, a reminder, a voice test). */
 function useSpeakingNow() {
@@ -171,7 +189,20 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
     return { open, done: tasks.length - open.length, unread, timeline, feed, dueToday };
   }, [tasks, notes, now]);
 
+  const insights = useMemo(
+    () => buildInsights({ tasks, memories, notes, pc: pc || null, conversations, now }, 4),
+    [tasks, memories, notes, pc, conversations, now],
+  );
+
   const complete = (t) => api.toggleTask(t.id, true).then(loadTasks).catch((e) => setProblem(e.message));
+  // Shared handler for insight cards and the feature showcase: open a tab, run a prompt,
+  // or open Brain Gym. 'games' routes to the Brain Gym overlay rather than a missing tab.
+  const runAction = (a) => {
+    if (!a) return;
+    if (a.game || a.tab === 'games') return setBrainGymOpen(true);
+    if (a.tab) return onOpenTab(a.tab);
+    if (a.prompt != null) return onAsk(a.prompt, Boolean(a.send));
+  };
   const runCommand = (c) => (c.tab ? onOpenTab(c.tab) : onAsk(c.prompt, Boolean(c.send)));
   const stopSpeaking = () => {
     window.speechSynthesis?.cancel();
@@ -255,6 +286,32 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
         <Stat icon="bell" hue={190} value={unread.length} label="Unread alerts" onClick={() => onOpenTab('tasks')} />
         <Stat icon="brain" hue={330} value={memories.length} label="Memories" onClick={() => onOpenTab('memory')} />
       </div>
+
+      {insights.length > 0 && (
+        <section className="cc-insights" aria-label="AI insights">
+          <div className="cc-insights-head">
+            <span className="cc-badge sm"><Icon name="sparkles" /></span>
+            <strong>Azarvis noticed</strong>
+            <small>Live from your tasks, device and memory</small>
+          </div>
+          <div className="cc-insights-grid">
+            {insights.map((i) => (
+              <article key={i.id} className="cc-insight" style={{ '--hue': i.hue }}>
+                <span className="cc-badge"><Icon name={i.icon} /></span>
+                <div className="cc-insight-body">
+                  <strong>{i.title}</strong>
+                  <p>{i.text}</p>
+                </div>
+                {i.action && (
+                  <button className="cc-insight-go" onClick={() => runAction(i.action)}>
+                    {i.action.label} <Icon name="chevron" size="0.9em" />
+                  </button>
+                )}
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="cc-row cc-row-main">
         <Panel icon="pulse" title="System status">
@@ -342,6 +399,24 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
                 {c.label}
                 <small>{c.hint}</small>
               </span>
+            </button>
+          ))}
+        </div>
+      </Panel>
+
+      <Panel icon="rocket" title="Explore Azarvis" className="cc-explore-panel" extra={<span className="cc-live">8 POWERS</span>}>
+        <div className="cc-explore">
+          {FEATURES.map((f) => (
+            <button key={f.title} className="cc-feature" style={{ '--hue': f.hue }} onClick={() => runAction(f.action)}>
+              <div className="cc-feature-art">
+                <HomeArt motif={MOTIF_FALLBACK[f.motif] || f.motif} hue={f.hue} />
+                <span className="cc-feature-chip"><Icon name={f.icon} size="1em" /></span>
+              </div>
+              <div className="cc-feature-text">
+                <strong>{f.title}</strong>
+                <p>{f.desc}</p>
+                <span className="cc-feature-go">{f.action.label} <Icon name="chevron" size="0.9em" /></span>
+              </div>
             </button>
           ))}
         </div>
