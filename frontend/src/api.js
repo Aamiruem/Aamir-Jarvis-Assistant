@@ -76,6 +76,21 @@ async function request(path, options = {}) {
   return data;
 }
 
+/** Like request(), but returns the raw Response (audio, files). Null when signed out. */
+export async function requestRaw(path, options = {}) {
+  if (!accessToken) return null;
+  let res = await send(path, options);
+  if (res.status === 401) {
+    try {
+      await refreshAccessToken();
+      res = await send(path, options);
+    } catch {
+      return null;
+    }
+  }
+  return res;
+}
+
 const post = (path, body, extra) => request(path, { method: 'POST', body, ...extra });
 const publicPost = (path, body) => post(path, body, { auth: false });
 

@@ -1,5 +1,6 @@
 // Azarvis reads new alerts (reminders, PC watcher) out loud on this device. On by default;
 // the choice is per browser, since only the device in front of you should talk.
+import { createNeuralQueue, neuralKnownAvailable } from './neuralVoice.js';
 import { cleanForSpeech } from './speechText.js';
 import { applyVoice, currentVoice } from './voiceSettings.js';
 
@@ -26,11 +27,20 @@ export function alertSpeech(alerts) {
   return alerts.map((a) => `${a.title}${a.body ? `. ${a.body}` : ''}`).join(' ... ');
 }
 
+let alertQueue = null;
+
 /** Speaks alerts after whatever Azarvis is already saying (queued, never interrupting). */
 export function speakAlerts(alerts) {
   const synth = window.speechSynthesis;
   const text = cleanForSpeech(alertSpeech(alerts));
-  if (!synth || !text || !readAlertsAloud()) return false;
-  synth.speak(applyVoice(new SpeechSynthesisUtterance(text), currentVoice(synth.getVoices(), 'en-IN'), 'en-IN'));
+  if (!text || !readAlertsAloud()) return false;
+  const browser = (t) => synth?.speak(applyVoice(new SpeechSynthesisUtterance(t), currentVoice(synth.getVoices(), 'en-IN'), 'en-IN'));
+  if (neuralKnownAvailable()) {
+    alertQueue ??= createNeuralQueue({ onError: (_e, item) => browser(item.text) }); // the louder Jarvis voice
+    alertQueue.say(text);
+    return true;
+  }
+  if (!synth) return false;
+  browser(text);
   return true;
 }

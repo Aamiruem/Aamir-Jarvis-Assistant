@@ -7,7 +7,8 @@ const VOICE_KEY = 'jarvis-voice'; // the chosen voice's name (kept from before t
 const TUNING_KEY = 'jarvis-voice-tuning';
 export const VOICE_EVENT = 'jarvis-voice-change';
 
-export const DEFAULT_TUNING = { rate: 1.05, pitch: 1, volume: 1 };
+// Defaults lean towards a calm, deep "Jarvis" delivery at full volume.
+export const DEFAULT_TUNING = { rate: 0.98, pitch: 0.9, volume: 1 };
 export const LIMITS = {
   rate: { min: 0.6, max: 1.6, step: 0.05 },
   pitch: { min: 0.5, max: 1.6, step: 0.05 }, // below 1 = deeper, above 1 = higher
@@ -87,4 +88,50 @@ export function voiceOptions(voices, lang = 'en-IN') {
   return [...voices]
     .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name))
     .map((v) => ({ name: v.name, lang: v.lang, natural: /natural|neural/i.test(v.name), recommended: rank(v) === 0 }));
+}
+
+// ---------- The neural "Jarvis" voice (neuralVoice.js) ----------
+// engine: "auto" = neural when Azarvis runs on this PC, else the browser voice; "browser" = always the browser.
+// boost: loudness, 1 = normal … 2.5 = much louder (a limiter keeps it clean). clarity / depth: EQ.
+const EXTRAS_KEY = 'azarvis-voice-neural';
+export const DEFAULT_EXTRAS = { engine: 'auto', neuralVoice: 'en-GB-RyanNeural', neuralRate: -4, neuralPitch: -6, boost: 1.8, clarity: true, depth: true };
+export const EXTRA_LIMITS = { neuralRate: { min: -40, max: 50 }, neuralPitch: { min: -25, max: 25 }, boost: { min: 1, max: 2.5 } };
+
+/** Ready-made voice styles: one tap sets the voice, speed, pitch, loudness and EQ. */
+export const VOICE_STYLES = [
+  { id: 'jarvis', label: 'Jarvis', note: 'British, deep and calm', extras: { neuralVoice: 'en-GB-RyanNeural', neuralRate: -4, neuralPitch: -6, depth: true, clarity: true, boost: 1.8 }, browser: { rate: 0.95, pitch: 0.8 } },
+  { id: 'friday', label: 'Friday', note: 'British, bright', extras: { neuralVoice: 'en-GB-SoniaNeural', neuralRate: 2, neuralPitch: 2, depth: false, clarity: true, boost: 1.6 }, browser: { rate: 1.05, pitch: 1.15 } },
+  { id: 'desi', label: 'Desi Jarvis', note: 'Indian English, friendly', extras: { neuralVoice: 'en-IN-PrabhatNeural', neuralRate: 0, neuralPitch: -3, depth: true, clarity: true, boost: 1.8 }, browser: { rate: 1, pitch: 0.9 } },
+  { id: 'announcer', label: 'Announcer', note: 'Loud and bold', extras: { neuralVoice: 'en-US-GuyNeural', neuralRate: 4, neuralPitch: -2, depth: true, clarity: true, boost: 2.3 }, browser: { rate: 1.05, pitch: 0.85 } },
+  { id: 'hindi', label: 'Hindi', note: 'हिंदी आवाज़', extras: { neuralVoice: 'hi-IN-MadhurNeural', neuralRate: 0, neuralPitch: 0, depth: false, clarity: true, boost: 1.8 }, browser: { rate: 1, pitch: 1 } },
+];
+
+export function readVoiceExtras() {
+  let saved = {};
+  try {
+    saved = JSON.parse(localStorage.getItem(EXTRAS_KEY)) || {};
+  } catch {
+    saved = {};
+  }
+  const out = { ...DEFAULT_EXTRAS, ...saved };
+  for (const [k, lim] of Object.entries(EXTRA_LIMITS)) out[k] = clamp(out[k], lim, DEFAULT_EXTRAS[k]);
+  out.engine = out.engine === 'browser' ? 'browser' : 'auto';
+  out.clarity = Boolean(out.clarity);
+  out.depth = Boolean(out.depth);
+  return out;
+}
+
+export function saveVoiceExtras(patch) {
+  try {
+    localStorage.setItem(EXTRAS_KEY, JSON.stringify({ ...readVoiceExtras(), ...patch }));
+  } catch {
+    // storage blocked: applies until reload
+  }
+  window.dispatchEvent(new Event(VOICE_EVENT));
+}
+
+/** Applies a style to both engines (the browser keeps the user's chosen browser voice). */
+export function applyVoiceStyle(style) {
+  saveVoiceExtras(style.extras);
+  saveVoiceSettings({ ...style.browser, volume: 1 });
 }

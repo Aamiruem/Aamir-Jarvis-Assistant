@@ -3,6 +3,7 @@ import { readAlertsAloud, setReadAlertsAloud } from '../alerts.js';
 import { api } from '../api.js';
 import { useNow, useVisibleInterval } from '../hooks.js';
 import { Icon } from '../icons.jsx';
+import { speakOnce, stopSpeakOnce, unlockAudio } from '../neuralVoice.js';
 import { speechSupported } from '../useSpeech.js';
 import { applyVoice, currentVoice } from '../voiceSettings.js';
 import { AiNotice, aiProblemOf } from './AiNotice.jsx';
@@ -170,12 +171,18 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
 
   const complete = (t) => api.toggleTask(t.id, true).then(loadTasks).catch((e) => setProblem(e.message));
   const runCommand = (c) => (c.tab ? onOpenTab(c.tab) : onAsk(c.prompt, Boolean(c.send)));
-  const stopSpeaking = () => window.speechSynthesis?.cancel();
+  const stopSpeaking = () => {
+    window.speechSynthesis?.cancel();
+    stopSpeakOnce();
+  };
   const testVoice = () => {
-    const synth = window.speechSynthesis;
-    if (!synth) return;
-    synth.cancel();
-    synth.speak(applyVoice(new SpeechSynthesisUtterance(VOICE_SAMPLE), currentVoice(synth.getVoices(), 'en-IN'), 'en-IN'));
+    unlockAudio();
+    speakOnce(VOICE_SAMPLE, (text) => {
+      const synth = window.speechSynthesis;
+      if (!synth) return;
+      synth.cancel();
+      synth.speak(applyVoice(new SpeechSynthesisUtterance(text), currentVoice(synth.getVoices(), 'en-IN'), 'en-IN'));
+    });
   };
   const toggleAloud = () => {
     setReadAlertsAloud(!aloud);

@@ -27,7 +27,7 @@ from app.llm.claude import key_status
 from app.system_control import current_os
 from app.nlp.intent import get_classifier
 from app.rag.store import get_store
-from app.routers import chat, local_bridge, mind, misc, mllab, pcwatch, rag, study_notes, system, whatsapp
+from app.routers import chat, local_bridge, mind, misc, mllab, pcwatch, rag, study_notes, system, tts, whatsapp
 from app.pc_watcher import watch_loop
 from app.scheduler import reminder_loop
 from app.whatsapp.loop import whatsapp_loop
@@ -96,6 +96,7 @@ app.include_router(pcwatch.router, dependencies=protected)
 app.include_router(study_notes.router, dependencies=protected)
 app.include_router(mind.router, dependencies=protected)
 app.include_router(whatsapp.router, dependencies=protected)
+app.include_router(tts.router, dependencies=protected)
 
 
 @app.get("/health")

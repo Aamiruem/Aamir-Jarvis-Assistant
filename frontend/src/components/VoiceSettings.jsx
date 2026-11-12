@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Icon } from '../icons.jsx';
+import JarvisVoiceSettings from './JarvisVoiceSettings.jsx';
 import { pickVoice } from '../speechText.js';
 import { applyVoice, currentVoice, DEFAULT_TUNING, LIMITS, readTuning, readVoiceName, resetVoiceSettings, saveVoiceSettings, voiceOptions } from '../voiceSettings.js';
 
@@ -69,6 +70,9 @@ export default function VoiceSettings() {
   const preset = PRESETS.find((p) => p.rate === tuning.rate && p.pitch === tuning.pitch);
 
   return (
+    <>
+    <JarvisVoiceSettings />
+    <h4 className="jv-sub">Browser voice (backup, used when the neural voice can't be reached)</h4>
     <div className="voice-settings">
       <label className="voice-pick">
         <strong>Voice</strong>
@@ -103,5 +107,6 @@ export default function VoiceSettings() {
         <span className="muted small">Saved on this device. Every spoken reply and reminder uses it.</span>
       </div>
     </div>
+    </>
   );
 }

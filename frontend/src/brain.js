@@ -187,9 +187,18 @@ export function speak(text, { onEnd } = {}) {
   if (!('speechSynthesis' in window)) return false;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text.replace(/[•\n“”"]+/g, ' '));
-  u.rate = 1.03;
+  // Jarvis-like delivery at full volume: a natural British male voice when the device has one
+  // (Edge: "Microsoft Ryan/Thomas Online (Natural)"; Chrome: "Google UK English Male"), else Indian English.
+  u.rate = 0.98;
+  u.pitch = 0.9;
+  u.volume = 1;
   const voices = window.speechSynthesis.getVoices();
-  u.voice = voices.find((v) => /en-IN/i.test(v.lang) && /natural|neural|online/i.test(v.name)) || voices.find((v) => /en-(IN|GB|US)/i.test(v.lang)) || null;
+  u.voice =
+    voices.find((v) => /en-GB/i.test(v.lang) && /(ryan|thomas).*(natural|online)/i.test(v.name)) ||
+    voices.find((v) => /google uk english male/i.test(v.name)) ||
+    voices.find((v) => /en-IN/i.test(v.lang) && /natural|neural|online/i.test(v.name)) ||
+    voices.find((v) => /en-(IN|GB|US)/i.test(v.lang)) ||
+    null;
   if (onEnd) u.onend = onEnd;
   window.speechSynthesis.speak(u);
   return true;

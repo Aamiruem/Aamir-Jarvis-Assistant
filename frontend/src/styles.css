@@ -1397,3 +1397,16 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
 .wa-steps small { overflow-wrap: anywhere; }
 .wa-try { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
 .wa-try code { padding: 3px 8px; border-radius: 8px; font-size: 12.5px; background: var(--panel-2); border: 1px solid var(--border); }
+
+/* Account → Voice: the neural Jarvis voice */
+.jarvis-voice { margin-bottom: 18px; border-color: hsl(210 80% 60% / 0.35); background: linear-gradient(160deg, hsl(210 80% 55% / 0.1), var(--panel) 60%); }
+.jv-head { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.jv-head p { margin: 2px 0 0; }
+.jv-dot { flex: none; width: 12px; height: 12px; margin-top: 5px; border-radius: 50%; background: var(--muted); }
+.jv-dot.on { background: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2); }
+.jv-styles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.jv-style { display: grid; gap: 2px; padding: 10px 12px; border-radius: 14px; text-align: left; cursor: pointer; color: var(--text); background: var(--panel-2); border: 1px solid var(--border); transition: border-color 0.15s, background 0.15s; }
+.jv-style small { color: var(--muted); font-size: 12px; }
+.jv-style:hover { border-color: var(--border-strong); }
+.jv-style.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.jv-sub { margin: 8px 0 10px; font-size: 14px; color: var(--muted); font-weight: 600; }

@@ -34,3 +34,6 @@ tzdata>=2024.2            # timezone data for Windows
 
 # --- Tests ---
 pytest>=8.3
+
+# --- Voice ---
+edge-tts>=7.0                # neural Jarvis voice (Microsoft neural voices, free, no key)

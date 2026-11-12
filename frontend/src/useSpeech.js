@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { cleanForSpeech, isBargeIn, isEcho, pauseFor, takeSentences } from './speechText.js';
+import { createNeuralQueue, neuralAvailable, neuralKnownAvailable } from './neuralVoice.js';
 import { applyVoice, currentVoice, VOICE_EVENT } from './voiceSettings.js';
 
-// Voice in/out with the browser's built-in Web Speech API (works best in Chrome / Edge).
+// Voice in with the browser's Web Speech API; voice out with the neural Jarvis voice when Azarvis
+// runs on this PC (neuralVoice.js: clearer, louder), else the browser's own voice.
 const Recognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
 export const speechSupported = Boolean(Recognition);
 
@@ -50,17 +52,23 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang =
   const activeStream = useRef(null);
   const utterances = useRef([]); // kept on purpose: Chrome can drop onend for garbage-collected utterances
   const voiceRef = useRef(null);
+  const neural = useRef(null); // the neural voice's sentence queue (one per hook)
 
   // Stops Azarvis talking. An unfinished spoken reply still runs its "finished" callback.
   const quiet = () => {
     const s = activeStream.current;
     activeStream.current = null;
     window.speechSynthesis?.cancel();
+    neural.current?.stop();
     if (speakingRef.current) session.current.echoUntil = Date.now() + ECHO_TAIL_MS;
     speakingRef.current = false;
     setSpeaking(false);
     s?.interrupt();
   };
+
+  useEffect(() => {
+    neuralAvailable();
+  }, []);
 
   // The chosen voice, else the most natural one installed (voices load asynchronously in Chrome),
   // reloaded when the voice settings change.
@@ -302,7 +310,32 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang =
       }
       onEnd?.();
     };
+    const sentenceDone = () => {
+      if (interrupted) return;
+      done += 1;
+      if (ended && done >= queued) finish();
+    };
+    const browserUtter = (text) => {
+      if (!synth) return sentenceDone();
+      const u = applyVoice(new SpeechSynthesisUtterance(text), voiceRef.current, lang);
+      u.rate = Math.min(2, Math.max(0.5, u.rate * style.rate));
+      u.pitch = Math.min(2, Math.max(0, u.pitch * style.pitch));
+      u.onend = u.onerror = sentenceDone;
+      utterances.current.push(u);
+      synth.speak(u);
+    };
     const utter = (text) => {
+      if (neuralKnownAvailable()) {
+        neural.current ??= createNeuralQueue({ onError: (_err, item) => browserUtter(item.text) });
+        queued += 1;
+        spokenRef.current += ` ${text}`;
+        if (!speakingRef.current) {
+          speakingRef.current = true;
+          setSpeaking(true);
+        }
+        neural.current.say(text, style, sentenceDone);
+        return;
+      }
       if (!synth) return;
       const u = applyVoice(new SpeechSynthesisUtterance(text), voiceRef.current, lang);
       u.rate = Math.min(2, Math.max(0.5, u.rate * style.rate));
@@ -341,11 +374,12 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang =
         if (interrupted) return finish();
         takeSentences(buffer, true).chunks.forEach(utter);
         buffer = '';
-        if (!synth || done >= queued) return finish();
+        if (done >= queued || (!synth && !neural.current?.busy)) return finish();
         // Safety net: Chrome sometimes never fires onend at all.
         const startedAt = Date.now();
         watch = setInterval(() => {
-          if (!synth.speaking && !synth.pending && Date.now() - startedAt > 1000) finish();
+          const browserIdle = !synth || (!synth.speaking && !synth.pending);
+          if (browserIdle && !neural.current?.busy && Date.now() - startedAt > 1000) finish();
         }, 500);
       },
       interrupt() {
@@ -361,7 +395,7 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang =
   const speak = useCallback(
     (text, onEnd) => {
       const clean = cleanForSpeech(text).slice(0, 1500);
-      if (!window.speechSynthesis || !clean) {
+      if ((!window.speechSynthesis && !neuralKnownAvailable()) || !clean) {
         onEnd?.();
         return;
       }
