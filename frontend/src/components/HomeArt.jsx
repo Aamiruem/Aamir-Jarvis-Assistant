@@ -40,7 +40,10 @@ const VB = { viewBox: '0 0 160 90', preserveAspectRatio: 'xMidYMid slice', class
 function Neural({ id, hue }) {
   const r = rng(7);
   const cols = [20, 55, 90, 125];
-  const nodes = cols.map((x, ci) => Array.from({ length: ci === 0 || ci === 3 ? 2 : 3 }, (_, i, a) => ({ x, y: 18 + (i + 0.5) * (54 / a.length) + (r() - 0.5) * 8 })));
+  const nodes = cols.map((x, ci) => {
+    const count = ci === 0 || ci === 3 ? 2 : 3;
+    return Array.from({ length: count }, (_, i) => ({ x, y: 18 + (i + 0.5) * (54 / count) + (r() - 0.5) * 8 }));
+  });
   const edges = [];
   for (let c = 0; c < nodes.length - 1; c++) for (const a of nodes[c]) for (const b of nodes[c + 1]) edges.push([a, b]);
   return (
