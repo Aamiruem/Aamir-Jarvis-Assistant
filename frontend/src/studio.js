@@ -95,8 +95,10 @@ export function parseIdea(text) {
   };
   map.audience = take(/^(for|this is for|it'?s for|made for)\b/i)?.replace(/^(for|this is for|it'?s for|made for)\s+/i, '');
   map.proof = take(/\d|%|percent|\bx\b|times|doubled|tripled/i);
-  map.take = take(/\b(most people|everyone thinks|myth|wrong|mistake|instead of|stop |don'?t|nobody)\b/i);
+  // Strong "hot take" signals first, then the story, then weaker signals ("nobody watched" is story).
+  map.take = take(/\b(most people|everyone thinks|myth|the mistake|people get wrong|instead of)\b/i);
   map.story = take(/\b(i|we|my|our|last (year|week|month)|yesterday|when i)\b/i);
+  map.take ||= take(/\b(wrong|mistake|stop |don'?t|nobody)\b/i);
   map.idea = rest.length ? trimEnd(rest.shift()) : map.story || map.take || trimEnd(all[0] || text);
   if (!map.quote && rest.length) map.quote = trimEnd(rest.sort((a, b) => a.length - b.length)[0]);
   for (const k of Object.keys(map)) if (!map[k]) delete map[k];
@@ -112,6 +114,12 @@ export function parseProblem(text) {
     return i < 0 ? undefined : trimEnd(rest.splice(i, 1)[0]);
   };
   map.since = find(/\b(since|started|ago|last (week|month|night)|yesterday|every|when|worse|after)\b/i);
+  // "…, it started 3 days ago" inside the first sentence.
+  const clause = !map.since && map.problem.match(/[,;]?\s*((it|this|that)\s+)?(started|began|since|has been happening)\b[^,;.]*/i);
+  if (clause && clause.index > 10) {
+    map.since = cap(trimEnd(clause[0].replace(/^[,;\s]+/, '')));
+    map.problem = trimEnd(map.problem.slice(0, clause.index) + map.problem.slice(clause.index + clause[0].length));
+  }
   map.tried = find(/\b(tried|restart|reinstall|already|checked|cleared|updated)\b/i);
   map.goal = find(/\b(want|need|goal|so that|fixed|able to)\b/i);
   if (rest.length) map.problem = `${map.problem}. ${rest.map(trimEnd).join('. ')}`;
@@ -275,7 +283,7 @@ export function runSpecialist(id, raw, { tone = 'founder', handle = '@azarvis' }
 const KB = [
   {
     id: 'slow-pc',
-    re: /\b(slow|lag|hang|freez|stuck|not responding|100%|cpu|ram|memory|heat|hot|fan)\b/i,
+    re: /\b(slow\w*|lag\w*|hang\w*|freez\w*|stuck|not responding|cpu|ram|memory|overheat\w*|heat\w*|fan noise|crawl\w*)\b/i,
     name: 'Slow or freezing computer',
     causes: ['Memory (RAM) is almost full, so Windows swaps to the disk', 'Too many apps and browser tabs start with the PC', 'The disk is nearly full (under 15% free)', 'A background update, antivirus scan or indexer is running', 'Dust and heat make the processor slow itself down'],
     checks: ['Open Task Manager (Ctrl+Shift+Esc) and sort by Memory and CPU', 'Open Azarvis → My device: is memory above 85% or the disk above 90%?', 'Look at the Startup apps tab in Task Manager', 'Feel the bottom of the laptop: very hot means heat is part of it'],
@@ -284,7 +292,7 @@ const KB = [
   },
   {
     id: 'internet',
-    re: /\b(internet|wifi|wi-fi|network|router|slow net|no connection|disconnect|buffer|ping|lag in game|data)\b/i,
+    re: /\b(internet|wifi|wi-fi|network|router|no connection|disconnect\w*|buffer\w*|ping|mobile data)\b/i,
     name: 'Internet problems',
     causes: ['Weak Wi-Fi signal (far from the router or walls in between)', 'The router needs a restart', 'Too many devices are streaming at once', 'The provider has an outage or you hit a data limit'],
     checks: ['Open Azarvis → My device: look at response time and quality', 'Try another device on the same Wi-Fi', 'Move next to the router and test again', 'Check the provider app for outages or data balance'],
@@ -293,7 +301,7 @@ const KB = [
   },
   {
     id: 'battery',
-    re: /\b(battery|charg|drain|power|plug)\b/i,
+    re: /\b(batter\w*|charg\w*|drain\w*|power\w*|plug\w*)\b/i,
     name: 'Battery or charging',
     causes: ['Screen brightness and background apps use most of the power', 'The battery has aged (fewer full charges left)', 'The charger, cable or port is loose or not enough watts'],
     checks: ['Azarvis → My device shows if the charger is connected right now', 'Windows: Settings → System → Power & battery → Battery usage', 'Try another socket and cable'],
@@ -302,7 +310,7 @@ const KB = [
   },
   {
     id: 'code',
-    re: /\b(error|bug|crash|exception|undefined|null|npm|python|code|build|compile|deploy|vercel|react|api|500|404)\b/i,
+    re: /\b(error\w*|bug\w*|crash\w*|exception|undefined|npm|pip|python|my code|build fail\w*|compil\w*|deploy\w*|vercel|react|api|stack trace|500|404)\b/i,
     name: 'Code, app or build error',
     causes: ['A dependency version changed or is missing', 'An environment variable or API key is missing', 'The code expects data that is empty or undefined', 'A cached build is out of date'],
     checks: ['Read the first error line, not the last one', 'Check the .env values the app needs', 'Reproduce it with the smallest input', 'Compare with the last version that worked (git diff)'],
@@ -311,7 +319,7 @@ const KB = [
   },
   {
     id: 'study',
-    re: /\b(study|exam|focus|concentrat|procrastinat|syllabus|marks|revision|distract|learn)\b/i,
+    re: /\b(stud\w*|exam\w*|focus\w*|concentrat\w*|procrastinat\w*|syllabus|marks|revision|distract\w*)\b/i,
     name: 'Study and focus',
     causes: ['The plan is too big, so starting feels hard', 'The phone and notifications break focus', 'Too little sleep or long sessions without breaks', 'Reading without testing yourself'],
     checks: ['How many hours did you really study yesterday?', 'How often did you pick up the phone?', 'Which topic do you avoid most?'],
@@ -320,7 +328,7 @@ const KB = [
   },
   {
     id: 'career',
-    re: /\b(job|interview|resume|cv|career|internship|placement|hr|offer|salary|linkedin)\b/i,
+    re: /\b(jobs?|interview\w*|resume|cv|career\w*|internship\w*|placement\w*|offer letter|salary|hiring)\b/i,
     name: 'Job search and interviews',
     causes: ['The resume does not show results with numbers', 'Applying widely instead of to the right roles', 'Little interview practice out loud'],
     checks: ['Does every resume line show an impact (number, result)?', 'How many applications got a reply?', 'Have you done a mock interview this week?'],
@@ -329,7 +337,7 @@ const KB = [
   },
   {
     id: 'stress',
-    re: /\b(stress|anxious|anxiety|tired|sleep|burnout|overwhelm|sad|lonely|motivation|demotivated)\b/i,
+    re: /\b(stress\w*|anxious|anxiety|tired|sleep\w*|burn(ed|t)? ?out|overwhelm\w*|sad|lonely|motivat\w*|demotivat\w*)\b/i,
     name: 'Stress, sleep and energy',
     causes: ['Too many open tasks at once', 'Irregular sleep and late screens', 'No time for movement or people'],
     checks: ['How many hours did you sleep the last 3 nights?', 'What is the one task that worries you most?', 'When did you last take a real break?'],

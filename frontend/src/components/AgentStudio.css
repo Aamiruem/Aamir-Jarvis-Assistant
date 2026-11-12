@@ -154,3 +154,6 @@
 @media (prefers-reduced-motion: reduce) {
   .as-wave.on i, .as-orb.listening, .as-manager.busy, .as-member--working .as-state, .as-shot, .as-out, .as-shot--empty.pulse { animation: none; }
 }
+.as-log--chat { margin: 0 0 10px; }
+.as-msg--you { justify-self: end; max-width: 88%; }
+.as-msg--azarvis { justify-self: start; max-width: 92%; }

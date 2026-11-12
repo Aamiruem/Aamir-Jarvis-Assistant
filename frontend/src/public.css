@@ -937,3 +937,24 @@ body:has(.pub) { background: #0b0d12; }
   .flow-steps li.active .flow-step-icon { animation: none; }
   .launch-btn:hover { transform: none; }
 }
+
+/* ---------- Agent Studio: nav button, footer button, page ---------- */
+.pub-studio-link {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 13px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  border: 1px solid color-mix(in srgb, #a3e635 50%, transparent); background: color-mix(in srgb, #a3e635 12%, transparent);
+  color: var(--text); font-weight: 700; font-size: 14px; transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.pub-studio-link .icon { color: #a3e635; }
+.pub-studio-link:hover, .pub-studio-link.active { background: color-mix(in srgb, #a3e635 24%, transparent); border-color: #a3e635; box-shadow: 0 6px 18px rgba(163, 230, 53, 0.2); }
+:root[data-theme='light'] .pub-studio-link .icon { color: #4d7c0f; }
+.pub .site-foot-cta .btn.site-foot-studio:not(.primary) { color: #1a2600; background: #c4f135; border-color: transparent; font-weight: 700; }
+.pub .site-foot-cta .btn.site-foot-studio:not(.primary):hover:not(:disabled) { background: #d4f86a; border-color: transparent; }
+.pub-drawer-studio { color: #1a2600 !important; background: #c4f135 !important; border-color: transparent !important; font-weight: 700; }
+.demo-link--studio { margin-top: 6px; border: 1px dashed color-mix(in srgb, #a3e635 55%, transparent); }
+.studio-page { display: grid; gap: 18px; padding-block: 22px 40px; }
+.studio-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.studio-head h1 { margin: 0; font: 800 clamp(24px, 3vw, 34px)/1.15 Inter, system-ui, sans-serif; letter-spacing: -0.02em; }
+.studio-head p { margin: 4px 0 0; color: var(--muted); font-size: 15px; }
+.studio-logo { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; color: #1a2600; background: linear-gradient(135deg, #d9f99d, #a3e635); box-shadow: 0 10px 26px rgba(163, 230, 53, 0.3); flex: none; }
+@media (max-width: 1240px) { .pub-studio-link { padding: 7px 10px; font-size: 13px; } }
+@media (max-width: 640px) { .pub-studio-link { display: none; } }

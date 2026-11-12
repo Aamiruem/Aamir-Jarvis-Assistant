@@ -286,6 +286,17 @@ export default function AgentStudio({ onAsk, onAddTask = saveDemoTask }) {
   const allText = () => team.filter((m) => run.results[m.id]).map((m) => `## ${run.results[m.id].title}\n\n${run.results[m.id].text}`).join('\n\n');
   const managerState = run.phase === 'idle' ? (call ? 'Listening' : 'Waiting') : run.phase === 'briefing' ? 'Briefing' : run.phase === 'working' ? 'Delegating' : 'Done';
   const orbState = talking ? 'speaking' : listen.listening ? 'listening' : call ? 'on' : '';
+  // The conversation: above the box in chat (reads top-down), below the controls for voice and demo.
+  const logView = log.length > 0 && (
+    <div className={`as-log ${input === 'chat' ? 'as-log--chat' : ''}`} ref={logRef} aria-live="polite">
+      {log.map((m, i) => (
+        <div key={i} className={`as-msg as-msg--${m.who}`}>
+          <small>{m.who === 'azarvis' ? 'Azarvis' : 'You'}</small>
+          <p>{m.text}</p>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className={`as as--${mode}`}>
@@ -370,6 +381,7 @@ export default function AgentStudio({ onAsk, onAddTask = saveDemoTask }) {
             {input === 'chat' && (
               <>
                 {!log.length && <button type="button" className="as-call" onClick={startChat}><Icon name="chat" size="1.1em" /> Start the chat</button>}
+                {logView}
                 <form className="as-chat-input" onSubmit={sendChat}>
                   <textarea value={typed} onChange={(e) => setTyped(e.target.value)} rows={3} placeholder={mode === 'create' ? 'Answer, or paste your whole idea at once…' : 'Describe the problem, or answer the question…'} aria-label="Your answer" onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) sendChat(e); }} />
                   <div className="as-row">
@@ -387,16 +399,7 @@ export default function AgentStudio({ onAsk, onAddTask = saveDemoTask }) {
               </>
             )}
 
-            {log.length > 0 && (
-              <div className="as-log" ref={logRef} aria-live="polite">
-                {log.map((m, i) => (
-                  <div key={i} className={`as-msg as-msg--${m.who}`}>
-                    <small>{m.who === 'azarvis' ? 'Azarvis' : 'You'}</small>
-                    <p>{m.text}</p>
-                  </div>
-                ))}
-              </div>
-            )}
+            {input !== 'chat' && logView}
           </section>
 
           <section className="as-card">
