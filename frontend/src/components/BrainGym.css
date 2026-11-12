@@ -1,0 +1,53 @@
+.bg-overlay { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 20px; background: rgba(3, 7, 18, .78); backdrop-filter: blur(12px); }
+.brain-gym { --bg-line: rgba(122, 161, 211, .18); --bg-surface: rgba(14, 22, 39, .95); width: min(680px, 100%); max-height: min(88vh, 800px); overflow: auto; position: relative; border: 1px solid rgba(71, 207, 237, .35); border-radius: 24px; padding: clamp(20px, 4vw, 34px); background: radial-gradient(ellipse at 50% -15%, rgba(34, 211, 238, .17), transparent 55%), linear-gradient(145deg, #111a2d, #0b1020 70%); box-shadow: 0 30px 100px #0009, 0 0 55px rgba(34, 211, 238, .12); color: #eef4ff; }
+.bg-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.bg-header h2 { margin: 7px 0 0; font-size: clamp(30px, 5vw, 42px); line-height: 1; }
+.bg-header h2 span { color: #55e4f7; text-shadow: 0 0 22px #22d3ee77; }
+.bg-header p { margin: 8px 0 0; color: #9baac4; font-size: 13px; }
+.bg-kicker { display: inline-flex; align-items: center; gap: 7px; color: #60e3f2; font-size: 10px; font-weight: 800; letter-spacing: .17em; }
+.bg-header .icon-btn { color: #9baac4; background: rgba(255,255,255,.05); }
+.bg-daily { position: relative; margin: 24px 0 18px; padding: 14px 16px; border: 1px solid var(--bg-line); border-radius: 16px; background: rgba(255,255,255,.035); }
+.bg-daily > span { display: flex; align-items: center; gap: 7px; color: #9baac4; font-size: 12px; }
+.bg-daily > span .icon { color: #c29aff; }
+.bg-daily strong { position: absolute; right: 16px; top: 13px; font-size: 15px; color: #fff; }
+.bg-daily strong small { color: #9baac4; font-size: 11px; font-weight: 400; }
+.bg-progress { height: 5px; margin-top: 12px; overflow: hidden; border-radius: 8px; background: #ffffff12; }
+.bg-progress i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #22d3ee, #9273ff); box-shadow: 0 0 12px #22d3eeaa; transition: width .35s ease; }
+.bg-modes { display: grid; gap: 10px; }
+.bg-mode { display: flex; align-items: center; gap: 14px; width: 100%; padding: 15px; border: 1px solid var(--bg-line); border-radius: 16px; background: linear-gradient(120deg, hsla(var(--hue), 70%, 50%, .09), rgba(255,255,255,.025) 70%); color: #eef4ff; text-align: left; cursor: pointer; transition: transform .18s, border-color .18s, box-shadow .18s; }
+.bg-mode:hover { transform: translateY(-2px); border-color: hsla(var(--hue), 85%, 68%, .7); box-shadow: 0 8px 26px hsla(var(--hue), 80%, 55%, .13); }
+.bg-mode-icon { display: grid; place-items: center; flex: none; width: 45px; height: 45px; border-radius: 14px; color: hsl(var(--hue), 88%, 70%); background: hsla(var(--hue), 75%, 55%, .14); font-size: 20px; }
+.bg-mode > span:nth-child(2) { display: grid; gap: 3px; flex: 1; }
+.bg-mode strong { font-size: 15px; }
+.bg-mode small, .bg-mode em { color: #9baac4; font-size: 12px; font-style: normal; }
+.bg-mode em { margin-top: 3px; color: hsl(var(--hue), 80%, 72%); font-size: 11px; }
+.bg-chevron { color: #8392ad; }
+.bg-play { min-height: 410px; padding-top: 6px; text-align: center; }
+.bg-game-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.bg-game-head > span { color: #b8c7df; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+.bg-game-head > span i { display: inline-block; width: 5px; height: 5px; margin: 0 7px 2px; border-radius: 50%; background: #53e3f3; }
+.bg-game-head > b { min-width: 38px; color: #60e3f2; font-variant-numeric: tabular-nums; }
+.bg-game-head > b.urgent { color: #ff8097; animation: bg-tick .6s infinite alternate; }
+@keyframes bg-tick { to { opacity: .45; } }
+.bg-play h3 { margin: 27px 0 0; font-family: Rajdhani, Inter, sans-serif; font-size: 25px; }
+.bg-status { min-height: 24px; margin: 4px 0 20px; color: #9baac4; font-size: 13px; }
+.bg-sequence-grid { display: grid; grid-template-columns: repeat(3, 74px); gap: 13px; justify-content: center; padding: 10px; }
+.bg-sequence-grid button, .bg-focus-grid button { border: 1px solid rgba(107, 141, 190, .3); background: linear-gradient(145deg, #1b2940, #111a2d); box-shadow: inset 0 0 16px #060a1280; cursor: pointer; transition: .17s ease; }
+.bg-sequence-grid button { aspect-ratio: 1; border-radius: 19px; }
+.bg-sequence-grid button:hover, .bg-focus-grid button:hover { border-color: #78ebf5; transform: scale(1.04); }
+.bg-sequence-grid button.lit, .bg-focus-grid button.lit { border-color: #8df6ff; background: radial-gradient(circle, #e5ffff, #56e9f6 38%, #3781ba 90%); box-shadow: 0 0 26px #41ddebcc, inset 0 0 14px #fff; }
+.bg-focus-grid { display: grid; grid-template-columns: repeat(4, 55px); gap: 8px; justify-content: center; padding: 8px; }
+.bg-focus-grid button { aspect-ratio: 1; border-radius: 12px; }
+.bg-focus-grid button.picked:not(.lit) { border-color: #ee8bab; background: #ad426766; box-shadow: 0 0 13px #ec648933; }
+.bg-math { display: grid; gap: 22px; justify-items: center; padding: 28px 0 10px; }
+.bg-math > strong { font-family: Rajdhani, Inter, sans-serif; font-size: clamp(35px, 8vw, 58px); letter-spacing: .04em; color: #f6f8ff; text-shadow: 0 0 20px #35cce533; }
+.bg-math > div { display: grid; grid-template-columns: repeat(4, minmax(54px, 82px)); gap: 10px; }
+.bg-math button { padding: 12px; border: 1px solid var(--bg-line); border-radius: 13px; background: #ffffff0a; color: #dce8fb; font-size: 18px; cursor: pointer; }
+.bg-math button:hover { border-color: #54deef; background: #22d3ee1a; }
+.bg-retry { margin-top: 24px; }
+.bg-footer { display: flex; align-items: center; gap: 8px; margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--bg-line); color: #8291aa; font-size: 11px; }
+.bg-footer .icon { flex: none; color: #61dcb8; }
+.cc-game-btn { min-height: 42px; border-color: rgba(34,211,238,.28); color: #dcfbff; background: linear-gradient(135deg, rgba(34,211,238,.15), rgba(129,140,248,.15)); }
+.cc-game-btn:hover { box-shadow: 0 0 20px rgba(34,211,238,.18); }
+@media (max-width: 560px) { .bg-overlay { padding: 8px; } .brain-gym { max-height: 94vh; border-radius: 20px; padding: 20px 16px; } .bg-daily strong { position: static; display: block; margin-top: 4px; } .bg-play { min-height: 390px; } .bg-sequence-grid { grid-template-columns: repeat(3, 62px); gap: 10px; } .bg-focus-grid { grid-template-columns: repeat(4, 47px); gap: 7px; } .bg-game-head .btn { padding-inline: 8px; } }
+@media (prefers-reduced-motion: reduce) { .bg-mode, .bg-progress i, .bg-sequence-grid button, .bg-focus-grid button { transition: none; } }

@@ -8,6 +8,7 @@ import { speechSupported } from '../useSpeech.js';
 import { applyVoice, currentVoice } from '../voiceSettings.js';
 import { AiNotice, aiProblemOf } from './AiNotice.jsx';
 import './HomePanel.css';
+import BrainGym from './BrainGym.jsx';
 
 const DeviceCard = lazy(() => import('./DeviceCard.jsx'));
 
@@ -123,6 +124,7 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
   const [problem, setProblem] = useState('');
   const [ask, setAsk] = useState('');
   const [aloud, setAloud] = useState(readAlertsAloud);
+  const [brainGymOpen, setBrainGymOpen] = useState(false);
   const speaking = useSpeakingNow();
 
   const loadTasks = useCallback(() => api.tasks(true).then(setTasks), []);
@@ -218,6 +220,9 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
               </button>
             </div>
           )}
+          <button className="btn cc-game-btn" onClick={() => setBrainGymOpen(true)}>
+            <Icon name="brain" size="1.1em" /> Brain Gym
+          </button>
           <span className={`cc-pill ${health ? (allUp ? 'ok' : 'bad') : ''}`}>
             <i />
             {health ? (allUp ? 'All systems ready' : aiProblem ? 'Needs attention' : 'Partly offline') : 'Checking systems…'}
@@ -325,6 +330,8 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
           <button className="cc-link" onClick={() => onOpenTab('tasks')}>View all tasks <Icon name="chevron" size="1em" /></button>
         </Panel>
       </div>
+
+      {brainGymOpen && <BrainGym onClose={() => setBrainGymOpen(false)} />}
 
       <Panel icon="zap" title="Quick actions" className="cc-commands-panel">
         <div className="cc-commands">
