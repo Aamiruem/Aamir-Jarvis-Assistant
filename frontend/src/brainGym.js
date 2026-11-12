@@ -10,6 +10,8 @@ export const GAMES = [
   { id: 'stroop', name: 'Colour Clash', icon: 'eye', hue: 330, skill: 'Focus & control', blurb: 'Tap the COLOUR of the word, not what it says. Your brain fights you.' },
   { id: 'span', name: 'Number Span', icon: 'keyboard', hue: 160, skill: 'Attention', blurb: 'A number flashes, then you type it back. One digit longer each time.' },
   { id: 'reaction', name: 'Reaction', icon: 'pulse', hue: 0, skill: 'Reflexes', blurb: 'Tap the instant it turns green. Measures your reaction time in milliseconds.' },
+  { id: 'schulte', name: 'Schulte Table', icon: 'search', hue: 210, skill: 'Visual search', blurb: 'Find the numbers 1, 2, 3… in order, as fast as you can. Trains attention and wide vision.' },
+  { id: 'logic', name: 'Logic Sequence', icon: 'target', hue: 280, skill: 'Reasoning', blurb: 'What number comes next? Spot the hidden rule. Pure fluid intelligence, the hardest to fake.' },
 ];
 
 export const getGame = (id) => GAMES.find((g) => g.id === id);
@@ -135,6 +137,94 @@ export function spanDigits(round, level, seed) {
 }
 export const spanFlashMs = (len, level) => Math.max(500, Math.round((900 - len * 40) / levelMult(level)));
 
+// ---------- Schulte Table (visual search): find 1..N in order, fast ----------
+/** Fisher–Yates shuffle driven by a seeded rng, so the same seed gives the same grid. */
+export function shuffle(arr, rand) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+export const schulteSize = (level) => ({ easy: 3, normal: 4, hard: 5, insane: 6 }[level] || 4);
+export function schulteGrid(level, seed) {
+  const size = schulteSize(level);
+  const n = size * size;
+  return { size, n, cells: shuffle(Array.from({ length: n }, (_, i) => i + 1), rng(seed)) };
+}
+
+// ---------- Logic Sequence (fluid reasoning): what number comes next? ----------
+// Each rule returns { terms, answer, rule }. Harder levels unlock harder rules.
+const RULES = {
+  add: (rand) => {
+    const start = 1 + Math.floor(rand() * 9);
+    const d = 2 + Math.floor(rand() * 7);
+    const t = [start, start + d, start + 2 * d, start + 3 * d];
+    return { terms: t, answer: start + 4 * d, rule: `add ${d}` };
+  },
+  mul: (rand) => {
+    const start = 2 + Math.floor(rand() * 3);
+    const r = 2 + Math.floor(rand() * 2);
+    const t = [start, start * r, start * r * r, start * r ** 3];
+    return { terms: t, answer: start * r ** 4, rule: `multiply by ${r}` };
+  },
+  grow: (rand) => {
+    // differences grow by 1: 2, 4, 7, 11, 16…
+    const start = 1 + Math.floor(rand() * 5);
+    let d = 1 + Math.floor(rand() * 3);
+    const t = [start];
+    for (let i = 0; i < 4; i++) {
+      t.push(t[t.length - 1] + d);
+      d += 1;
+    }
+    return { terms: t.slice(0, 5), answer: t[5] ?? t[4] + d, rule: 'gaps grow by 1' };
+  },
+  square: (rand) => {
+    const s = 1 + Math.floor(rand() * 4);
+    const t = [s, s + 1, s + 2, s + 3].map((x) => x * x);
+    return { terms: t, answer: (s + 4) * (s + 4), rule: 'perfect squares' };
+  },
+  fib: (rand) => {
+    const a = 1 + Math.floor(rand() * 4);
+    const b = a + 1 + Math.floor(rand() * 4);
+    const t = [a, b];
+    while (t.length < 5) t.push(t[t.length - 1] + t[t.length - 2]);
+    return { terms: t, answer: t[4] + t[3], rule: 'add the two before it' };
+  },
+  alt: (rand) => {
+    // two interleaved arithmetic runs: 3,10,5,13,7,16…
+    const a0 = 2 + Math.floor(rand() * 5);
+    const b0 = 8 + Math.floor(rand() * 6);
+    const da = 1 + Math.floor(rand() * 3);
+    const db = 2 + Math.floor(rand() * 3);
+    const t = [a0, b0, a0 + da, b0 + db, a0 + 2 * da];
+    return { terms: t, answer: b0 + 2 * db, rule: 'two sequences take turns' };
+  },
+};
+const RULE_SETS = {
+  easy: ['add', 'add', 'mul'],
+  normal: ['add', 'mul', 'grow', 'square'],
+  hard: ['grow', 'square', 'fib', 'alt'],
+  insane: ['fib', 'alt', 'grow', 'mul'],
+};
+export function logicProblem(level, seed) {
+  const rand = rng(seed);
+  const set = RULE_SETS[level] || RULE_SETS.normal;
+  const name = set[Math.floor(rand() * set.length)];
+  const { terms, answer, rule } = RULES[name](rand);
+  // Four options: the answer plus plausible near-misses, shuffled.
+  const opts = new Set([answer]);
+  const near = [answer + 1, answer - 1, answer + terms[1] - terms[0], Math.round(answer * 1.5), answer + 2, answer - 2];
+  for (const o of near) {
+    if (opts.size >= 4) break;
+    if (o > 0 && o !== answer) opts.add(o);
+  }
+  let guard = 0;
+  while (opts.size < 4 && guard++ < 20) opts.add(answer + 3 + Math.floor(rand() * 9));
+  return { terms, answer, rule, options: shuffle([...opts], rand) };
+}
+
 // ---------- scoring: 0-100 with a star rating and a word ----------
 export function rate(score) {
   const stars = score >= 90 ? 5 : score >= 75 ? 4 : score >= 55 ? 3 : score >= 35 ? 2 : 1;
@@ -159,6 +249,14 @@ export function scoreGame(id, raw, level = 'normal') {
     case 'reaction':
       // 180 ms ≈ 100, 600 ms ≈ 0
       return clamp(Math.round(((600 - (raw.ms ?? 600)) / 420) * 100));
+    case 'schulte': {
+      // Faster is better. Par ~1200 ms per number; a big grid naturally scores more because count is higher.
+      const count = raw.count || 16;
+      const base = count * 500; // a near-perfect run
+      return clamp(Math.round((1 - ((raw.ms ?? count * 2000) - base) / (count * 1500)) * 100));
+    }
+    case 'logic':
+      return clamp(Math.round((raw.correct || 0) * 10 * (0.6 + m * 0.4)));
     default:
       return 0;
   }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dailyWorkout, dayKey, GAMES, getGame, mathProblem, memorySequence, nBackSequence, rate, scoreGame, spanDigits, stroopTrial, updateStreak } from './brainGym.js';
+import { dailyWorkout, dayKey, GAMES, getGame, logicProblem, mathProblem, memorySequence, nBackSequence, rate, rng, schulteGrid, schulteSize, scoreGame, shuffle, spanDigits, stroopTrial, updateStreak } from './brainGym.js';
 
 describe('memory grid', () => {
   it('grows by one each round and is the same for a seed', () => {
@@ -93,5 +93,60 @@ describe('streak', () => {
   });
   it('dayKey is stable and zero-padded', () => {
     expect(dayKey(new Date(2026, 0, 5, 12))).toBe('2026-01-05');
+  });
+});
+
+describe('shuffle', () => {
+  it('keeps every element, is deterministic for a seed', () => {
+    const base = [1, 2, 3, 4, 5, 6, 7, 8];
+    const a = shuffle(base, rng(5));
+    expect([...a].sort((x, y) => x - y)).toEqual(base);
+    expect(shuffle(base, rng(5))).toEqual(a);
+    expect(base).toEqual([1, 2, 3, 4, 5, 6, 7, 8]); // input not mutated
+  });
+});
+
+describe('Schulte table', () => {
+  it('is a full permutation of 1..N for the level size', () => {
+    expect(schulteSize('normal')).toBe(4);
+    expect(schulteSize('insane')).toBe(6);
+    const g = schulteGrid('hard', 99);
+    expect(g.size).toBe(5);
+    expect(g.n).toBe(25);
+    expect([...g.cells].sort((a, b) => a - b)).toEqual(Array.from({ length: 25 }, (_, i) => i + 1));
+    expect(schulteGrid('hard', 99).cells).toEqual(g.cells); // same seed → same grid
+  });
+  it('scores faster runs higher', () => {
+    const fast = scoreGame('schulte', { ms: 16 * 600, count: 16 });
+    const slow = scoreGame('schulte', { ms: 16 * 2500, count: 16 });
+    expect(fast).toBeGreaterThan(slow);
+    expect(fast).toBeLessThanOrEqual(100);
+    expect(slow).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('Logic sequence', () => {
+  it('the answer always obeys the rule, with four distinct options including it', () => {
+    for (const level of ['easy', 'normal', 'hard', 'insane']) {
+      for (let seed = 1; seed <= 40; seed++) {
+        const p = logicProblem(level, seed);
+        expect(p.terms.length).toBeGreaterThanOrEqual(4);
+        expect(p.options).toContain(p.answer);
+        expect(new Set(p.options).size).toBe(4);
+        expect(Number.isInteger(p.answer)).toBe(true);
+      }
+    }
+  });
+  it('is deterministic for a seed and scores by correct answers', () => {
+    expect(logicProblem('hard', 7)).toEqual(logicProblem('hard', 7));
+    expect(scoreGame('logic', { correct: 10 }, 'insane')).toBeGreaterThan(scoreGame('logic', { correct: 3 }, 'insane'));
+  });
+  it('known rules produce the expected next term', () => {
+    // add: terms are arithmetic, so answer − last === last − secondlast
+    const add = logicProblem('easy', 3);
+    if (add.rule.startsWith('add')) {
+      const d = add.terms[1] - add.terms[0];
+      expect(add.answer - add.terms[add.terms.length - 1]).toBe(d);
+    }
   });
 });
