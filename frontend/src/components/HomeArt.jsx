@@ -158,7 +158,85 @@ function Spark({ id, hue }) {
   );
 }
 
-const MOTIFS = { neural: Neural, orbit: Orbit, wave: Wave, grid: Grid, shield: Shield, spark: Spark };
+// A slowly rotating globe with meridians, parallels and country chips orbiting it —
+// the "study abroad / every country" motif. Rotation via <animateTransform>.
+function Globe({ id, hue }) {
+  const chips = ['\u{1F1FA}\u{1F1F8}', '\u{1F1E8}\u{1F1E6}', '\u{1F1EC}\u{1F1E7}', '\u{1F1E6}\u{1F1FA}', '\u{1F1E9}\u{1F1EA}'];
+  return (
+    <svg {...VB}>
+      <Defs id={id} hue={hue} />
+      <rect width="160" height="90" fill={`url(#${id}-bg)`} />
+      <rect width="160" height="90" fill={`url(#${id}-glow)`} />
+      <g transform="translate(80 45)">
+        <g fill="none" stroke={`url(#${id}-line)`} strokeWidth="0.6" opacity="0.7">
+          <circle r="26" />
+          <g>
+            <ellipse rx="26" ry="9" />
+            <ellipse rx="26" ry="18" />
+            <ellipse rx="9" ry="26" />
+            <ellipse rx="18" ry="26" />
+            <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="18s" repeatCount="indefinite" />
+          </g>
+        </g>
+        <circle r="26" fill={`hsl(${hue} 90% 60% / 0.08)`} />
+        {/* orbiting country chips */}
+        <g>
+          <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="22s" repeatCount="indefinite" />
+          {chips.map((ch, i) => {
+            const a = (i / chips.length) * Math.PI * 2;
+            return (
+              <g key={i} transform={`translate(${Math.cos(a) * 36} ${Math.sin(a) * 22})`}>
+                <circle r="7" fill={`hsl(${hue} 60% 16%)`} stroke={`hsl(${hue} 95% 68%)`} strokeWidth="0.6" />
+                <text textAnchor="middle" y="3" fontSize="7">{ch}</text>
+                <animateTransform attributeName="transform" type="rotate" from="0" to="-360" dur="22s" repeatCount="indefinite" additive="sum" />
+              </g>
+            );
+          })}
+        </g>
+      </g>
+    </svg>
+  );
+}
+
+// A phone handset with a live call and status rows ticking — the "AI voice agent" motif.
+function Phone({ id, hue }) {
+  const rows = ['Check eligibility', 'Book counselling', 'Application status', 'Visa process'];
+  return (
+    <svg {...VB}>
+      <Defs id={id} hue={hue} />
+      <rect width="160" height="90" fill={`url(#${id}-bg)`} />
+      <rect width="160" height="90" fill={`url(#${id}-glow)`} />
+      {/* soundwave on the left */}
+      <g transform="translate(26 45)">
+        {Array.from({ length: 7 }, (_, i) => {
+          const h = 8 + Math.abs(Math.sin(i)) * 24;
+          return (
+            <rect key={i} x={i * 5 - 18} y={-h / 2} width="2.4" height={h} rx="1.2" fill={`url(#${id}-line)`}>
+              <animate attributeName="height" values={`${h};${h * 0.3};${h}`} dur={`${1 + (i % 3) * 0.3}s`} repeatCount="indefinite" />
+              <animate attributeName="y" values={`${-h / 2};${-h * 0.15};${-h / 2}`} dur={`${1 + (i % 3) * 0.3}s`} repeatCount="indefinite" />
+            </rect>
+          );
+        })}
+      </g>
+      {/* handset */}
+      <g transform="translate(96 14)">
+        <rect width="52" height="62" rx="9" fill={`hsl(${hue} 50% 12%)`} stroke={`hsl(${hue} 95% 68%)`} strokeWidth="1" />
+        <rect x="18" y="4" width="16" height="2.5" rx="1.25" fill={`hsl(${hue} 95% 68%)`} opacity="0.6" />
+        {rows.map((r, i) => (
+          <g key={i} transform={`translate(6 ${12 + i * 11})`}>
+            <rect width="40" height="8" rx="2" fill={`hsl(${hue} 60% 20% / 0.8)`} />
+            <circle cx="5" cy="4" r="2" fill={`hsl(${(hue + i * 20) % 360} 95% 65%)`}>
+              <animate attributeName="opacity" values="0.3;1;0.3" dur={`${1.4 + i * 0.3}s`} repeatCount="indefinite" />
+            </circle>
+            <rect x="10" y="2.5" width="22" height="3" rx="1.5" fill={`hsl(${hue} 60% 75% / 0.5)`} />
+          </g>
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+const MOTIFS = { neural: Neural, orbit: Orbit, wave: Wave, grid: Grid, shield: Shield, spark: Spark, globe: Globe, phone: Phone };
 
 /** <HomeArt motif="neural" hue={265} /> — one inline-SVG banner. */
 export default function HomeArt({ motif = 'neural', hue = 265 }) {
