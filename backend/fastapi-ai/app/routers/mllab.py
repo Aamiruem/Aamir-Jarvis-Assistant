@@ -11,13 +11,15 @@
     GET    /mllab/runs                       experiment log
     GET    /mllab/house-price                model card, or training progress on first use
     POST   /mllab/house-price/predict
+    GET    /mllab/crop-yield                 model card + country defaults, or training progress on first use
+    POST   /mllab/crop-yield/predict
 """
 import asyncio
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
-from app.mllab import automl, data, housing, jobs, registry
+from app.mllab import automl, crop, data, housing, jobs, registry
 from app.security import Caller, get_caller
 
 router = APIRouter(prefix="/mllab", tags=["ml-lab"])
@@ -141,3 +143,25 @@ async def house_price_predict(body: housing.HouseInput):
     if housing.status()["status"] != "ready":
         raise HTTPException(409, "The house price model is still training. Try again in a few minutes.")
     return await asyncio.to_thread(housing.predict, body)
+
+
+@router.get("/crop-yield")
+async def crop_yield_status():
+    status = await asyncio.to_thread(crop.status)
+    status["fields"] = crop.CropInput.model_json_schema()["properties"]
+    if status["status"] == "ready":
+        try:
+            status["countries"] = crop.countries(await asyncio.to_thread(crop.load_records))
+        except Exception:  # cached data gone and offline: the form still works without defaults
+            status["countries"] = {}
+    return status
+
+
+@router.post("/crop-yield/predict")
+async def crop_yield_predict(body: crop.CropInput):
+    if crop.status()["status"] != "ready":
+        raise HTTPException(409, "The crop yield model is still training. Try again in a few minutes.")
+    try:
+        return await asyncio.to_thread(crop.predict, body)
+    except ValueError as e:
+        raise HTTPException(422, str(e))

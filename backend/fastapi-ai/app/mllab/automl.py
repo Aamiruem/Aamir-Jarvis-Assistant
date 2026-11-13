@@ -67,7 +67,7 @@ def to_text(X: np.ndarray) -> np.ndarray:
     return np.vectorize(lambda v: "(missing)" if v is None else str(v), otypes=[object])(X) if X.size else X
 
 
-def build_preprocessor(kinds: list[str]) -> ColumnTransformer:
+def build_preprocessor(kinds: list[str], max_categories: int = 30) -> ColumnTransformer:
     num = [i for i, k in enumerate(kinds) if k == "numeric"]
     cat = [i for i, k in enumerate(kinds) if k == "categorical"]
     parts = []
@@ -80,7 +80,7 @@ def build_preprocessor(kinds: list[str]) -> ColumnTransformer:
     if cat:
         parts.append(("cat", Pipeline([
             ("text", FunctionTransformer(to_text)),
-            ("onehot", OneHotEncoder(handle_unknown="infrequent_if_exist", min_frequency=5, max_categories=30, sparse_output=False)),
+            ("onehot", OneHotEncoder(handle_unknown="infrequent_if_exist", min_frequency=5, max_categories=max_categories, sparse_output=False)),
         ]), cat))
     return ColumnTransformer(parts)
 
@@ -151,6 +151,7 @@ def train(
     cv_folds: int = 5,
     tune_iter: int = 12,
     max_cv_rows: int = 20_000,
+    max_categories: int = 30,
     only: list[str] | None = None,
     progress: Progress | None = None,
 ) -> tuple[dict, Pipeline, dict]:
@@ -212,7 +213,7 @@ def train(
     leaderboard = []
     for i, (name, model) in enumerate(models.items()):
         say(f"Cross-validating {name}", 10 + int(50 * i / len(models)))
-        pipe = Pipeline([("prep", build_preprocessor(kinds)), ("model", model)])
+        pipe = Pipeline([("prep", build_preprocessor(kinds, max_categories)), ("model", model)])
         t0 = time.perf_counter()
         res = cross_validate(pipe, X_cv, y_cv, cv=splitter, scoring=scoring, return_train_score=True, error_score="raise")
         cv = {}
@@ -228,7 +229,7 @@ def train(
     leaderboard.sort(key=lambda row: -row["cv"][primary]["mean"])
     best_name = leaderboard[0]["model"]
 
-    best = Pipeline([("prep", build_preprocessor(kinds)), ("model", clone(models[best_name]))])
+    best = Pipeline([("prep", build_preprocessor(kinds, max_categories)), ("model", clone(models[best_name]))])
     tuned, params = False, {}
     space = {f"model__{k}": v for k, v in SEARCH_SPACE.get(best_name, {}).items()}
     if tune_iter and space:
@@ -355,7 +356,7 @@ def _meta(features, kinds, X_train, classes, task, target, interval) -> dict:
         else:
             values = [str(v) for v in X_train[:, j] if v is not None]
             uniq, counts = np.unique(values, return_counts=True)
-            stats[f] = {"kind": k, "categories": [str(u) for u in uniq[np.argsort(-counts)][:50]]}
+            stats[f] = {"kind": k, "categories": [str(u) for u in uniq[np.argsort(-counts)][:200]]}
     return {"features": features, "stats": stats, "classes": classes, "task": task, "target": target, "interval": interval}
 
 

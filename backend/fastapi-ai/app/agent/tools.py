@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 
 from app.config import settings
 from app.db import sql
+from app.mllab import crop as crop_yield
 from app.mllab import housing
 from app.mllab import registry as ml_models
 from app.rag.store import get_store
@@ -306,6 +307,10 @@ class PredictHousePrice(housing.HouseInput):
     pass
 
 
+class PredictCropYield(crop_yield.CropInput):
+    pass
+
+
 class ListMlModels(BaseModel):
     pass
 
@@ -320,6 +325,12 @@ def predict_house_price(args: PredictHousePrice, ctx: ToolContext) -> dict:
     if housing.status()["status"] != "ready":
         return {"status": "training", "note": "The house price model is being trained for the first time; it takes a few minutes."}
     return housing.predict(args)
+
+
+def predict_crop_yield(args: PredictCropYield, ctx: ToolContext) -> dict:
+    if crop_yield.status()["status"] != "ready":
+        return {"status": "training", "note": "The crop yield model is being trained for the first time; it takes a few minutes."}
+    return crop_yield.predict(args)
 
 
 def list_ml_models(args: ListMlModels, ctx: ToolContext) -> dict:
@@ -416,6 +427,13 @@ TOOLS: dict[str, tuple[str, type[BaseModel], callable]] = {
         "trained on 1990 US census data). Give the estimate together with its likely range and the model's tested "
         "typical error; it is an estimate, never a certainty. Ask for inputs the user hasn't given rather than inventing them.",
         PredictHousePrice, predict_house_price,
+    ),
+    "predict_crop_yield": (
+        "Estimate a crop's yield (tonnes per hectare) for a country and year with the ML Lab crop yield model, trained "
+        "on FAO and World Bank data for 101 countries and 10 crops (1990 to 2013). Give the estimate with its likely "
+        "range and the model's tested typical error; it is an estimate, never a certainty. Ask for inputs the user "
+        "hasn't given (rainfall, pesticides, temperature) rather than inventing them.",
+        PredictCropYield, predict_crop_yield,
     ),
     "list_ml_models": (
         "List the machine learning models in the user's ML Lab (ones they trained on their own CSV files, plus built-in "
