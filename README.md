@@ -39,6 +39,7 @@ frontend/ (React)                backend/
 **Learning path:** see [docs/LEARNING_ROADMAP.md](docs/LEARNING_ROADMAP.md).
 **Voice commands, "Hey Azarvis", Room Watch and Windows/Linux/macOS control:** see [docs/VOICE_AND_PC_CONTROL.md](docs/VOICE_AND_PC_CONTROL.md).
 **Every endpoint:** see [docs/API.md](docs/API.md).
+**Next-gen upgrade plan and checklist (phases, what is done, what needs keys):** see [docs/UPGRADE_PLAN.md](docs/UPGRADE_PLAN.md).
 **SEO and Google Search Console:** see [docs/SEO.md](docs/SEO.md).
 **ML Lab (AutoML, house price prediction, train on your CSV):** see [docs/ML_LAB.md](docs/ML_LAB.md).
 
