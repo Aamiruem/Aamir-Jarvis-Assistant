@@ -8,8 +8,11 @@ const WAKE = /\b(?:(?:hey|hi|hello|ok|okay|yo)[\s,]+)?(?:azarvis|azarvas|azervis
  * ''             - only the wake word: Azarvis should answer "Yes?" and listen
  * 'open notepad' - the request that followed the wake word
  */
+// The same name as a Hindi or Urdu recognizer writes it.
+const WAKE_NATIVE = /(?:(?:हे|हाय|हेलो|ओके|ہے|ہائے|ہیلو)[\s,،]*)?(?:जार्विस|जारविस|जार्वेस|अज़ार्विस|अजार्विस|अजारविस|جاروس|جارویس|جاروِس|ازارویس)[\s,.!?:;،۔।-]*/;
+
 export function afterWakeWord(text) {
-  const m = (text || '').match(WAKE);
+  const m = (text || '').match(WAKE) || (text || '').match(WAKE_NATIVE);
   if (!m) return null;
   return text.slice(m.index + m[0].length).trim();
 }

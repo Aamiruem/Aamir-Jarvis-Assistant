@@ -9,6 +9,7 @@ import { openUrl, quickCommand } from '../quickCommands.js';
 import { cleanAnswer, markOnboarded } from '../session.js';
 import { toast } from '../ui.jsx';
 import { useSpeech } from '../useSpeech.js';
+import { languageCommand, languageInfo, readLanguage, saveLanguage } from '../languages.js';
 import { afterWakeWord } from '../wakeWord.js';
 
 const SUGGESTIONS = [
@@ -107,6 +108,13 @@ export default function Chat({ userId, history, conversationId, onConversation, 
           return;
         }
         text = request;
+      }
+      // "Speak in Hindi" / "Urdu mein baat karo": listen in that language from now on.
+      const switchTo = languageCommand(text, readLanguage());
+      if (switchTo) {
+        saveLanguage(switchTo);
+        jarvisSays(languageInfo(switchTo).hello);
+        return;
       }
       if (handsFreeRef.current && STOP_WORDS.test(text)) {
         endHandsFree();

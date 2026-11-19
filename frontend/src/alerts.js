@@ -2,7 +2,7 @@
 // the choice is per browser, since only the device in front of you should talk.
 import { createNeuralQueue, neuralKnownAvailable } from './neuralVoice.js';
 import { cleanForSpeech } from './speechText.js';
-import { applyVoice, currentVoice } from './voiceSettings.js';
+import { utteranceFor } from './voiceSettings.js';
 
 const KEY = 'jarvis-speak-alerts';
 
@@ -34,7 +34,7 @@ export function speakAlerts(alerts) {
   const synth = window.speechSynthesis;
   const text = cleanForSpeech(alertSpeech(alerts));
   if (!text || !readAlertsAloud()) return false;
-  const browser = (t) => synth?.speak(applyVoice(new SpeechSynthesisUtterance(t), currentVoice(synth.getVoices(), 'en-IN'), 'en-IN'));
+  const browser = (t) => synth?.speak(utteranceFor(t, synth.getVoices()));
   if (neuralKnownAvailable()) {
     alertQueue ??= createNeuralQueue({ onError: (_e, item) => browser(item.text) }); // the louder Jarvis voice
     alertQueue.say(text);

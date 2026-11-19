@@ -24,7 +24,8 @@ export function cleanForSpeech(text) {
 export function takeSentences(buffer, final = false) {
   const chunks = [];
   let rest = buffer;
-  const end = /[.!?…:;](?=\s)|\n/;
+  // Also the Hindi/Urdu full stops (। ۔), the Arabic question mark (؟) and CJK ones (。！？).
+  const end = /[.!?…:;](?=\s)|[।॥۔؟。！？]|\n/;
   for (let m = rest.match(end); m; m = rest.match(end)) {
     const piece = rest.slice(0, m.index + m[0].length);
     rest = rest.slice(m.index + m[0].length);
@@ -46,7 +47,8 @@ export function takeSentences(buffer, final = false) {
 }
 
 // Words that mean the speaker is mid-thought ("remind me to call mom and…").
-const CONTINUES = /\b(and|or|but|so|to|the|a|an|of|for|with|then|also|because|if|that|my|at|in|on|is|um|uh|like)$/i;
+// (Also Hinglish, Hindi and Urdu: aur, lekin, और, لیکن…)
+const CONTINUES = /(?:^|\s)(and|or|but|so|to|the|a|an|of|for|with|then|also|because|if|that|my|at|in|on|is|um|uh|like|aur|ya|lekin|ki|ke|ko|और|या|लेकिन|कि|के|को|اور|یا|لیکن|کہ)$/i;
 
 /**
  * How long a silence means "they've finished speaking", in ms. Short when the recognizer has
@@ -59,7 +61,7 @@ export function pauseFor(text, settled) {
   return settled ? 750 : 1250;
 }
 
-const words = (s) => (s || '').toLowerCase().match(/[a-z0-9ऀ-ॿ']+/g) || []; // Latin + Devanagari (Hindi)
+const words = (s) => (s || '').toLowerCase().match(/[\p{L}\p{M}\p{N}']+/gu) || []; // any language, any script
 
 /**
  * True when what the microphone heard is (mostly) Azarvis's own voice coming out of the

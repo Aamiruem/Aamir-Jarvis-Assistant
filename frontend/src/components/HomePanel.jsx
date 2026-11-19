@@ -5,7 +5,7 @@ import { useNow, useVisibleInterval } from '../hooks.js';
 import { Icon } from '../icons.jsx';
 import { speakOnce, stopSpeakOnce, unlockAudio } from '../neuralVoice.js';
 import { speechSupported } from '../useSpeech.js';
-import { applyVoice, currentVoice } from '../voiceSettings.js';
+import { utteranceFor } from '../voiceSettings.js';
 import { buildInsights } from '../homeInsights.js';
 import { AiNotice, aiProblemOf } from './AiNotice.jsx';
 import HomeArt from './HomeArt.jsx';
@@ -214,7 +214,7 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
       const synth = window.speechSynthesis;
       if (!synth) return;
       synth.cancel();
-      synth.speak(applyVoice(new SpeechSynthesisUtterance(text), currentVoice(synth.getVoices(), 'en-IN'), 'en-IN'));
+      synth.speak(utteranceFor(text, synth.getVoices()));
     });
   };
   const toggleAloud = () => {

@@ -52,3 +52,11 @@ def test_unknown_voice_falls_back_and_limits_hold(fake_edge):
         assert c.post("/tts", headers=H, json={"text": "Hi", "rate": 500}).status_code == 422
         assert c.post("/tts", headers=H, json={"text": ""}).status_code == 422
         assert c.post("/tts", json={"text": "Hi"}).status_code == 401  # internal key required
+
+
+def test_any_language_neural_voice_is_accepted(fake_edge):
+    with TestClient(app) as c:
+        assert c.post("/tts", headers=H, json={"text": "आप कैसे हैं?", "voice": "hi-IN-SwaraNeural"}).status_code == 200
+        assert c.post("/tts", headers=H, json={"text": "آپ کیسے ہیں؟", "voice": "ur-IN-SalmanNeural"}).status_code == 200
+        assert c.post("/tts", headers=H, json={"text": "Hi", "voice": "hi-IN-Swara; rm -rf"}).status_code == 200
+    assert [call[1] for call in fake_edge] == ["hi-IN-SwaraNeural", "ur-IN-SalmanNeural", "en-GB-RyanNeural"]

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { cleanForSpeech, isBargeIn, isEcho, pauseFor, takeSentences } from './speechText.js';
+import { cleanForSpeech, isBargeIn, isEcho, pauseFor, pickVoice, takeSentences } from './speechText.js';
 import { createNeuralQueue, neuralAvailable, neuralKnownAvailable } from './neuralVoice.js';
-import { applyVoice, currentVoice, VOICE_EVENT } from './voiceSettings.js';
+import { applyVoice, currentVoice, readVoiceExtras, VOICE_EVENT } from './voiceSettings.js';
+import { browserVoiceFor, detectLanguage, neuralVoiceFor, speechLocale } from './languages.js';
+import { useLanguage } from './useLanguage.js';
 
 // Voice in with the browser's Web Speech API; voice out with the neural Jarvis voice when Azarvis
 // runs on this PC (neuralVoice.js: clearer, louder), else the browser's own voice.
@@ -34,7 +36,10 @@ const best = (result) => Array.from(result).reduce((a, b) => ((b.confidence || 0
  * shouldBargeIn(heard) - optional filter: return false to let Azarvis keep talking
  * onBargeIn()        - the user started talking over Azarvis (Azarvis has already gone quiet)
  */
-export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang = 'en-IN' }) {
+export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang: fixedLang }) {
+  // The language to listen for: the caller's fixed one, else the user's (Account → Voice).
+  const savedLang = useLanguage();
+  const lang = fixedLang || savedLang;
   const [listening, setListening] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [interim, setInterim] = useState('');
@@ -315,9 +320,20 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang =
       done += 1;
       if (ended && done >= queued) finish();
     };
+    const startSpeaking = (text) => {
+      queued += 1;
+      spokenRef.current += ` ${text}`;
+      if (!speakingRef.current) {
+        speakingRef.current = true;
+        setSpeaking(true);
+      }
+    };
+    // The browser's voice, in the sentence's own language (Hindi text gets a Hindi voice, etc.).
     const browserUtter = (text) => {
       if (!synth) return sentenceDone();
-      const u = applyVoice(new SpeechSynthesisUtterance(text), voiceRef.current, lang);
+      const code = detectLanguage(text, lang);
+      const voice = browserVoiceFor(code, voiceRef.current, synth.getVoices(), pickVoice);
+      const u = applyVoice(new SpeechSynthesisUtterance(text), voice, speechLocale(code));
       u.rate = Math.min(2, Math.max(0.5, u.rate * style.rate));
       u.pitch = Math.min(2, Math.max(0, u.pitch * style.pitch));
       u.onend = u.onerror = sentenceDone;
@@ -325,34 +341,13 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang =
       synth.speak(u);
     };
     const utter = (text) => {
-      if (neuralKnownAvailable()) {
-        neural.current ??= createNeuralQueue({ onError: (_err, item) => browserUtter(item.text) });
-        queued += 1;
-        spokenRef.current += ` ${text}`;
-        if (!speakingRef.current) {
-          speakingRef.current = true;
-          setSpeaking(true);
-        }
-        neural.current.say(text, style, sentenceDone);
-        return;
-      }
-      if (!synth) return;
-      const u = applyVoice(new SpeechSynthesisUtterance(text), voiceRef.current, lang);
-      u.rate = Math.min(2, Math.max(0.5, u.rate * style.rate));
-      u.pitch = Math.min(2, Math.max(0, u.pitch * style.pitch));
-      u.onend = u.onerror = () => {
-        if (interrupted) return;
-        done += 1;
-        if (ended && done >= queued) finish();
-      };
-      queued += 1;
-      utterances.current.push(u);
-      spokenRef.current += ` ${text}`;
-      if (!speakingRef.current) {
-        speakingRef.current = true;
-        setSpeaking(true);
-      }
-      synth.speak(u);
+      // A native neural voice for this sentence's language (null: none exists, the browser reads it).
+      const neuralId = neuralKnownAvailable() ? neuralVoiceFor(text, lang, readVoiceExtras().neuralVoice) : null;
+      if (!neuralId && !synth) return;
+      startSpeaking(text);
+      if (!neuralId) return browserUtter(text);
+      neural.current ??= createNeuralQueue({ onError: (_err, item) => browserUtter(item.text) });
+      neural.current.say(text, style, sentenceDone, neuralId);
     };
     const handle = {
       /** Sets how the rest of this reply sounds ({ rate, pitch } multipliers, clamped to a gentle range). */

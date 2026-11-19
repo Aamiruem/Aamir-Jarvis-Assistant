@@ -2,6 +2,7 @@
 // and how loud. Saved in this browser and shared by every spoken reply (chat, voice sessions,
 // reminder alerts). Changing them fires VOICE_EVENT so a voice that is already loaded updates.
 import { pickVoice } from './speechText.js';
+import { browserVoiceFor, detectLanguage, readLanguage, speechLocale } from './languages.js';
 
 const VOICE_KEY = 'jarvis-voice'; // the chosen voice's name (kept from before these settings)
 const TUNING_KEY = 'jarvis-voice-tuning';
@@ -75,6 +76,17 @@ export function applyVoice(utterance, voice, lang) {
 
 /** The voice to use right now: the saved choice if it is installed, else the clearest one. */
 export const currentVoice = (voices, lang = 'en-IN') => pickVoice(voices, lang, readVoiceName());
+
+/**
+ * A browser utterance for any text, in its own language: Hindi text gets a Hindi voice, Urdu an
+ * Urdu one, English the chosen voice. Used by one-off phrases (alerts, greetings, voice tests).
+ */
+export function utteranceFor(text, voices = window.speechSynthesis?.getVoices() ?? []) {
+  const hint = readLanguage();
+  const code = detectLanguage(text, hint);
+  const voice = browserVoiceFor(code, currentVoice(voices, hint), voices, pickVoice);
+  return applyVoice(new SpeechSynthesisUtterance(text), voice, speechLocale(code));
+}
 
 /** Voices sorted for a picker: the language's natural (neural) voices first. */
 export function voiceOptions(voices, lang = 'en-IN') {

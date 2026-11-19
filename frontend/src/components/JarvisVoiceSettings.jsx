@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { requestRaw } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { neuralAvailable, speakOnce, unlockAudio } from '../neuralVoice.js';
-import { applyVoice, applyVoiceStyle, currentVoice, DEFAULT_EXTRAS, readVoiceExtras, saveVoiceExtras, VOICE_STYLES } from '../voiceSettings.js';
+import { LANGUAGES, languageInfo, saveLanguage } from '../languages.js';
+import { useLanguage } from '../useLanguage.js';
+import { applyVoiceStyle, DEFAULT_EXTRAS, utteranceFor, readVoiceExtras, saveVoiceExtras, VOICE_STYLES } from '../voiceSettings.js';
 
 // Account → Voice, top part: the neural "Jarvis" voice (clearer, and louder than 100%).
 const SAMPLE = 'Good evening. All systems are online, and your reminders are ready. How can I help?';
@@ -11,13 +13,14 @@ function browserSay(text) {
   const synth = window.speechSynthesis;
   if (!synth) return;
   synth.cancel();
-  synth.speak(applyVoice(new SpeechSynthesisUtterance(text), currentVoice(synth.getVoices(), 'en-IN'), 'en-IN'));
+  synth.speak(utteranceFor(text, synth.getVoices()));
 }
 
 export default function JarvisVoiceSettings() {
   const [x, setX] = useState(readVoiceExtras);
   const [ready, setReady] = useState(null);
   const [voices, setVoices] = useState([]);
+  const lang = useLanguage();
 
   useEffect(() => {
     neuralAvailable().then(setReady);
@@ -36,6 +39,12 @@ export default function JarvisVoiceSettings() {
     setX(readVoiceExtras());
     unlockAudio();
     speakOnce(SAMPLE, browserSay);
+  };
+  // A new language: Jarvis listens for it from now on and says hello in it.
+  const pickLanguage = (code) => {
+    saveLanguage(code);
+    unlockAudio();
+    speakOnce(languageInfo(code).hello, browserSay);
   };
   const test = () => {
     unlockAudio();
@@ -60,6 +69,22 @@ export default function JarvisVoiceSettings() {
           <input type="checkbox" checked={x.engine !== 'browser'} onChange={(e) => set({ engine: e.target.checked ? 'auto' : 'browser' })} />
           Use neural voice
         </label>
+      </div>
+
+      <div className="jv-language">
+        <label className="voice-pick">
+          <strong>Language you speak</strong>
+          <select value={lang} onChange={(e) => pickLanguage(e.target.value)}>
+            {LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>{l.name.startsWith('English') ? l.name : `${l.name} · ${l.native}`}</option>
+            ))}
+          </select>
+        </label>
+        <p className="muted small">
+          Jarvis listens for this language, and answers in whatever language you use, each in a native
+          human voice: Hindi in a Hindi voice, Urdu in an Urdu voice, Tamil in a Tamil voice. Hinglish works
+          on English (India). You can also just say “speak in Hindi” or “Urdu mein baat karo”.
+        </p>
       </div>
 
       <div className="jv-styles" role="group" aria-label="Voice style">

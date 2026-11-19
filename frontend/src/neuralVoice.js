@@ -8,6 +8,7 @@
 // caller falls back to the browser's own voice (speechSynthesis), so speech always works.
 import { requestRaw } from './api.js';
 import { readVoiceExtras } from './voiceSettings.js';
+import { neuralVoiceFor, readLanguage } from './languages.js';
 
 let ctx = null;
 let chain = null;
@@ -65,12 +66,19 @@ export function unlockAudio() {
   if (c?.state === 'suspended') c.resume().catch(() => {});
 }
 
-async function fetchClip(text, { rate = 1, pitch = 1 } = {}) {
+// No neural voice exists for this text's language: the caller's browser voice reads it instead,
+// and the neural voice stays on for everything else.
+const noVoice = () => Object.assign(new Error('no neural voice for this language'), { noVoice: true });
+
+async function fetchClip(text, { rate = 1, pitch = 1 } = {}, voice) {
   const { neuralVoice, neuralRate, neuralPitch } = readVoiceExtras();
+  // A voice that speaks the text's language: given by the caller, else found from the text.
+  const id = voice || neuralVoiceFor(text, readLanguage(), neuralVoice);
+  if (!id) throw noVoice();
   // The user's speed/pitch multipliers (and the reply's mood) on top of the voice's own setting.
   const body = {
     text,
-    voice: neuralVoice,
+    voice: id,
     rate: Math.round(Math.max(-50, Math.min(60, neuralRate + (rate - 1) * 100))),
     pitch: Math.round(Math.max(-30, Math.min(30, neuralPitch + (pitch - 1) * 40))),
   };
@@ -83,7 +91,7 @@ async function fetchClip(text, { rate = 1, pitch = 1 } = {}) {
 /**
  * A queue of sentences spoken one after another. Each clip is fetched as soon as it is queued
  * (so the next sentence is ready when the current one ends): no gaps.
- *   const q = createNeuralQueue(); q.say(text, style, onDone); q.stop();
+ *   const q = createNeuralQueue(); q.say(text, style, onDone, voice); q.stop();
  */
 export function createNeuralQueue({ onError } = {}) {
   const items = [];
@@ -97,7 +105,7 @@ export function createNeuralQueue({ onError } = {}) {
     try {
       buffer = await item.clip;
     } catch (err) {
-      available = false; // fall back to the browser voice from now on (rechecked next page load)
+      if (!err.noVoice) available = false; // fall back to the browser voice from now on (rechecked next page load)
       items.shift();
       onError?.(err, item);
       return playNext();
@@ -120,9 +128,12 @@ export function createNeuralQueue({ onError } = {}) {
   };
 
   return {
-    say(text, style, onDone) {
+    /** voice: a neural voice id for this text; omitted = one that speaks the text's language. */
+    say(text, style, onDone, voice) {
       stopped = false;
-      items.push({ text, onDone, clip: fetchClip(text, style) });
+      const clip = fetchClip(text, style, voice);
+      clip.catch(() => {}); // handled when its turn comes (playNext)
+      items.push({ text, onDone, clip });
       playNext();
     },
     stop() {

@@ -4,9 +4,13 @@ POST /tts {text, voice, rate, pitch} -> audio/mpeg, made with Microsoft's neural
 edge-tts (free, no key, the voices Edge's "Read aloud" uses). Far clearer than most browser voices,
 and the browser can make it louder than 100% (Web Audio gain + limiter, see frontend/src/neuralVoice.js).
 GET /tts/voices -> the voices Azarvis offers. Needs internet; the browser voice is the fallback.
+
+Any Microsoft neural voice name is accepted (hi-IN-MadhurNeural, ur-IN-SalmanNeural, ta-IN-PallaviNeural...):
+the browser picks a native voice for each sentence's language (frontend/src/languages.js).
 """
 import hashlib
 import logging
+import re
 from collections import OrderedDict
 
 from fastapi import APIRouter, HTTPException
@@ -30,6 +34,8 @@ VOICES = {
     "hi-IN-SwaraNeural": ("Hindi female", "Hindi"),
 }
 DEFAULT_VOICE = "en-GB-RyanNeural"
+# A neural voice name: locale (optionally with a region like zh-CN-liaoning), then the name.
+VOICE_NAME = re.compile(r"[a-z]{2,3}-[A-Z]{2}(?:-[a-z]+)?-[A-Za-z]+Neural")
 _CACHE: "OrderedDict[str, bytes]" = OrderedDict()
 CACHE_ITEMS = 120  # short phrases repeat a lot ("Done.", greetings, reminders)
 
@@ -52,7 +58,7 @@ async def speak(body: SpeakIn):
         import edge_tts
     except ImportError:
         raise HTTPException(status_code=503, detail="Neural voice needs edge-tts: pip install edge-tts")
-    voice = body.voice if body.voice in VOICES else DEFAULT_VOICE
+    voice = body.voice if body.voice in VOICES or VOICE_NAME.fullmatch(body.voice) else DEFAULT_VOICE
     key = hashlib.sha1(f"{voice}|{body.rate}|{body.pitch}|{body.text}".encode()).hexdigest()
     if key in _CACHE:
         _CACHE.move_to_end(key)

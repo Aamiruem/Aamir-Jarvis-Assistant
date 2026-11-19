@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLanguage } from './useLanguage.js';
 
 // Speech-to-text with the browser's own recognizer (Chrome, Edge, Safari; not Firefox).
 // For the website and the demo: one phrase at a time, shown live while you speak.
@@ -6,9 +7,12 @@ const Recognition = typeof window !== 'undefined' ? window.SpeechRecognition || 
 
 /**
  * @param {(text: string) => void} onFinal called with what was said, when the speaker stops
+ * @param {string} [fixedLang] listen for this language instead of the user's chosen one
  * @returns {{ supported: boolean, listening: boolean, transcript: string, error: string, start: () => void, stop: () => void }}
  */
-export function useListen(onFinal, lang = 'en-IN') {
+export function useListen(onFinal, fixedLang) {
+  const savedLang = useLanguage(); // the language chosen in Account → Voice
+  const lang = fixedLang || savedLang;
   const [listening, setListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState('');
