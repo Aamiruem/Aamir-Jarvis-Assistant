@@ -95,6 +95,11 @@ const NAV_GROUPS = [
   ['AI tools', ['vision', 'camera', 'knowledge', 'games']],
   ['System', ['device', 'security', 'admin']],
 ];
+// One distinct colour per sidebar icon (hue, 0-360), so each screen is easy to spot.
+const NAV_HUES = {
+  home: 212, command: 190, chat: 172, tasks: 36, notes: 48, memory: 330, contacts: 282, automate: 300,
+  studio: 88, mllab: 150, vision: 262, camera: 196, knowledge: 18, games: 318, device: 222, security: 142, admin: 0,
+};
 // Only the newest screens carry a "New" tag, so it still means something.
 const NEWEST = new Set(['command', 'security', 'camera']);
 // The sidebar is the one place to switch screens (Account is the avatar at its bottom).
@@ -457,7 +462,7 @@ export default function App() {
                 <h2 className="sb-group-title">{group}</h2>
                 {items.map((t) => (
                   <button key={t.id} className={`sb-link ${tab === t.id ? 'active' : ''}`} onClick={() => go(t.id)} aria-current={tab === t.id ? 'page' : undefined}>
-                    <Icon name={t.icon} size="1.1em" />
+                    <span className="sb-ico" style={{ '--h': NAV_HUES[t.id] ?? t.hue }} aria-hidden="true"><Icon name={t.icon} size="1.15em" /></span>
                     <span className="grow">{t.label}</span>
                     {NEWEST.has(t.id) && <span className="sb-new-tag">New</span>}
                   </button>

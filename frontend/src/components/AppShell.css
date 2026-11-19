@@ -127,3 +127,23 @@
 .sb-group-title { color: color-mix(in srgb, var(--text) 62%, transparent); font-weight: 700; }
 .sb-quick-toggle { color: color-mix(in srgb, var(--text) 80%, transparent); }
 @media (max-height: 820px) { .sb-link { height: 31px; } .sb-group { gap: 0; } .sb-nav { gap: 6px; } .sb-head { padding-bottom: 6px; } .sb-start { padding-bottom: 8px; } }
+
+/* ---------- Colourful sidebar icons (2026-11-19) ----------
+   Each screen has its own hue (NAV_HUES in App.jsx): a bigger icon on a soft tinted tile,
+   brighter on hover and when it is the current page. Light and dark get their own lightness. */
+.sb-link { gap: 11px; padding-left: 6px; }
+.sb-ico {
+  --h: 210;
+  flex: none; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px;
+  color: hsl(var(--h) 85% 66%); background: hsl(var(--h) 85% 55% / 0.14); border: 1px solid hsl(var(--h) 85% 60% / 0.18);
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.sb-link .sb-ico .icon, .sb-link:hover .sb-ico .icon { color: inherit; }
+.sb-link:hover .sb-ico { background: hsl(var(--h) 85% 55% / 0.24); transform: scale(1.06); }
+.sb-link.active .sb-ico { color: #fff; background: hsl(var(--h) 75% 48%); border-color: transparent; box-shadow: 0 4px 12px hsl(var(--h) 80% 45% / 0.35); }
+.sb-link.active .icon { color: inherit; }
+:root[data-theme='light'] .sb-ico { color: hsl(var(--h) 72% 38%); background: hsl(var(--h) 80% 50% / 0.12); border-color: hsl(var(--h) 70% 45% / 0.16); }
+:root[data-theme='light'] .sb-link:hover .sb-ico { background: hsl(var(--h) 80% 50% / 0.2); }
+:root[data-theme='light'] .sb-link.active .sb-ico { color: #fff; background: hsl(var(--h) 70% 42%); }
+@media (max-height: 820px) { .sb-ico { width: 26px; height: 26px; border-radius: 7px; } }
+@media (prefers-reduced-motion: reduce) { .sb-ico { transition: none; } .sb-link:hover .sb-ico { transform: none; } }
