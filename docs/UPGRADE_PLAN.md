@@ -92,6 +92,14 @@ Last updated: 2026-11-19 (Phase 1 done).
 - [x] `infra/gcp/deploy.sh` (Cloud Build → Artifact Registry → Cloud Run, Secret Manager, Cloud SQL, bucket mount, smoke test) + `docs/GOOGLE_CLOUD.md`
 - [ ] Owner: create the project/resources (billed) and run the script; Docker and gcloud are not installed on the dev PC, so images were not built here
 
+### Design system + Security Center (Master Prompt 5, 2026-11-19) ✅
+- [x] Design tokens v2 (exact dark/light palette, Inter / Space Grotesk / JetBrains Mono, 4px spacing, radii) across app, website and static pages: `docs/DESIGN_SYSTEM.md`
+- [x] Website navbar redesign (`.snav`), hero image no longer upscaled
+- [x] App top bar: breadcrumb + live system status pill (`/api/health`)
+- [x] Security Center tab: account protection score from real sessions/passkeys/activity, local password checker + opt-in HIBP k-anonymity breach check, crypto password generator, read-only Windows PC check (`GET /api/ai/security/pc-check`: Defender, firewall, UAC, last update)
+- [ ] Not built by design: password vault (secrets are never stored), IRCTC booking automation (IRCTC forbids automated booking software), arbitrary terminal execution
+- [ ] Still open: Computer Control, Browser Automation (Playwright), Coding Studio, Agent Management pages; Framer Motion / TypeScript migration
+
 ### Phase 11: Monitoring and deployment
 - [ ] Alembic baseline migration; `/metrics` (Prometheus format); backup/restore script
 
