@@ -31,7 +31,9 @@ the public website (`frontend/src/public.css`, last block) and the static conten
 ## Components
 - **Buttons:** one filled primary per view (`.btn.primary`: solid `--accent`), outlined or text for the rest. No gradients on buttons.
 - **Website navbar:** `.snav` (PublicSite.jsx): text links with an underline for the active section, theme, Sign in, outlined Try demo, filled Get started.
-- **App top bar:** breadcrumb + page title, global search, system status pill (real `/api/health`), Room Watch, theme, notifications, account.
+- **App sidebar** (`AppShell.css`, `.sb-*`): brand row; one row with *New chat* (the only filled button) and a mic button whose dot shows voice is ready; navigation in groups (Overview, Work, Create & automate, AI tools, System) with plain icons, the active page tinted with an accent bar; a *New* tag only on the newest two pages; contextual Quick actions; the account menu at the bottom.
+- **Account menu** (`UserMenu.jsx`): account, portfolio, install, share, phone, help (Ctrl K), sign out. The same menu sits behind the avatar in the top bar.
+- **App top bar:** breadcrumb + one-line page title, search (max 520px), system status pill (real `/api/health`), Room Watch / theme / notifications, avatar menu.
 - **Cards:** `--surface`, `1px --border`, `--radius-lg`, `--space-5` padding (see `SecurityCenter.css` as the reference).
 - **Status:** a dot or icon in `--ok` / `--warn` / `--danger`, always with text; never color alone.
 - **Motion:** short (150–250 ms) transitions; every animation stops under `prefers-reduced-motion`.

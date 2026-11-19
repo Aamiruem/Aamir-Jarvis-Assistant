@@ -5,6 +5,8 @@ import { useRoomWatch } from './useRoomWatch.js';
 import SiteFooter from './components/SiteFooter.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
 import SystemStatusPill from './components/SystemStatusPill.jsx';
+import UserMenu from './components/UserMenu.jsx';
+import './components/AppShell.css';
 import ThemeMenu from './components/ThemeMenu.jsx';
 import { Icon } from './icons.jsx';
 import { useTheme } from './theme.js';
@@ -83,6 +85,16 @@ const TABS = [
 ].map((t, i) => ({ ...t, key: i + 1 })); // Alt+1 … Alt+9
 // The Command Center sits right after Home on Alt+0, so the older Alt+1…9 shortcuts don't move.
 TABS.splice(1, 0, { id: 'command', label: 'Command Center', icon: 'target', hue: 190, isNew: true, key: 0 });
+// The sidebar, in groups by what you do there (Account is in the menu at its bottom).
+const NAV_GROUPS = [
+  ['Overview', ['home', 'command', 'chat']],
+  ['Work', ['tasks', 'notes', 'memory', 'contacts']],
+  ['Create & automate', ['automate', 'studio', 'mllab']],
+  ['AI tools', ['vision', 'knowledge', 'games']],
+  ['System', ['device', 'security', 'admin']],
+];
+// Only the newest screens carry a "New" tag, so it still means something.
+const NEWEST = new Set(['command', 'security']);
 // The sidebar is the one place to switch screens (Account is the avatar at its bottom).
 const SIDEBAR_TABS = TABS.map((t) => t.id).filter((id) => id !== 'account');
 const SIDEBAR_QUICK_ACTIONS = {
@@ -359,6 +371,17 @@ export default function App() {
     const result = await share({ title: 'Azarvis', text: 'Azarvis, my AI assistant:', url: window.location.origin }).catch(() => 'failed');
     if (result === 'copied') toast('Link copied');
   };
+  const userMenuItems = [
+    { icon: 'user', label: 'Account & security', onClick: () => go('account') },
+    { icon: 'briefcase', label: 'Aamir’s portfolio', onClick: () => window.open(PORTFOLIO_URL, '_blank', 'noopener,noreferrer') },
+    'divider',
+    ...(installer.installed ? [] : [{ icon: 'download', label: 'Install app', onClick: installApp }]),
+    { icon: 'share', label: 'Share Azarvis', onClick: shareJarvis },
+    { icon: 'phone', label: 'Azarvis on your phone', onClick: () => go('automate') },
+    { icon: 'help', label: 'Help & commands', hint: 'Ctrl K', onClick: () => { setPaletteQuery(''); setPaletteOpen(true); } },
+    'divider',
+    { icon: 'logout', label: 'Sign out', onClick: logout, danger: true },
+  ];
   const go = (id) => {
     setTab(id);
     setMenuOpen(false);
@@ -399,81 +422,66 @@ export default function App() {
     <div className={`app ${collapsed ? 'collapsed' : ''}`}>
       <div className="app-bg" aria-hidden="true" />
       {menuOpen && <div className="scrim" onClick={() => setMenuOpen(false)} />}
-      <aside className={`sidebar ${menuOpen ? 'open' : ''}`}>
-        <div className="side-head">
-          <div className="brand">
-            <span className="brand-mark"><img className="brand-logo" src="/icon.svg" alt="" width="34" height="34" /></span>
-            <span className="brand-name">
-              <span className="brand-word">Azarvis</span>
-              <span className="brand-tag">AI Assistant</span>
-            </span>
-          </div>
-          <button className="icon-btn side-collapse" onClick={toggleMenu} title="Collapse sidebar" aria-label="Collapse sidebar">
-            <Icon name="panelClose" size="1.2em" />
+      <aside className={`sidebar sb ${menuOpen ? 'open' : ''}`}>
+        <div className="sb-head">
+          <button type="button" className="sb-brand" onClick={() => go('home')} aria-label="Azarvis home">
+            <img src="/icon.svg" alt="" width="28" height="28" />
+            <span>Azarvis</span>
+          </button>
+          <button className="sb-icon" onClick={toggleMenu} title="Collapse sidebar" aria-label="Collapse sidebar">
+            <Icon name="panelClose" size="1.15em" />
           </button>
         </div>
-        <button className="side-new" onClick={newChat}>
-          <span className="side-new-plus"><Icon name="plus" size="1em" /></span> New chat
-        </button>
-        <button className="side-voice" onClick={() => startSession()} disabled={!voiceSupported} title={voiceSupported ? 'Start a hands-free voice session with Azarvis' : 'Voice input needs a supported browser such as Chrome or Edge'}>
-          <span className="side-voice-icon"><Icon name="mic" size="1.1em" /></span>
-          <span className="side-voice-copy"><strong>Talk to Azarvis</strong><small>{voiceSupported ? 'Hands-free voice control' : 'Voice unavailable'}</small></span>
-          <span className={`side-voice-live ${voiceSupported ? '' : 'off'}`}><i /> {voiceSupported ? 'Ready' : 'Off'}</span>
-        </button>
-        <section className={`side-quick ${quickActionsOpen ? 'open' : ''}`}>
-          <button className="side-quick-toggle" onClick={() => setQuickActionsOpen((open) => !open)} aria-expanded={quickActionsOpen} aria-controls="side-quick-grid">
-            <span><Icon name="zap" size="1.05em" /> Quick actions</span>
-            <small className="side-quick-context">{currentTab?.label}</small>
-            <Icon name="chevron" size="1em" className="side-quick-chevron" />
+        <div className="sb-start">
+          <button className="sb-new" onClick={newChat}>
+            <Icon name="plus" size="1.05em" /> New chat
+          </button>
+          <button
+            className={`sb-mic ${voiceSupported ? '' : 'off'}`}
+            onClick={() => startSession()}
+            disabled={!voiceSupported}
+            title={voiceSupported ? 'Talk to Azarvis: start a hands-free voice session' : 'Voice needs Chrome or Edge'}
+            aria-label="Talk to Azarvis (hands-free voice)"
+          >
+            <Icon name="mic" size="1.15em" />
+          </button>
+        </div>
+        <nav className="sb-nav" aria-label="Main">
+          {NAV_GROUPS.map(([group, ids]) => {
+            const items = ids.map((id) => tabs.find((t) => t.id === id)).filter(Boolean);
+            if (!items.length) return null;
+            return (
+              <div className="sb-group" key={group}>
+                <h2 className="sb-group-title">{group}</h2>
+                {items.map((t) => (
+                  <button key={t.id} className={`sb-link ${tab === t.id ? 'active' : ''}`} onClick={() => go(t.id)} aria-current={tab === t.id ? 'page' : undefined}>
+                    <Icon name={t.icon} size="1.1em" />
+                    <span className="grow">{t.label}</span>
+                    {NEWEST.has(t.id) && <span className="sb-new-tag">New</span>}
+                  </button>
+                ))}
+              </div>
+            );
+          })}
+        </nav>
+        <section className={`sb-quick ${quickActionsOpen ? 'open' : ''}`}>
+          <button className="sb-quick-toggle" onClick={() => setQuickActionsOpen((open) => !open)} aria-expanded={quickActionsOpen} aria-controls="side-quick-grid" title={`Quick actions for ${currentTab?.label ?? 'this page'}`}>
+            <Icon name="zap" size="1em" />
+            <span className="grow">Quick actions</span>
+            <Icon name="chevron" size="0.95em" className="sb-quick-chev" />
           </button>
           {quickActionsOpen && (
-            <div className="side-quick-grid" id="side-quick-grid" role="group" aria-label={`${currentTab?.label ?? 'Azarvis'} quick actions`}>
+            <div className="sb-quick-list" id="side-quick-grid" role="group" aria-label={`${currentTab?.label ?? 'Azarvis'} quick actions`}>
               {sidebarActions.map((action) => (
                 <button key={action.label} onClick={() => runSidebarAction(action)}>
-                  <Icon name={action.icon} /><span><strong>{action.label}</strong><small>{action.hint}</small></span>
+                  <Icon name={action.icon} size="1em" /><span><strong>{action.label}</strong><small>{action.hint}</small></span>
                 </button>
               ))}
             </div>
           )}
         </section>
-        <nav className="side-nav" aria-label="Main">
-          {tabs
-            .filter((t) => SIDEBAR_TABS.includes(t.id))
-            .map((t) => (
-              <button key={t.id} className={`side-link ${tab === t.id ? 'active' : ''}`} style={{ '--hue': t.hue }} onClick={() => go(t.id)} aria-current={tab === t.id ? 'page' : undefined}>
-                <span className="side-ico"><Icon name={t.icon} size="1.2em" /></span>
-                <span className="grow">{t.label}</span>
-                {t.isNew && <span className="new-pill">New</span>}
-              </button>
-            ))}
-        </nav>
-        <div className="promo">
-          <strong>Unlock Azarvis everywhere</strong>
-          <p>Ask from your phone, automate emails and posts, plan your day, all from one place.</p>
-          <button className="promo-btn" onClick={() => go('automate')}>
-            <Icon name="rocket" size="1.1em" /> Explore Automate
-          </button>
-        </div>
-        <div className="side-links">
-          {!installer.installed && (
-            <button onClick={installApp}>
-              <Icon name="download" size="1.25em" /> Install app
-            </button>
-          )}
-          <button onClick={shareJarvis}>
-            <Icon name="share" size="1.25em" /> Share Azarvis
-          </button>
-          <button onClick={() => go('automate')}>
-            <Icon name="phone" size="1.25em" /> Azarvis on your phone
-          </button>
-        </div>
-        <div className="side-foot">
-          <button className="side-avatar" onClick={() => go('account')} title={`${user.name}: account and security`} aria-label="Account">
-            {user.name.slice(0, 1).toUpperCase()}
-          </button>
-          <button className="icon-btn" onClick={() => go('contacts')} title="Contacts" aria-label="Contacts"><Icon name="mail" size="1.25em" /></button>
-          <button className="icon-btn" onClick={() => { setPaletteQuery(''); setPaletteOpen(true); }} title="Help and commands (Ctrl+K)" aria-label="Help"><Icon name="help" size="1.25em" /></button>
-          <button className="icon-btn" onClick={logout} title="Log out" aria-label="Log out"><Icon name="logout" size="1.25em" /></button>
+        <div className="sb-foot">
+          <UserMenu user={user} items={userMenuItems} />
         </div>
       </aside>
 
@@ -536,30 +544,9 @@ export default function App() {
           <ThemeMenu theme={theme} />
           <NotificationBell />
           </div>
-          {/* Top-right: your portfolio, plus account and sign-out always within reach. */}
+          {/* Account, portfolio and sign-out live in one menu (also at the bottom of the sidebar). */}
           <div className="topbar-right">
-            <a
-              className="portfolio-btn"
-              href={PORTFOLIO_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              title="Aamir Hussain Azad — portfolio"
-            >
-              <Icon name="briefcase" size="1em" />
-              <span>Portfolio</span>
-            </a>
-            <button
-              className="topbar-avatar"
-              onClick={() => go('account')}
-              title={`${user.name}: account and security`}
-              aria-label="Account and security"
-            >
-              {user.name.slice(0, 1).toUpperCase()}
-            </button>
-            <button className="topbar-signout" onClick={logout} title="Sign out of Azarvis" aria-label="Sign out">
-              <Icon name="logout" size="1.1em" />
-              <span>Sign out</span>
-            </button>
+            <UserMenu user={user} items={userMenuItems} compact placement="down" />
           </div>
         </header>
         <section className="content">

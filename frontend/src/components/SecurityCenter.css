@@ -1,5 +1,6 @@
 /* Security Center: built only from the design-system tokens (styles.css, "design system v2"). */
-.sec { display: grid; gap: var(--space-5); max-width: 1180px; }
+.sec { display: grid; gap: var(--space-5); width: min(1180px, calc(100% - 2 * var(--space-6))); margin: 0 auto; padding-block: var(--space-6) var(--space-10); }
+@media (max-width: 760px) { .sec { width: calc(100% - 2 * var(--space-3)); padding-top: var(--space-4); } }
 .sec-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
 .sec-head h1 { margin: 0 0 var(--space-1); font: 700 clamp(26px, 3vw, 34px)/1.15 var(--font-display); letter-spacing: -0.02em; }
 .sec-head p { margin: 0; max-width: 70ch; color: var(--muted); }
