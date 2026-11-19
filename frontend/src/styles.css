@@ -1589,3 +1589,16 @@ code, pre, kbd, samp { font-family: var(--font-mono); }
 .status-pill--bad i { background: var(--danger); box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 22%, transparent); }
 .status-pill:hover { border-color: var(--accent); }
 @media (max-width: 900px) { .topbar-crumbs { display: none; } .status-pill span { display: none; } .status-pill { width: 32px; padding: 0; justify-content: center; } }
+
+/* CampusX notes (CoursePanel): notes only, no video. */
+.course--notes .course-head { background: var(--surface, var(--panel)); border-color: var(--border); }
+.lecture-study { display: grid; gap: 10px; padding: 18px 20px; border-radius: 16px; background: var(--surface, var(--panel)); border: 1px solid var(--border); }
+.lecture-study h3 { font-size: 16px; margin: 14px 0 6px; }
+.lecture-study pre { max-width: 100%; overflow-x: auto; }
+.lecture-revise { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.lecture-revise strong { font-size: 13px; margin-right: 4px; }
+.lecture-topics { margin: 0; padding: 12px 14px 12px 34px; display: grid; gap: 4px; font-size: 13.5px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface, var(--panel)); max-height: 340px; overflow-y: auto; }
+.course--notes .course-list { grid-template-rows: auto auto auto minmax(0, 1fr); }
+.course--notes .course-free { display: flex; align-items: flex-start; gap: 8px; line-height: 1.35; }
+.course--notes .course-item.active { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.course--notes .course-num .icon { color: var(--accent); }

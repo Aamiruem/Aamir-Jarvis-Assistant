@@ -446,7 +446,7 @@ export default function NotesPanel({ target }) {
 
   return (
     <div className="panel notes-panel">
-      <PageHeader icon="notes" hue={45} title="Notes" subtitle={courseView ? 'CampusX course: every lecture, its code, chapters and your notes' : book ? `${book.title} · ${book.chapters} chapters · ${done.size} read` : ''}>
+      <PageHeader icon="notes" hue={45} title="Notes" subtitle={courseView ? 'CampusX: study notes for all 244 lectures, the CampusX notes book and your own notes' : book ? `${book.title} · ${book.chapters} chapters · ${done.size} read` : ''}>
         <button className="btn sm" onClick={teach} disabled={Boolean(teaching) || !book || book.custom} title="Add these notes to Azarvis's knowledge base">
           <Icon name="brain" size="1em" /> {teaching ? `Teaching Azarvis… ${teaching.done}/${teaching.total}` : 'Teach Azarvis these notes'}
         </button>

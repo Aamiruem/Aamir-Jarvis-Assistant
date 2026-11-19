@@ -2,27 +2,27 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { toast } from '../ui.jsx';
+import MarkdownView from './MarkdownView.jsx';
 import StudyNotesView from './StudyNotesView.jsx';
 
-// A YouTube course (frontend/public/courses, made by scripts/import_youtube_course.py): every
-// lecture in order with the video, its chapters, code links and description, your own notes
-// and notes written by Azarvis with the master prompt (saved to your account as user notes).
+// CampusX notes (frontend/public/courses): every lecture of the course as a notes page, no videos.
+// Each lecture has study notes (notes.json, written from its title and topic list), the topics it
+// covers, its code links, your own notes and optional deeper notes by Azarvis (saved to your
+// account). The CampusX notes book (public/notes/campusx-ml-244-lecture) is at the top of the list.
 
-const loadCourse = async (slug) => {
-  const r = await fetch(`/courses/${slug}/course.json`);
-  if (!r.ok) throw new Error(`Couldn't load the course (${r.status})`);
+const getJson = async (url, what) => {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`Couldn't load ${what} (${r.status})`);
   return r.json();
 };
-const mmss = (s) => {
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  return h ? `${h}:${String(m).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}` : `${m}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
-};
-const length = (s) => (s >= 3600 ? `${Math.floor(s / 3600)} h ${Math.round((s % 3600) / 60)} min` : `${Math.round(s / 60)} min`);
-const watchedKey = (slug) => `jarvis-course-watched:${slug}`;
-const readWatched = (slug) => {
+const BOOK = 'campusx-ml-244-lecture';
+const REVISE = /\n*\*\*Revise:\*\*[\s\S]*$/; // the "Revise: #12 …" line of a session note, shown as buttons
+const readKey = (slug) => `jarvis-course-read:${slug}`;
+const readRead = (slug) => {
   try {
-    return new Set(JSON.parse(localStorage.getItem(watchedKey(slug))) || []);
+    // Lectures marked "watched" before the videos were removed count as read.
+    const saved = localStorage.getItem(readKey(slug)) ?? localStorage.getItem(`jarvis-course-watched:${slug}`);
+    return new Set(JSON.parse(saved) || []);
   } catch {
     return new Set();
   }
@@ -106,12 +106,11 @@ function LectureNotes({ course, lecture, notes, onSaved }) {
         </div>
       </section>
       <section>
-        <h4><Icon name="sparkles" size="1em" /> Notes by Azarvis</h4>
+        <h4><Icon name="sparkles" size="1em" /> Deeper notes by Azarvis</h4>
         <p className="muted small">
           Complete study notes for this lecture's topic in 13 sections: definitions, difficult words, concepts basic → advanced,
           diagrams, code at three levels with a dry run, real-world uses, exercises, interview questions, comparisons, a summary,
-          a cheat sheet and a final test. Answers stay hidden until you ask. Azarvis can't watch the video, so the notes are built
-          from the title, the description and your notes.
+          a cheat sheet and a final test. Answers stay hidden until you ask. Built from the lecture's title, its topics and your notes.
         </p>
         {job ? (
           <div className="progress-card">
@@ -132,28 +131,32 @@ function LectureNotes({ course, lecture, notes, onSaved }) {
 
 export default function CoursePanel({ slug = 'campusx-dsmp-2022-23', target }) {
   const [course, setCourse] = useState(null);
+  const [studyNotes, setStudyNotes] = useState(null); // notes.json: { notes: {n: md}, kinds: {n: lesson|session}, basis }
+  const [book, setBook] = useState(null); // the CampusX notes book index
+  const [chapter, setChapter] = useState(null); // { file, title, md } while a book chapter is open
   const [error, setError] = useState('');
   const [current, setCurrent] = useState(1);
-  const [start, setStart] = useState(0);
   const [query, setQuery] = useState('');
   const [section, setSection] = useState('all');
-  const [watched, setWatched] = useState(() => readWatched(slug));
+  const [lessonsOnly, setLessonsOnly] = useState(false);
+  const [read, setRead] = useState(() => readRead(slug));
   const [notes, setNotes] = useState([]);
-  const [showDescription, setShowDescription] = useState(false);
-  const [freeOnly, setFreeOnly] = useState(false);
-  const [tryPlayer, setTryPlayer] = useState(false); // members can still play locked lectures here
-  const player = useRef(null);
+  const top = useRef(null);
 
   const loadNotes = () => api.userNotes().then(setNotes).catch(() => {});
   useEffect(() => {
-    loadCourse(slug).then(setCourse).catch((e) => setError(e.message));
+    getJson(`/courses/${slug}/course.json`, 'the course').then(setCourse).catch((e) => setError(e.message));
+    getJson(`/courses/${slug}/notes.json`, 'the study notes').then(setStudyNotes).catch(() => setStudyNotes({ notes: {}, kinds: {} }));
+    getJson(`/notes/${BOOK}/index.json`, 'the notes book').then(setBook).catch(() => {});
     loadNotes();
   }, [slug]);
   useEffect(() => {
-    if (target?.lecture) setCurrent(target.lecture);
+    if (target?.lecture) open(target.lecture);
   }, [target]);
 
   const lecture = course?.lectures.find((l) => l.n === current);
+  const noteFor = (n) => studyNotes?.notes?.[String(n)] || '';
+  const isLesson = (n) => studyNotes?.kinds?.[String(n)] === 'lesson';
   const shown = useMemo(() => {
     if (!course) return [];
     const q = query.trim().toLowerCase();
@@ -163,70 +166,94 @@ export default function CoursePanel({ slug = 'campusx-dsmp-2022-23', target }) {
         ...s,
         items: s.lectures
           .map((n) => course.lectures[n - 1])
-          .filter((l) => !freeOnly || !l.members_only)
-          .filter((l) => !q || `${l.n} ${l.title} ${l.chapters.map((c) => c.title).join(' ')}`.toLowerCase().includes(q)),
+          .filter((l) => !lessonsOnly || isLesson(l.n))
+          .filter((l) => !q || `${l.n} ${l.title} ${l.chapters.map((c) => c.title).join(' ')} ${noteFor(l.n)}`.toLowerCase().includes(q)),
       }))
       .filter((s) => s.items.length);
-  }, [course, query, section, freeOnly]);
+  }, [course, studyNotes, query, section, lessonsOnly]);
+  const chapters = useMemo(() => (book?.parts || []).flatMap((p) => p.chapters), [book]);
 
-  const open = (n, at = 0) => {
+  const scrollUp = () => top.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  function open(n) {
+    setChapter(null);
     setCurrent(n);
-    setStart(at);
-    setShowDescription(false);
-    setTryPlayer(false);
-    player.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-  const toggleWatched = () => {
-    const next = new Set(watched);
-    next.has(lecture.n) ? next.delete(lecture.n) : next.add(lecture.n);
-    setWatched(next);
+    scrollUp();
+  }
+  const openChapter = async (c) => {
     try {
-      localStorage.setItem(watchedKey(slug), JSON.stringify([...next]));
+      const r = await fetch(`/notes/${BOOK}/${c.file}`);
+      if (!r.ok) throw new Error(`Couldn't load the chapter (${r.status})`);
+      setChapter({ ...c, md: await r.text() });
+      scrollUp();
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  };
+  const toggleRead = () => {
+    const next = new Set(read);
+    next.has(lecture.n) ? next.delete(lecture.n) : next.add(lecture.n);
+    setRead(next);
+    try {
+      localStorage.setItem(readKey(slug), JSON.stringify([...next]));
     } catch {}
   };
 
   if (error) return <p className="error">{error}</p>;
-  if (!course) return <p className="muted">Loading the course…</p>;
+  if (!course) return <p className="muted">Loading the CampusX notes…</p>;
   const noted = new Set(notes.filter((n) => /^campusx(-ai)?:/.test(n.category || '')).map((n) => n.category.split(':')[1]));
+  const lessonCount = Object.values(studyNotes?.kinds || {}).filter((k) => k === 'lesson').length;
+  const md = lecture ? noteFor(lecture.n) : '';
+  const revise = [...(md.match(REVISE)?.[0] || '').matchAll(/#lecture-(\d+)/g)].map((m) => Number(m[1]));
+  const chapterIndex = chapter ? chapters.findIndex((c) => c.file === chapter.file) : -1;
 
   return (
-    <div className="course">
+    <div className="course course--notes">
       <header className="course-head">
-        <span className="badge-icon lg" style={{ '--hue': 0 }}><Icon name="youtube" /></span>
+        <span className="badge-icon lg" style={{ '--hue': 45 }}><Icon name="book" /></span>
         <div className="grow">
-          <h3>{course.title}</h3>
+          <h3>CampusX Data Science notes</h3>
           <p className="muted">
-            {course.channel} · {course.count} lectures · {course.hours} hours · {watched.size} watched
+            {course.count} lectures · {lessonCount} study notes{book ? ` · ${book.chapters}-chapter notes book` : ''} · {read.size} read
           </p>
-          <div className="progress"><i style={{ width: `${(watched.size / course.count) * 100}%` }} /></div>
+          <div className="progress"><i style={{ width: `${(read.size / course.count) * 100}%` }} /></div>
         </div>
-        <a className="btn sm" href={course.url} target="_blank" rel="noopener noreferrer"><Icon name="youtube" size="1em" /> Playlist</a>
       </header>
 
       <div className="course-layout">
         <aside className="course-list">
           <label className="side-search">
             <Icon name="search" size="1em" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search lectures and chapters" aria-label="Search lectures" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search lectures and notes" aria-label="Search lectures and notes" />
           </label>
           <select value={section} onChange={(e) => setSection(e.target.value)} aria-label="Section">
             <option value="all">All sections</option>
             {course.sections.map((s) => <option key={s.name} value={s.name}>{s.name} ({s.lectures.length})</option>)}
           </select>
           <label className="check-row course-free">
-            <input type="checkbox" checked={freeOnly} onChange={(e) => setFreeOnly(e.target.checked)} />
-            Only lectures that play for free ({course.lectures.filter((l) => !l.members_only).length})
+            <input type="checkbox" checked={lessonsOnly} onChange={(e) => setLessonsOnly(e.target.checked)} />
+            Only lessons (hide task and update sessions)
           </label>
           <div className="course-items">
+            {chapters.length > 0 && !query && section === 'all' && (
+              <div>
+                <div className="conv-group-title">Notes book · {book.title}</div>
+                {chapters.map((c) => (
+                  <button key={c.file} className={`course-item ${chapter?.file === c.file ? 'active' : ''}`} onClick={() => openChapter(c)}>
+                    <span className="course-num"><Icon name="book" size="0.95em" /></span>
+                    <span className="grow">{c.title.replace(/^Lecture \d+:\s*/, '')}<small className="muted">{c.headings?.length || 0} topics</small></span>
+                  </button>
+                ))}
+              </div>
+            )}
             {shown.map((s) => (
               <div key={s.name}>
                 <div className="conv-group-title">{s.name}</div>
                 {s.items.map((l) => (
-                  <button key={l.n} className={`course-item ${l.n === current ? 'active' : ''}`} onClick={() => open(l.n)} title={l.full_title}>
-                    <span className="course-num">{watched.has(l.n) ? <Icon name="check" size="0.95em" /> : l.n}</span>
+                  <button key={l.n} className={`course-item ${!chapter && l.n === current ? 'active' : ''}`} onClick={() => open(l.n)} title={l.full_title}>
+                    <span className="course-num">{read.has(l.n) ? <Icon name="check" size="0.95em" /> : l.n}</span>
                     <span className="grow">
                       {l.title}
-                      <small className="muted">{length(l.duration)}{l.members_only ? ' · members' : ''}{noted.has(l.id) ? ' · notes' : ''}</small>
+                      <small className="muted">{isLesson(l.n) ? 'Study notes' : 'Session note'}{noted.has(l.id) ? ' · your notes' : ''}</small>
                     </span>
                   </button>
                 ))}
@@ -236,72 +263,57 @@ export default function CoursePanel({ slug = 'campusx-dsmp-2022-23', target }) {
           </div>
         </aside>
 
-        {lecture && (
-          <article className="lecture" ref={player}>
-            {lecture.members_only && !tryPlayer ? (
-              <div className="video locked">
-                <div className="locked-card">
-                  <span className="badge-icon lg" style={{ '--hue': 38 }}><Icon name="key" /></span>
-                  <h4>CampusX members-only lecture</h4>
-                  <p>
-                    This session is part of CampusX's paid mentorship program. Join the CampusX channel membership on YouTube
-                    (or the course on their website), then sign in to YouTube in this browser and it plays right here.
-                  </p>
-                  <div className="row wrap">
-                    <a className="btn primary sm" href={`https://www.youtube.com/watch?v=${lecture.id}`} target="_blank" rel="noopener noreferrer"><Icon name="youtube" size="1em" /> Join or watch on YouTube</a>
-                    <a className="btn sm" href="https://learnwith.campusx.in/" target="_blank" rel="noopener noreferrer"><Icon name="globe" size="1em" /> CampusX courses</a>
-                    <button className="btn sm ghost" onClick={() => setTryPlayer(true)}>I'm a member: play here</button>
-                  </div>
-                  <p className="muted small">Meanwhile, “Make notes with Azarvis” below writes complete notes on this lecture's topic.</p>
-                </div>
-              </div>
-            ) : (
-            <div className="video">
-              <iframe
-                key={`${lecture.id}-${start}`}
-                src={`https://www.youtube-nocookie.com/embed/${lecture.id}?rel=0${start ? `&start=${start}&autoplay=1` : ''}`}
-                title={lecture.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                referrerPolicy="strict-origin-when-cross-origin"
-              />
-            </div>
-            )}
+        {chapter ? (
+          <article className="lecture" ref={top}>
             <div className="lecture-head">
               <div className="grow">
-                <small className="muted">Lecture {lecture.n} of {course.count} · {lecture.section} · {length(lecture.duration)}</small>
+                <small className="muted">{book.title} · chapter {chapterIndex + 1} of {chapters.length}</small>
+                <h3>{chapter.title}</h3>
+              </div>
+            </div>
+            <div className="row wrap">
+              <button className="btn sm" disabled={chapterIndex <= 0} onClick={() => openChapter(chapters[chapterIndex - 1])}><Icon name="chevron" size="1em" className="flip" /> Previous chapter</button>
+              <button className="btn sm" disabled={chapterIndex >= chapters.length - 1} onClick={() => openChapter(chapters[chapterIndex + 1])}>Next chapter <Icon name="chevron" size="1em" /></button>
+            </div>
+            <section className="lecture-study"><MarkdownView source={chapter.md} /></section>
+          </article>
+        ) : lecture && (
+          <article className="lecture" ref={top}>
+            <div className="lecture-head">
+              <div className="grow">
+                <small className="muted">Lecture {lecture.n} of {course.count} · {lecture.section}</small>
                 <h3>{lecture.title}</h3>
               </div>
-              <button className={`btn sm ${watched.has(lecture.n) ? '' : 'primary'}`} onClick={toggleWatched}>
-                <Icon name="check" size="1em" /> {watched.has(lecture.n) ? 'Watched' : 'Mark watched'}
+              <button className={`btn sm ${read.has(lecture.n) ? '' : 'primary'}`} onClick={toggleRead}>
+                <Icon name="check" size="1em" /> {read.has(lecture.n) ? 'Read' : 'Mark as read'}
               </button>
-              <a className="btn sm" href={`https://www.youtube.com/watch?v=${lecture.id}`} target="_blank" rel="noopener noreferrer"><Icon name="youtube" size="1em" /> YouTube</a>
             </div>
             <div className="row wrap">
               <button className="btn sm" disabled={current <= 1} onClick={() => open(current - 1)}><Icon name="chevron" size="1em" className="flip" /> Previous</button>
               <button className="btn sm" disabled={current >= course.count} onClick={() => open(current + 1)}>Next <Icon name="chevron" size="1em" /></button>
             </div>
 
-            {lecture.code.length > 0 && (
-              <section className="lecture-code">
-                <h4><Icon name="file" size="1em" /> Code and material from the description</h4>
-                <ul>{lecture.code.map((u) => <li key={u}><a href={u} target="_blank" rel="noopener noreferrer">{u.replace(/^https?:\/\//, '').slice(0, 70)}</a></li>)}</ul>
-              </section>
-            )}
+            <section className="lecture-study">
+              <h4><Icon name="notes" size="1em" /> {isLesson(lecture.n) ? 'Study notes' : 'About this session'}</h4>
+              {md ? <MarkdownView source={md.replace(REVISE, '')} /> : <p className="muted">No notes for this lecture yet.</p>}
+              {revise.length > 0 && (
+                <div className="lecture-revise">
+                  <strong>Revise</strong>
+                  {revise.map((n) => <button key={n} className="chip" onClick={() => open(n)}>#{n} {course.lectures[n - 1]?.title}</button>)}
+                </div>
+              )}
+              {studyNotes?.basis && isLesson(lecture.n) && <p className="muted small">{studyNotes.basis}</p>}
+            </section>
             {lecture.chapters.length > 0 && (
               <section>
-                <h4><Icon name="timeline" size="1em" /> What this lecture covers ({lecture.chapters.length} chapters)</h4>
-                <ol className="lecture-chapters">
-                  {lecture.chapters.map((c, i) => (
-                    <li key={i}><button onClick={() => open(lecture.n, Math.floor(c.start || 0))}><time>{mmss(c.start || 0)}</time> {c.title}</button></li>
-                  ))}
-                </ol>
+                <h4><Icon name="timeline" size="1em" /> Topics covered ({lecture.chapters.length})</h4>
+                <ol className="lecture-topics">{lecture.chapters.map((c, i) => <li key={i}>{c.title}</li>)}</ol>
               </section>
             )}
-            {lecture.description && (
-              <section>
-                <button className="btn sm ghost" onClick={() => setShowDescription((v) => !v)}><Icon name="book" size="1em" /> {showDescription ? 'Hide' : 'Show'} the video description</button>
-                {showDescription && <pre className="lecture-description">{lecture.description}</pre>}
+            {lecture.code.length > 0 && (
+              <section className="lecture-code">
+                <h4><Icon name="file" size="1em" /> Code and material</h4>
+                <ul>{lecture.code.map((u) => <li key={u}><a href={u} target="_blank" rel="noopener noreferrer">{u.replace(/^https?:\/\//, '').slice(0, 70)}</a></li>)}</ul>
               </section>
             )}
             <LectureNotes course={course} lecture={lecture} notes={notes} onSaved={loadNotes} />

@@ -1,0 +1,41 @@
+# CampusX lecture notes, part 4: dashboards, capstone project, other sessions.
+NOTES = {
+241: (["Plotly graph objects (`plotly.graph_objects`) give full control: build `go.Figure` from traces (`go.Scatter`, `go.Bar`), then style with `update_layout`.",
+       "Use Express for quick charts and graph objects for custom multi-trace figures."],
+      "import plotly.graph_objects as go\nfig = go.Figure([go.Bar(x=['A', 'B'], y=[3, 5], name='2023'), go.Bar(x=['A', 'B'], y=[4, 6], name='2024')])\nfig.update_layout(barmode='group', title='Sales'); fig.show()", []),
+242: (["Dash builds web dashboards in Python: layout from components (`dcc.Graph`, `dcc.Dropdown`, `html.Div`) and callbacks that update charts when inputs change.",
+       "Example: a COVID-19 dashboard with KPI cards, a country dropdown and trend charts."],
+      "from dash import Dash, dcc, html, Input, Output\nimport plotly.express as px\napp = Dash(__name__)\napp.layout = html.Div([dcc.Dropdown(['A', 'B'], 'A', id='pick'), dcc.Graph(id='chart')])\n@app.callback(Output('chart', 'figure'), Input('pick', 'value'))\ndef draw(v):\n    return px.bar(x=[1, 2, 3], y=[3, 1, 2], title=v)\napp.run(debug=True)", []),
+243: (["Deploying a Dash app: expose `server = app.server`, list dependencies in `requirements.txt`, run with gunicorn (`Procfile: web: gunicorn app:server`), push to a host."], "", []),
+244: (["Dash basics: app layout, core and HTML components, and the callback model (Input → function → Output)."], "", []),
+213: (["Capstone kickoff: choose a real problem (a real-estate price predictor with analytics and recommendations), define goals, gather data by scraping property listings, and plan the modules."], "", []),
+216: (["Capstone data cleaning: merge scraped sources, fix price and area units, parse text fields (bedrooms, floors, amenities), remove duplicates and invalid rows."], "", []),
+217: (["Capstone feature engineering: derive features such as price per sq ft, area type, age of property, luxury score and furnishing level from raw columns."], "", []),
+218: (["Capstone EDA: univariate and bivariate analysis of price drivers by sector, area, bedrooms and property type; note insights for modelling."], "", []),
+222: (["Capstone missing-value imputation: choose strategies per column (group-wise medians, model-based imputation) without leaking the target."], "", []),
+224: (["Capstone feature selection: compare correlation, tree importances, permutation importance, RFE and SHAP; keep features that agree."], "", []),
+225: (["Capstone outlier detection: IQR and z-score checks, domain rules (impossible areas or prices), and deciding whether to cap or remove."], "", []),
+231: (["Capstone model selection: compare linear models, trees, random forest, gradient boosting and XGBoost with cross-validation; pick, tune and save the pipeline for production."], "", []),
+232: (["Capstone analytics module: interactive visual analysis of the market (maps, price by sector, word clouds of amenities) for the app."], "", []),
+233: (["Capstone recommender system: content-based recommendations of similar properties using facilities, price and location similarity (cosine similarity)."], "", []),
+234: (["Recommender part 2: combine several similarity scores with weights and serve the top-N recommendations."], "", []),
+235: (["Capstone insights module: turn model results into insights for users, such as which features raise the price in a sector."], "", []),
+236: (["Deploying the capstone on AWS: package the Streamlit app, set up an EC2 instance, install dependencies, run it as a service and open the port securely."], "", []),
+81: (["Open source software: how projects are organised, licences (MIT, Apache, GPL), and how to contribute (issues, forks, pull requests, good first issues)."], "", []),
+83: (["Open source part 2: making a first contribution end to end, following contribution guides and code review etiquette."], "", []),
+68: (["Guest session on working in data science: real projects, skills that matter on the job, and career advice."], "", []),
+147: (["Using ChatGPT to learn data science faster: ask for explanations at your level, generate practice problems, review your code, and always verify answers."], "", []),
+206: (["Advanced imputation: KNN imputer (fill from similar rows) and iterative imputer / MICE (model each feature from the others); compare strategies by model performance."],
+      "from sklearn.impute import KNNImputer\nX_filled = KNNImputer(n_neighbors=5).fit_transform(X_num)", ["When would KNN imputation beat median imputation?"]),
+122: (["Overview of the CampusX Data Science Mentorship Program 2023: curriculum, schedule and how sessions are organised."], "", []),
+}
+
+# Sessions without a lesson of their own: a short note that points to what to revise.
+KINDS = [
+    (r"task \d+ solution|task solutions|week \d+ task", "Solutions to this week's practice task. Solve the task yourself first, then compare your approach with the lessons above."),
+    (r"interview", "Interview preparation: questions on the topics covered so far. Revise the interview questions in the lessons above and practise explaining answers aloud."),
+    (r"doubt clearance", "Doubt-clearing session for the recent lessons. Revise the lessons above and note anything still unclear."),
+    (r"schedule|program improvements|feedback form|website launch", "Program update (schedule, feedback or announcements): no new topic is taught here."),
+    (r"oop project", "Project session applying object-oriented programming: classes, encapsulation and inheritance in a small working program."),
+    (r"time complexity", None),
+]
