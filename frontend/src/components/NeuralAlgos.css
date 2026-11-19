@@ -41,14 +41,14 @@
   background: linear-gradient(150deg, hsl(var(--hue) 80% 45% / 0.18), hsl(var(--hue) 80% 30% / 0.04));
   border-bottom: 1px solid hsl(var(--hue) 80% 55% / 0.25);
 }
-:root[data-theme='light'] .na-diawrap { color: hsl(var(--hue) 75% 40%); }
+:root[data-theme='light'] .na-diawrap { color: hsl(var(--hue) 75% 30%); }
 .na-dia { display: block; width: 100%; height: 58px; }
 
 .na-card-top { display: flex; align-items: center; gap: 7px; }
 .na-num { font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 800; font-size: 15px; color: hsl(var(--hue) 90% 68%); min-width: 18px; }
 .na-card-top strong { font-size: 15px; flex: 1; }
 .na-cat-tag { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: hsl(var(--hue) 90% 70%); background: hsl(var(--hue) 85% 55% / 0.14); padding: 2px 7px; border-radius: 6px; }
-:root[data-theme='light'] .na-num, :root[data-theme='light'] .na-cat-tag { color: hsl(var(--hue) 75% 38%); }
+:root[data-theme='light'] .na-num, :root[data-theme='light'] .na-cat-tag { color: hsl(var(--hue) 75% 28%); }
 .na-tag { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
 .na-formula { font-size: 11.5px; background: var(--field, rgba(0,0,0,0.25)); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; align-self: flex-start; color: var(--text); }
 .na-points { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }

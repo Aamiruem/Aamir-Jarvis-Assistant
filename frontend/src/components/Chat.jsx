@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { api, streamChat } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { AiNotice, aiProblemOf, isSetupError, spokenFailure } from './AiNotice.jsx';
@@ -468,7 +469,7 @@ export default function Chat({ userId, history, conversationId, onConversation, 
                       {m.status && <small>{m.status}</small>}
                     </span>
                   ) : (
-                    <ReactMarkdown>{m.content}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
                   )
                 ) : (
                   m.content

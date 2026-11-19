@@ -1136,3 +1136,6 @@ body:has(.pub) { background: #080b14; }
 .snav-btn--filled:hover { background: var(--accent); filter: brightness(1.08); box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent); }
 .snav-new { color: var(--on-accent); background: var(--accent); }
 :root:not([data-theme='light']) .snav-new { color: var(--on-accent); }
+
+/* Light theme: the example phrases in the workflow cards (contrast audit, 2026-11-19). */
+:root[data-theme='light'] .pub .flow-say { color: hsl(var(--hue) 80% 26%); }

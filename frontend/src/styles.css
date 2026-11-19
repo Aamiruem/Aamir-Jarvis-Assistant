@@ -1602,3 +1602,32 @@ code, pre, kbd, samp { font-family: var(--font-mono); }
 .course--notes .course-free { display: flex; align-items: flex-start; gap: 8px; line-height: 1.35; }
 .course--notes .course-item.active { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .course--notes .course-num .icon { color: var(--accent); }
+
+/* ===================== Light theme: readable everywhere (contrast audit, 2026-11-19) =====================
+   Colours that were tuned for the dark theme and were never given a light value. Scoped with
+   :root[data-theme='light'] so they outrank component stylesheets and never touch the dark theme. */
+/* Code blocks (notes, study notes, chat): light surface, readable copy button. */
+:root[data-theme='light'] .md .code-block { background: var(--surface-2); box-shadow: none; }
+:root[data-theme='light'] .md pre, :root[data-theme='light'] .code-block pre { background: var(--surface-2); color: var(--text); }
+:root[data-theme='light'] .code-copy, :root[data-theme='light'] .md .code-copy { background: var(--surface); border-color: var(--border); color: var(--muted); opacity: 1; }
+:root[data-theme='light'] .code-copy:hover, :root[data-theme='light'] .md .code-copy:hover { color: var(--text); border-color: var(--accent); }
+:root[data-theme='light'] .bubble pre { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+:root[data-theme='light'] .bubble code { background: var(--surface-2); color: var(--text); }
+:root[data-theme='light'] .bubble pre code { background: none; }
+/* Chat tables and checklists (GitHub-flavoured Markdown). */
+.bubble table { border-collapse: collapse; margin: 8px 0; font-size: 14px; display: block; overflow-x: auto; }
+.bubble th, .bubble td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+.bubble th { background: var(--surface-2, var(--panel-2)); font-weight: 600; }
+.bubble li:has(> input[type='checkbox']) { list-style: none; margin-left: -18px; }
+.bubble blockquote { margin: 8px 0; padding: 4px 12px; border-left: 3px solid var(--accent); color: var(--muted); }
+/* Status tags: darker text on their pale tints. */
+:root[data-theme='light'] .tag.warn { color: #7a4f06; background: #fdf0d2; }
+/* Signed-in footer. */
+:root[data-theme='light'] .site-foot:not(.site-foot--public) .site-foot-logo span { background: linear-gradient(100deg, #087eaa, #6851d9); -webkit-background-clip: text; background-clip: text; }
+:root[data-theme='light'] .site-foot:not(.site-foot--public) .site-foot-author em { color: var(--violet); }
+/* Home stat cards. */
+:root[data-theme='light'] .cc-stat small { color: #3d4a60; }
+/* Voice Agent lead tier. */
+:root[data-theme='light'] .va-tier { color: hsl(var(--hue) 80% 32%); }
+/* Contact avatars: white initials need a darker tint for bright hues (yellow, lime). */
+:root[data-theme='light'] .contact-avatar { background: linear-gradient(135deg, hsl(var(--h) 70% 36%), hsl(calc(var(--h) + 40) 70% 28%)); }
