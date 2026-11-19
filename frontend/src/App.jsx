@@ -4,6 +4,7 @@ import { sessionPlan } from './session.js';
 import { useRoomWatch } from './useRoomWatch.js';
 import SiteFooter from './components/SiteFooter.jsx';
 import NotificationBell from './components/NotificationBell.jsx';
+import SystemStatusPill from './components/SystemStatusPill.jsx';
 import ThemeMenu from './components/ThemeMenu.jsx';
 import { Icon } from './icons.jsx';
 import { useTheme } from './theme.js';
@@ -59,6 +60,7 @@ const DevicePanel = lazy(() => import('./components/DevicePanel.jsx'));
 const StudioPanel = lazy(() => import('./components/StudioPanel.jsx'));
 const GamesPanel = lazy(() => import('./components/GamesPanel.jsx'));
 const CommandCenter = lazy(() => import('./components/CommandCenter.jsx'));
+const SecurityCenter = lazy(() => import('./components/SecurityCenter.jsx'));
 
 // Each tab has its own color (--hue), used for its icon in the top bar and the sidebar.
 const TABS = [
@@ -73,6 +75,7 @@ const TABS = [
   { id: 'knowledge', label: 'Voice Agent', icon: 'phone', hue: 205 },
   { id: 'vision', label: 'Vision', icon: 'eye', hue: 160 },
   { id: 'device', label: 'Device', icon: 'cpu', hue: 205, isNew: true },
+  { id: 'security', label: 'Security Center', icon: 'key', hue: 150, isNew: true },
   { id: 'games', label: 'Brain Gym', icon: 'sparkles', hue: 300, isNew: true },
   { id: 'contacts', label: 'Contacts', icon: 'contacts', hue: 280 },
   { id: 'account', label: 'Account', icon: 'user', hue: 220 },
@@ -482,10 +485,17 @@ export default function App() {
           {(() => {
             const current = TABS.find((t) => t.id === tab);
             return current ? (
-              <h1 className="topbar-title" style={{ '--hue': current.hue }}>
-                <span className="side-ico"><Icon name={current.icon} size="1.1em" /></span>
-                {current.label}
-              </h1>
+              <div className="topbar-where">
+                <nav className="topbar-crumbs" aria-label="Breadcrumb">
+                  <button type="button" onClick={() => go('home')}>Azarvis</button>
+                  <Icon name="chevron" size="0.85em" />
+                  <span aria-current="page">{current.label}</span>
+                </nav>
+                <h1 className="topbar-title" style={{ '--hue': current.hue }}>
+                  <span className="side-ico"><Icon name={current.icon} size="1.1em" /></span>
+                  {current.label}
+                </h1>
+              </div>
             ) : null;
           })()}
           <form
@@ -508,6 +518,7 @@ export default function App() {
               enterKeyHint="search"
             />
           </form>
+          <SystemStatusPill onOpen={() => go('command')} />
           <div className="topbar-tools" role="toolbar" aria-label="Quick actions">
           <button
             className={`icon-btn room-watch ${roomWatchOn ? 'on' : ''}`}
@@ -593,6 +604,7 @@ export default function App() {
             {tab === 'notes' && <NotesPanel target={notesTarget} />}
             {tab === 'vision' && <VisionPanel />}
             {tab === 'device' && <DevicePanel />}
+            {tab === 'security' && <SecurityCenter user={user} onOpenTab={setTab} />}
             {tab === 'studio' && <StudioPanel onAsk={(text) => ask(text, true)} />}
             {tab === 'games' && <GamesPanel onAsk={(text) => ask(text, true)} />}
             {tab === 'knowledge' && <VoiceAgent embedded onAsk={(text) => ask(text, true)} />}

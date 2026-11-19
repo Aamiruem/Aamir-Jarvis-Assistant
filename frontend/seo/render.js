@@ -31,18 +31,18 @@ window.azarvisConsent={open:bar};
 var c=get();if(c==='granted')load();else if(c!=='denied'){if(document.body)bar();else document.addEventListener('DOMContentLoaded',bar)}})();`;
 }
 
-const CSS = `:root{--bg:#0b0d12;--panel:#121722;--text:#e3ecff;--muted:#9aa8c4;--line:#232c40;--accent:#22d3ee;color-scheme:dark}
-@media (prefers-color-scheme:light){:root{--bg:#f4f6fb;--panel:#fff;--text:#0f1b33;--muted:#4a5878;--line:#dbe2ef;--accent:#0e7490;color-scheme:light}}
+const CSS = `:root{--bg:#080b14;--panel:#0d1322;--text:#f4f7ff;--muted:#a4b0c4;--line:#26344b;--accent:#00d4ff;--on:#04121a;color-scheme:dark}
+@media (prefers-color-scheme:light){:root{--bg:#f5f7fc;--panel:#fff;--text:#142033;--muted:#637087;--line:#dce4ef;--accent:#087eaa;--on:#fff;color-scheme:light}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
 a{color:var(--accent)}.wrap{max-width:860px;margin:0 auto;padding:0 20px}
 header{border-bottom:1px solid var(--line);background:var(--panel)}header .wrap{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding-block:12px}
-.brand{display:flex;align-items:center;gap:8px;font:700 20px Rajdhani,Inter,sans-serif;letter-spacing:.12em;color:var(--text);text-decoration:none;margin-right:auto}
+.brand{display:flex;align-items:center;gap:10px;font:700 21px/1 Inter,system-ui,sans-serif;letter-spacing:-.02em;color:var(--text);text-decoration:none;margin-right:auto}.brand img{border-radius:8px}
 nav.top{display:flex;flex-wrap:wrap;gap:4px 16px}nav.top a{color:var(--muted);text-decoration:none;font-size:14px;white-space:nowrap}nav.top a:hover,nav.top a[aria-current]{color:var(--text)}
 .crumbs{font-size:13px;color:var(--muted);margin:22px 0 0}.crumbs a{color:var(--muted)}
-h1{font:700 clamp(28px,5vw,40px)/1.15 Rajdhani,Inter,sans-serif;letter-spacing:.01em;margin:10px 0 12px}h2{font:700 22px/1.3 Rajdhani,Inter,sans-serif;margin:30px 0 6px}
+h1{font:700 clamp(28px,5vw,40px)/1.15 "Space Grotesk",Inter,sans-serif;letter-spacing:.01em;margin:10px 0 12px}h2{font:700 22px/1.3 "Space Grotesk",Inter,sans-serif;margin:30px 0 6px}
 .intro{font-size:18px;color:var(--muted);margin:0 0 8px}ul{padding-left:20px}li{margin:4px 0}code{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:.9em}
 .cta{display:flex;flex-wrap:wrap;gap:10px;margin:34px 0 10px}.btn{display:inline-block;padding:10px 18px;border-radius:10px;border:1px solid var(--line);text-decoration:none;color:var(--text);font-weight:600}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#04111a}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on)}
 footer{margin-top:48px;border-top:1px solid var(--line);padding-block:20px;font-size:14px;color:var(--muted)}footer a{color:var(--muted);margin-right:14px}
 footer button{font:inherit;background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer}`;
 
@@ -95,13 +95,13 @@ ${verification ? `<meta name="google-site-verification" content="${esc(verificat
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Inter:wght@400;600&display=swap" media="print" onload="this.media='all'" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family="Space Grotesk":wght@600;700&family=Inter:wght@400;600&display=swap" media="print" onload="this.media='all'" />
 <style>${CSS}</style>
 <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>
 ${consent ? `<script>${consent}</script>` : ''}
 </head>
 <body>
-<header><div class="wrap"><a class="brand" href="/"><img src="/icon.svg" alt="" width="26" height="26" />AZARVIS</a><nav class="top" aria-label="Site">${nav}</nav></div></header>
+<header><div class="wrap"><a class="brand" href="/"><img src="/icon.svg" alt="" width="30" height="30" />Azarvis</a><nav class="top" aria-label="Site">${nav}</nav></div></header>
 <main class="wrap">
 <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Azarvis</a> › <span aria-current="page">${esc(page.nav)}</span></nav>
 <h1>${esc(page.h1)}</h1>

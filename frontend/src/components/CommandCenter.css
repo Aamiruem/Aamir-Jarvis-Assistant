@@ -54,14 +54,14 @@
 .cc-status {
   justify-self: start; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px;
   padding: 8px 16px; border: 1px solid var(--cc-line); border-radius: 999px; background: var(--cc-panel);
-  font-family: Rajdhani, Inter, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.8rem;
+  font-family: 'Space Grotesk', Inter, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.8rem;
 }
 .cc-status > span { color: var(--cc-text); font-weight: 700; }
 .cc-status b { display: inline-flex; align-items: center; gap: 6px; }
 .cc-status em { font-style: normal; color: var(--cc-muted); letter-spacing: 0.04em; text-transform: none; font-size: 0.78rem; }
 .cc-clock { text-align: center; display: grid; }
 .cc-clock small { color: var(--cc-muted); font-size: 0.8rem; }
-.cc-clock strong { font-family: Rajdhani, Inter, sans-serif; font-size: clamp(1.5rem, 3vw, 2.1rem); color: var(--cc-cyan); letter-spacing: 0.06em; text-shadow: 0 0 18px rgba(34, 211, 238, 0.45); font-variant-numeric: tabular-nums; }
+.cc-clock strong { font-family: 'Space Grotesk', Inter, sans-serif; font-size: clamp(1.5rem, 3vw, 2.1rem); color: var(--cc-cyan); letter-spacing: 0.06em; text-shadow: 0 0 18px rgba(34, 211, 238, 0.45); font-variant-numeric: tabular-nums; }
 .cc-search {
   justify-self: end; display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%;
   padding: 8px 12px; border: 1px solid var(--cc-line); border-radius: 10px; background: var(--cc-panel); color: var(--cc-muted) !important; cursor: pointer;
@@ -110,7 +110,7 @@
   display: flex; flex-direction: column; gap: 10px;
 }
 .cc-panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; }
-.cc-panel-head h2 { margin: 0; font-family: Rajdhani, Inter, sans-serif; font-size: 0.86rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cc-text); white-space: nowrap; }
+.cc-panel-head h2 { margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 0.86rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cc-text); white-space: nowrap; }
 .cc-link { background: none; border: 0; padding: 0; color: var(--cc-cyan) !important; cursor: pointer; font-size: 0.8rem; }
 .cc-link:hover { text-decoration: underline; }
 .cc-foot { align-self: center; margin-top: auto; }
@@ -149,11 +149,11 @@
 .cc-orb-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .cc-orb-text { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; pointer-events: none; }
 .cc-orb-text h1 {
-  margin: 0; font-family: Rajdhani, Inter, sans-serif; font-weight: 700; font-size: clamp(2rem, 4.5vw, 3.2rem);
+  margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-weight: 700; font-size: clamp(2rem, 4.5vw, 3.2rem);
   letter-spacing: 0.32em; padding-left: 0.32em; color: #c9f7ff; text-shadow: 0 0 22px rgba(34, 211, 238, 0.85), 0 0 4px rgba(34, 211, 238, 0.9);
 }
 .cc-orb-text span, .cc-orb-text small { text-shadow: 0 0 6px #050b18, 0 0 12px #050b18; }
-.cc-orb-text span { font-family: Rajdhani, Inter, sans-serif; letter-spacing: 0.4em; padding-left: 0.4em; color: var(--cc-cyan); font-size: 0.9rem; }
+.cc-orb-text span { font-family: 'Space Grotesk', Inter, sans-serif; letter-spacing: 0.4em; padding-left: 0.4em; color: var(--cc-cyan); font-size: 0.9rem; }
 .cc-orb-text small { color: var(--cc-muted); font-size: 0.72rem; margin-top: 6px; letter-spacing: 0.08em; }
 .level-attention .cc-orb-text h1 { color: #fff1c2; text-shadow: 0 0 22px rgba(251, 191, 36, 0.8); }
 .level-degraded .cc-orb-text h1 { color: #ffd6d6; text-shadow: 0 0 22px rgba(248, 113, 113, 0.8); }
@@ -222,7 +222,7 @@
 .cc-ring-value { fill: none; stroke: currentColor; stroke-width: 6; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 42px 42px; transition: stroke-dashoffset 0.8s ease; filter: drop-shadow(0 0 4px currentColor); }
 .cc-ring.tone-ok { color: var(--cc-cyan); }
 .cc-ring-label { fill: var(--cc-muted); font-size: 9px; letter-spacing: 0.08em; }
-.cc-ring-num { fill: var(--cc-text); font-size: 15px; font-weight: 700; font-family: Rajdhani, Inter, sans-serif; }
+.cc-ring-num { fill: var(--cc-text); font-size: 15px; font-weight: 700; font-family: 'Space Grotesk', Inter, sans-serif; }
 
 /* ---------- memory ---------- */
 .cc-mem { display: flex; gap: 12px; align-items: center; }
@@ -231,7 +231,7 @@
 .cc-memmap circle { fill: var(--cc-cyan); filter: drop-shadow(0 0 2px var(--cc-cyan)); }
 .cc-mem dl { margin: 0; display: grid; gap: 6px; }
 .cc-mem dt { color: var(--cc-muted); font-size: 0.7rem; }
-.cc-mem dd { margin: 0; font-family: Rajdhani, Inter, sans-serif; font-size: 1.2rem; font-weight: 700; line-height: 1; }
+.cc-mem dd { margin: 0; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 1.2rem; font-weight: 700; line-height: 1; }
 
 /* ---------- providers ---------- */
 .cc-prov-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
@@ -256,14 +256,14 @@
   transition: box-shadow 0.2s, transform 0.2s;
 }
 .cc-talk:hover { box-shadow: 0 0 36px rgba(34, 211, 238, 0.45), inset 0 0 22px rgba(34, 211, 238, 0.2); transform: translateY(-1px); }
-.cc-talk strong { display: block; font-family: Rajdhani, Inter, sans-serif; letter-spacing: 0.16em; text-transform: uppercase; color: #c9f7ff; font-size: 1.05rem; }
+.cc-talk strong { display: block; font-family: 'Space Grotesk', Inter, sans-serif; letter-spacing: 0.16em; text-transform: uppercase; color: #c9f7ff; font-size: 1.05rem; }
 .cc-talk small { display: block; color: var(--cc-muted); font-size: 0.72rem; }
 .cc-talk-wave { display: flex; align-items: center; gap: 3px; height: 24px; }
 .cc-talk-wave i { width: 2px; height: 40%; border-radius: 2px; background: var(--cc-cyan); animation: cc-bar 1.2s ease-in-out infinite; animation-delay: calc(var(--i) * -0.11s); }
 
 /* ---------- loading / error ---------- */
 .cc-loading { min-height: 60vh; place-content: center; justify-items: center; }
-.cc-boot { display: flex; align-items: center; gap: 10px; color: var(--cc-cyan); font-family: Rajdhani, Inter, sans-serif; letter-spacing: 0.14em; text-transform: uppercase; }
+.cc-boot { display: flex; align-items: center; gap: 10px; color: var(--cc-cyan); font-family: 'Space Grotesk', Inter, sans-serif; letter-spacing: 0.14em; text-transform: uppercase; }
 .cc-boot-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--cc-cyan); box-shadow: 0 0 16px var(--cc-cyan); animation: cc-blink 1.2s ease-in-out infinite; }
 .cc-error { flex-direction: row; align-items: center; gap: 14px; max-width: 640px; color: var(--cc-text); }
 .cc-error > .icon { color: var(--cc-warn); font-size: 1.6rem; flex: none; }

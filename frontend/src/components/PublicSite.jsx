@@ -1,7 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { pageView, track } from '../analytics.js';
 import { Icon } from '../icons.jsx';
-import { GITHUB_USER, PORTFOLIO_URL } from '../siteLinks.js';
 import { Toaster } from '../ui.jsx';
 import Landing from './Landing.jsx';
 import Login from './Login.jsx';
@@ -41,18 +40,44 @@ const urlFor = (page, section) => {
 };
 
 // Landing-page sections linked from the top bar.
+// The website's sections (on Home) and pages, in reading order. Plain text links, Google-style:
+// the one filled button is "Get started".
 const NAV = [
-  ['features', 'Features', 'sparkles', 190],
-  ['workflows', 'Automations', 'workflow', 300],
-  ['how', 'How it works', 'timeline', 38],
-  ['projects', 'Projects', 'rocket', 265],
-  ['faq', 'FAQ', 'help', 160],
-  ['feedback', 'Feedback', 'chat', 330],
+  ['features', 'Features'],
+  ['how', 'How it works'],
+  ['workflows', 'Automations'],
+  ['studio', 'Agent Studio', 'page'],
+  ['projects', 'Projects'],
+  ['faq', 'FAQ'],
 ];
+
+/** The Home section on screen right now (for the underline in the navbar). */
+function useActiveSection(enabled) {
+  const [active, setActive] = useState('');
+  useEffect(() => {
+    if (!enabled || typeof IntersectionObserver === 'undefined') return undefined;
+    const ids = NAV.filter(([, , kind]) => kind !== 'page').map(([id]) => id);
+    const seen = new Map();
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => seen.set(e.target.id, e.isIntersecting ? e.intersectionRatio : 0));
+        const best = ids.map((id) => [id, seen.get(id) || 0]).sort((a, b) => b[1] - a[1])[0];
+        setActive(best && best[1] > 0 ? best[0] : '');
+      },
+      { rootMargin: '-64px 0px -45% 0px', threshold: [0, 0.15, 0.4] },
+    );
+    const observe = () => ids.forEach((id) => { const el = document.getElementById(id); if (el) io.observe(el); });
+    observe();
+    const late = setTimeout(observe, 800); // sections below the fold mount a moment later
+    return () => { clearTimeout(late); io.disconnect(); };
+  }, [enabled]);
+  return active;
+}
 
 function PublicNav({ page, theme, onNavigate, onSection }) {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const activeSection = useActiveSection(page === 'home');
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
     onScroll();
@@ -60,7 +85,7 @@ function PublicNav({ page, theme, onNavigate, onSection }) {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
   useEffect(() => {
-    if (!open) return;
+    if (!open) return undefined;
     const esc = (e) => e.key === 'Escape' && setOpen(false);
     document.addEventListener('keydown', esc);
     return () => document.removeEventListener('keydown', esc);
@@ -70,13 +95,15 @@ function PublicNav({ page, theme, onNavigate, onSection }) {
     setOpen(false);
     fn();
   };
+  const go = ([id, , kind]) => act(() => (kind === 'page' ? onNavigate(id) : onSection(id)));
+  const isActive = ([id, , kind]) => (kind === 'page' ? page === id : page === 'home' && activeSection === id);
 
   return (
-    <header className={`pub-nav ${scrolled ? 'pub-nav--scrolled' : ''} ${open ? 'pub-nav--open' : ''}`}>
-      <div className="pub-nav-inner">
+    <header className={`snav ${scrolled ? 'snav--scrolled' : ''} ${open ? 'snav--open' : ''}`}>
+      <div className="snav-inner">
         <a
           href="/"
-          className="pub-logo"
+          className="snav-brand"
           onClick={(e) => {
             e.preventDefault();
             setOpen(false);
@@ -84,49 +111,36 @@ function PublicNav({ page, theme, onNavigate, onSection }) {
           }}
           aria-label="Azarvis home"
         >
-          <img src="/icon.svg" alt="" width="34" height="34" />
-          <span>
-            Azarvis<small>AI Assistant</small>
-          </span>
+          <img src="/icon.svg" alt="" width="32" height="32" />
+          <span>Azarvis</span>
         </a>
 
-        <nav className="pub-links" aria-label="Website">
-          {NAV.map(([id, label, icon, hue]) => (
-            <button key={id} type="button" style={{ '--hue': hue }} onClick={act(() => onSection(id))}>
-              <Icon name={icon} size="1em" className="pub-link-icon" />
-              {label}
+        <nav className="snav-links" aria-label="Website">
+          {NAV.map((item) => (
+            <button key={item[0]} type="button" className={isActive(item) ? 'is-active' : ''} aria-current={isActive(item) ? 'true' : undefined} onClick={go(item)}>
+              {item[1]}
+              {item[0] === 'studio' && <span className="snav-new">New</span>}
             </button>
           ))}
         </nav>
 
-        <div className="pub-actions">
-          <a className="pub-author" href={PORTFOLIO_URL} target="_blank" rel="noopener noreferrer" title="Aamir Hussain Azad: portfolio">
-            <img src={`https://github.com/${GITHUB_USER}.png?size=64`} alt="" width="28" height="28" />
-            <span>by Aamir</span>
-          </a>
+        <div className="snav-actions">
           <ThemeMenu theme={theme} />
-          <button type="button" className={`pub-studio-link ${page === 'studio' ? 'active' : ''}`} onClick={act(() => onNavigate('studio'))}>
-            <Icon name="workflow" size="1em" /> Agent Studio
-          </button>
-          <button type="button" className={`pub-demo-link ${page === 'demo' ? 'active' : ''}`} onClick={act(() => onNavigate('demo'))}>
-            <Icon name="sparkles" size="1em" /> Try demo
-          </button>
-          <button type="button" className="btn ghost pub-signin" onClick={act(() => onNavigate('login'))}>
+          <button type="button" className="snav-btn snav-btn--text snav-hide-sm" onClick={act(() => onNavigate('login'))}>
             Sign in
           </button>
-          <button type="button" className="btn primary pub-cta" onClick={act(() => onNavigate('signup'))}>
-            Get started
+          <button type="button" className={`snav-btn snav-btn--outlined ${page === 'demo' ? 'is-active' : ''}`} onClick={act(() => onNavigate('demo'))}>
+            <Icon name="play" size="0.95em" /> Try demo
           </button>
-          {/* Phones: the demo (no login) is always one tap away. */}
-          <button type="button" className="pub-try" onClick={act(() => onNavigate('demo'))}>
-            <Icon name="play" size="0.9em" /> Try free
+          <button type="button" className="snav-btn snav-btn--filled snav-hide-sm" onClick={act(() => onNavigate('signup'))}>
+            Get started
           </button>
           <button
             type="button"
-            className="icon-btn pub-burger"
+            className="snav-burger"
             onClick={() => setOpen((o) => !o)}
             aria-expanded={open}
-            aria-controls="pub-drawer"
+            aria-controls="snav-drawer"
             aria-label={open ? 'Close menu' : 'Open menu'}
           >
             <Icon name={open ? 'x' : 'menu'} size="1.3em" />
@@ -135,26 +149,20 @@ function PublicNav({ page, theme, onNavigate, onSection }) {
       </div>
 
       {open && (
-        <div className="pub-drawer" id="pub-drawer">
-          {NAV.map(([id, label, icon, hue]) => (
-            <button key={id} type="button" style={{ '--hue': hue }} onClick={act(() => onSection(id))}>
-              <span className="pub-drawer-label"><Icon name={icon} size="1.05em" className="pub-link-icon" /> {label}</span>
+        <div className="snav-drawer" id="snav-drawer">
+          {NAV.map((item) => (
+            <button key={item[0]} type="button" className={isActive(item) ? 'is-active' : ''} onClick={go(item)}>
+              <span>{item[1]}{item[0] === 'studio' && <span className="snav-new">New</span>}</span>
               <Icon name="chevron" size="1em" />
             </button>
           ))}
-          <div className="pub-drawer-cta">
-            <button type="button" className="btn pub-drawer-studio" onClick={act(() => onNavigate('studio'))}>
-              <Icon name="workflow" size="1em" /> Agent Studio: voice + AI team
-            </button>
-            <button type="button" className="btn" onClick={act(() => onNavigate('demo'))}>
-              <Icon name="sparkles" size="1em" /> Try the demo (no login)
-            </button>
-            <button type="button" className="btn" onClick={act(() => onNavigate('login'))}>
-              Sign in
-            </button>
-            <button type="button" className="btn primary" onClick={act(() => onNavigate('signup'))}>
-              Create free account
-            </button>
+          <button type="button" onClick={act(() => onSection('feedback'))}>
+            <span>Feedback</span>
+            <Icon name="chevron" size="1em" />
+          </button>
+          <div className="snav-drawer-cta">
+            <button type="button" className="snav-btn snav-btn--outlined" onClick={act(() => onNavigate('login'))}>Sign in</button>
+            <button type="button" className="snav-btn snav-btn--filled" onClick={act(() => onNavigate('signup'))}>Create free account</button>
           </div>
         </div>
       )}

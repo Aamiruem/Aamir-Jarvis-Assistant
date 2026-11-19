@@ -87,10 +87,10 @@
 
 /* ---- hero ---- */
 .cc-hero { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
-.cc-hello h1 { margin: 4px 0 2px; font-family: Rajdhani, Inter, sans-serif; font-size: clamp(28px, 4vw, 42px); font-weight: 700; line-height: 1.05; letter-spacing: 0.01em; }
+.cc-hello h1 { margin: 4px 0 2px; font-family: 'Space Grotesk', Inter, sans-serif; font-size: clamp(28px, 4vw, 42px); font-weight: 700; line-height: 1.05; letter-spacing: 0.01em; }
 .cc-grad { background: var(--cc-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .cc-date { margin: 0; color: var(--cc-muted); font-size: 13px; display: flex; align-items: center; gap: 6px; }
-.cc-time { font-family: Rajdhani, Inter, sans-serif; font-size: 22px; color: var(--cc-cyan); letter-spacing: 0.06em; text-shadow: 0 0 18px rgba(56, 225, 255, 0.45); font-variant-numeric: tabular-nums; }
+.cc-time { font-family: 'Space Grotesk', Inter, sans-serif; font-size: 22px; color: var(--cc-cyan); letter-spacing: 0.06em; text-shadow: 0 0 18px rgba(56, 225, 255, 0.45); font-variant-numeric: tabular-nums; }
 .cc-hero-side { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .cc-start { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .cc-start-btn { padding: 11px 20px; font-size: 15px; animation: cc-start-glow 2.8s ease-in-out infinite; }
@@ -131,7 +131,7 @@
   transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 .cc-stat .cc-badge { grid-row: span 2; }
-.cc-stat strong { font-family: Rajdhani, Inter, sans-serif; font-size: 30px; line-height: 1; font-weight: 700; }
+.cc-stat strong { font-family: 'Space Grotesk', Inter, sans-serif; font-size: 30px; line-height: 1; font-weight: 700; }
 .cc-stat small { color: var(--cc-muted); font-size: 13px; }
 .cc-stat::after { content: ''; position: absolute; right: -30px; top: -30px; width: 100px; height: 100px; border-radius: 50%; background: hsl(var(--h) 90% 60% / 0.14); filter: blur(10px); }
 .cc-stat:hover, .cc-commands button:hover { transform: translateY(-3px); border-color: hsl(var(--h) 90% 65% / 0.6); box-shadow: 0 12px 28px hsl(var(--h) 90% 50% / 0.18); }
@@ -168,7 +168,7 @@
 .cc-orbit.o2 { inset: 6%; border-color: rgba(139, 92, 246, 0.5); transform: rotateY(65deg); animation: cc-spin 20s linear infinite reverse; }
 .cc-orbit.o3 { inset: 12%; border-style: dashed; border-color: rgba(244, 114, 182, 0.35); animation: cc-spin 30s linear infinite; }
 .cc-core-text { position: relative; text-align: center; }
-.cc-core-text strong { display: block; font-family: Rajdhani, Inter, sans-serif; font-size: 32px; letter-spacing: 0.35em; margin-left: 0.35em; color: var(--cc-core-text); text-shadow: 0 0 20px rgba(34, 211, 238, 0.8); }
+.cc-core-text strong { display: block; font-family: 'Space Grotesk', Inter, sans-serif; font-size: 32px; letter-spacing: 0.35em; margin-left: 0.35em; color: var(--cc-core-text); text-shadow: 0 0 20px rgba(34, 211, 238, 0.8); }
 .cc-core-text small { letter-spacing: 0.4em; color: var(--cc-cyan); font-size: 11px; }
 .cc-talk {
   display: inline-flex;
@@ -236,7 +236,7 @@
 .cc-timeline label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; overflow-wrap: anywhere; }
 .cc-timeline input { accent-color: var(--cc-violet); margin-top: 2px; }
 
-.cc-big { font-family: Rajdhani, Inter, sans-serif; font-size: 46px; font-weight: 700; line-height: 1; display: flex; flex-direction: column; }
+.cc-big { font-family: 'Space Grotesk', Inter, sans-serif; font-size: 46px; font-weight: 700; line-height: 1; display: flex; flex-direction: column; }
 .cc-big { background: var(--cc-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .cc-big small { font-family: Inter, sans-serif; font-size: 12px; font-weight: 400; color: var(--cc-muted); -webkit-text-fill-color: var(--cc-muted); margin-top: 4px; }
 .cc-mem { margin-top: 12px !important; display: grid; gap: 8px; font-size: 13px; overflow-wrap: anywhere; }
@@ -330,7 +330,7 @@
 /* ---- AI insights strip ---- */
 .cc-insights { display: flex; flex-direction: column; gap: 12px; }
 .cc-insights-head { display: flex; align-items: center; gap: 10px; }
-.cc-insights-head strong { font-family: Rajdhani, Inter, sans-serif; font-size: 18px; letter-spacing: 0.01em; }
+.cc-insights-head strong { font-family: 'Space Grotesk', Inter, sans-serif; font-size: 18px; letter-spacing: 0.01em; }
 .cc-insights-head small { color: var(--cc-muted); font-size: 12px; margin-left: auto; }
 .cc-insights-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
 .cc-insight {

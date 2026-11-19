@@ -54,7 +54,7 @@
   overflow: hidden;
 }
 .va-kicker { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); }
-.va-hero h1 { margin: 10px 0 10px; font-family: Rajdhani, Inter, sans-serif; font-size: clamp(26px, 3.6vw, 42px); line-height: 1.08; font-weight: 700; }
+.va-hero h1 { margin: 10px 0 10px; font-family: 'Space Grotesk', Inter, sans-serif; font-size: clamp(26px, 3.6vw, 42px); line-height: 1.08; font-weight: 700; }
 .va-grad { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .va-hero p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.55; max-width: 48ch; }
 .va-flags { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
@@ -134,7 +134,7 @@
 .va-qual { border-left: 1px solid var(--border); padding-left: 16px; display: flex; flex-direction: column; gap: 12px; }
 .va-qual h4 { margin: 0; display: flex; align-items: center; gap: 7px; font-size: 14px; }
 .va-gauge { position: relative; border-radius: 16px; padding: 16px; text-align: center; border: 1px solid hsl(var(--hue) 85% 55% / 0.4); background: linear-gradient(160deg, hsl(var(--hue) 85% 55% / 0.2), hsl(var(--hue) 85% 45% / 0.04)); }
-.va-gauge strong { font-family: Rajdhani, Inter, sans-serif; font-size: 44px; font-weight: 700; line-height: 1; color: hsl(var(--hue) 90% 68%); }
+.va-gauge strong { font-family: 'Space Grotesk', Inter, sans-serif; font-size: 44px; font-weight: 700; line-height: 1; color: hsl(var(--hue) 90% 68%); }
 :root[data-theme='light'] .va-gauge strong { color: hsl(var(--hue) 80% 40%); }
 .va-gauge small { font-size: 14px; color: var(--muted); }
 .va-tier { display: block; margin-top: 6px; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: hsl(var(--hue) 90% 68%); }

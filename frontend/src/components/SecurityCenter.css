@@ -1,0 +1,59 @@
+/* Security Center: built only from the design-system tokens (styles.css, "design system v2"). */
+.sec { display: grid; gap: var(--space-5); max-width: 1180px; }
+.sec-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-4); }
+.sec-head h1 { margin: 0 0 var(--space-1); font: 700 clamp(26px, 3vw, 34px)/1.15 var(--font-display); letter-spacing: -0.02em; }
+.sec-head p { margin: 0; max-width: 70ch; color: var(--muted); }
+.sec-score { display: grid; justify-items: center; gap: 2px; min-width: 132px; padding: var(--space-3) var(--space-5); border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--surface); }
+.sec-score strong { font: 700 34px/1 var(--font-display); }
+.sec-score small { font-size: 16px; color: var(--muted); }
+.sec-score span { font-size: 12px; color: var(--muted); }
+.sec-score.ok strong { color: var(--ok); } .sec-score.warn strong { color: var(--warn); } .sec-score.bad strong { color: var(--danger); }
+.sec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--space-5); }
+.sec-card { display: grid; gap: var(--space-4); align-content: start; padding: var(--space-5); border-radius: var(--radius-lg); border: 1px solid var(--border); background: var(--surface); box-shadow: var(--shadow); min-width: 0; }
+.sec-card > header { display: flex; align-items: flex-start; gap: var(--space-3); }
+.sec-card > header > .icon { flex: none; width: 40px; height: 40px; padding: 10px; border-radius: var(--radius-md); color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.sec-card > header > div { flex: 1; min-width: 0; }
+.sec-card > header h2 { margin: 0; font: 600 19px/1.25 var(--font-display); }
+.sec-card > header p { margin: 2px 0 0; font-size: 13.5px; color: var(--muted); }
+.sec-card > header .btn { flex: none; }
+.sec-pw { display: flex; gap: var(--space-2); }
+.sec-pw input { flex: 1; min-width: 0; height: 44px; padding: 0 var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--field); font-family: var(--font-mono); font-size: 15px; }
+.sec-pw input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
+.sec-result { display: grid; gap: var(--space-3); }
+.sec-result-head { display: flex; align-items: center; gap: var(--space-3); }
+.sec-result-head strong.s0, .sec-result-head strong.s1 { color: var(--danger); } .sec-result-head strong.s2 { color: var(--warn); } .sec-result-head strong.s3, .sec-result-head strong.s4 { color: var(--ok); }
+.sec-meter { display: grid; grid-template-columns: repeat(4, 34px); gap: 4px; }
+.sec-meter i { height: 6px; border-radius: 3px; background: var(--border); }
+.sec-meter.s0 i.on, .sec-meter.s1 i.on { background: var(--danger); } .sec-meter.s2 i.on { background: var(--warn); } .sec-meter.s3 i.on, .sec-meter.s4 i.on { background: var(--ok); }
+.sec-issues, .sec-tips { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-1); font-size: 13.5px; }
+.sec-issues li { display: flex; gap: var(--space-2); color: var(--warn); }
+.sec-issues .icon { flex: none; margin-top: 3px; }
+.sec-tips li { color: var(--muted); padding-left: 14px; position: relative; }
+.sec-tips li::before { content: ''; position: absolute; left: 2px; top: 9px; width: 4px; height: 4px; border-radius: 50%; background: var(--muted); }
+.sec-breach { display: flex; align-items: flex-start; gap: var(--space-2); margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); font-size: 13.5px; }
+.sec-breach .icon { flex: none; margin-top: 2px; }
+.sec-breach.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 10%, transparent); }
+.sec-breach.bad { color: var(--danger); background: color-mix(in srgb, var(--danger) 10%, transparent); }
+.sec-gen { display: flex; align-items: center; gap: var(--space-2); }
+.sec-gen-out { flex: 1; min-width: 0; padding: var(--space-3); border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--field); font: 500 15px/1.4 var(--font-mono); overflow-wrap: anywhere; user-select: all; }
+.sec-len { display: grid; gap: var(--space-1); font-size: 13.5px; }
+.sec-len input { width: 100%; accent-color: var(--accent); }
+.sec-opts input { accent-color: var(--accent); }
+.sec-opts { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); font-size: 13.5px; }
+.sec-checks { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: var(--space-3); }
+.sec-checks li { display: flex; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); border: 1px solid var(--border); background: var(--surface-2); }
+.sec-checks li > .icon { flex: none; margin-top: 2px; }
+.sec-checks li div { display: grid; align-content: start; gap: 2px; min-width: 0; }
+.sec-checks strong { font-size: 14px; }
+.sec-checks span { font-size: 13px; color: var(--muted); }
+.sec-checks small { font-size: 12.5px; color: var(--text); }
+.sec-checks .st-ok > .icon { color: var(--ok); }
+.sec-checks .st-warn > .icon { color: var(--warn); }
+.sec-checks .st-bad { border-color: color-mix(in srgb, var(--danger) 40%, var(--border)); }
+.sec-checks .st-bad > .icon { color: var(--danger); }
+.sec-checks .st-unknown > .icon { color: var(--muted); }
+.sec-skeleton { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: var(--space-3); }
+.sec-skeleton i { height: 64px; border-radius: var(--radius-md); background: linear-gradient(90deg, var(--surface-2), var(--border), var(--surface-2)); background-size: 200% 100%; animation: sec-shimmer 1.2s linear infinite; }
+@keyframes sec-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .sec-skeleton i { animation: none; } }
+@media (max-width: 560px) { .sec-card > header { flex-wrap: wrap; } .sec-card > header .btn { width: 100%; } .sec-meter { grid-template-columns: repeat(4, 26px); } }
