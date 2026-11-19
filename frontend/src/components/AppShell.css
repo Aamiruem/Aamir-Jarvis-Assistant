@@ -110,3 +110,20 @@
   .app .topbar .search-bar input { min-width: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .umenu-pop { animation: none; } .sb-quick-chev { transition: none; } }
+
+/* ---------- Sidebar fit + stronger colours (2026-11-19) ----------
+   The whole sidebar scrolls as one (a thin visible scrollbar), the account row stays pinned at the
+   bottom, so no button can hide inside an inner scroll box. Text and icons use near-full colour. */
+.app .sidebar.sb { overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border-strong, var(--border)) transparent; }
+.app .sidebar.sb::-webkit-scrollbar { width: 8px; }
+.app .sidebar.sb::-webkit-scrollbar-thumb { background: var(--border-strong, var(--border)); border-radius: 8px; }
+.sb-nav { flex: 0 0 auto; overflow: visible; min-height: auto; gap: 8px; }
+.sb-foot { position: sticky; bottom: -10px; margin-top: auto; padding-bottom: 10px; background: inherit; z-index: 2; }
+.app .sidebar.sb .sb-foot { background: var(--bg-2); }
+:root[data-theme='light'] .app .sidebar.sb .sb-foot { background: var(--surface); }
+.sb-link { height: 34px; font-size: 14.5px; color: color-mix(in srgb, var(--text) 86%, transparent); }
+.sb-link .icon { color: color-mix(in srgb, var(--text) 78%, transparent); }
+.sb-link:hover .icon { color: var(--accent); }
+.sb-group-title { color: color-mix(in srgb, var(--text) 62%, transparent); font-weight: 700; }
+.sb-quick-toggle { color: color-mix(in srgb, var(--text) 80%, transparent); }
+@media (max-height: 820px) { .sb-link { height: 31px; } .sb-group { gap: 0; } .sb-nav { gap: 6px; } .sb-head { padding-bottom: 6px; } .sb-start { padding-bottom: 8px; } }

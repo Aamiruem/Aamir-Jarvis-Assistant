@@ -63,6 +63,7 @@ const StudioPanel = lazy(() => import('./components/StudioPanel.jsx'));
 const GamesPanel = lazy(() => import('./components/GamesPanel.jsx'));
 const CommandCenter = lazy(() => import('./components/CommandCenter.jsx'));
 const SecurityCenter = lazy(() => import('./components/SecurityCenter.jsx'));
+const CameraLab = lazy(() => import('./components/CameraLab.jsx'));
 
 // Each tab has its own color (--hue), used for its icon in the top bar and the sidebar.
 const TABS = [
@@ -78,6 +79,7 @@ const TABS = [
   { id: 'vision', label: 'Vision', icon: 'eye', hue: 160 },
   { id: 'device', label: 'Device', icon: 'cpu', hue: 205, isNew: true },
   { id: 'security', label: 'Security Center', icon: 'key', hue: 150, isNew: true },
+  { id: 'camera', label: 'Camera Lab', icon: 'camera', hue: 190, isNew: true },
   { id: 'games', label: 'Brain Gym', icon: 'sparkles', hue: 300, isNew: true },
   { id: 'contacts', label: 'Contacts', icon: 'contacts', hue: 280 },
   { id: 'account', label: 'Account', icon: 'user', hue: 220 },
@@ -90,11 +92,11 @@ const NAV_GROUPS = [
   ['Overview', ['home', 'command', 'chat']],
   ['Work', ['tasks', 'notes', 'memory', 'contacts']],
   ['Create & automate', ['automate', 'studio', 'mllab']],
-  ['AI tools', ['vision', 'knowledge', 'games']],
+  ['AI tools', ['vision', 'camera', 'knowledge', 'games']],
   ['System', ['device', 'security', 'admin']],
 ];
 // Only the newest screens carry a "New" tag, so it still means something.
-const NEWEST = new Set(['command', 'security']);
+const NEWEST = new Set(['command', 'security', 'camera']);
 // The sidebar is the one place to switch screens (Account is the avatar at its bottom).
 const SIDEBAR_TABS = TABS.map((t) => t.id).filter((id) => id !== 'account');
 const SIDEBAR_QUICK_ACTIONS = {
@@ -592,6 +594,7 @@ export default function App() {
             {tab === 'vision' && <VisionPanel />}
             {tab === 'device' && <DevicePanel />}
             {tab === 'security' && <SecurityCenter user={user} onOpenTab={setTab} />}
+            {tab === 'camera' && <CameraLab />}
             {tab === 'studio' && <StudioPanel onAsk={(text) => ask(text, true)} />}
             {tab === 'games' && <GamesPanel onAsk={(text) => ask(text, true)} />}
             {tab === 'knowledge' && <VoiceAgent embedded onAsk={(text) => ask(text, true)} />}
