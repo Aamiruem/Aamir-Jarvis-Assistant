@@ -11,6 +11,7 @@ import { AiNotice, aiProblemOf } from './AiNotice.jsx';
 import HomeArt from './HomeArt.jsx';
 import './HomePanel.css';
 import BrainGym from './BrainGym.jsx';
+import CoreOrb from './CoreOrb.jsx';
 
 const DeviceCard = lazy(() => import('./DeviceCard.jsx'));
 
@@ -329,38 +330,51 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
           </ul>
         </Panel>
 
-        <section className="cc-panel cc-core-panel">
-          <div className="cc-core">
-            <div className="cc-orbit o1" />
-            <div className="cc-orbit o2" />
-            <div className="cc-orbit o3" />
-            <div className="cc-core-text">
+        <section className="cc-panel cc-core-panel hc" aria-label="Azarvis AI core">
+          {/* Always a dark "core" panel, in both themes, like a cockpit display. */}
+          <div className="hc-globe">
+            <CoreOrb speed={speaking ? 2.6 : 1} className="hc-globe-canvas" />
+            <div className="hc-globe-text">
               <strong>AZARVIS</strong>
-              <small>AI CORE</small>
-              <span className={`cc-core-state ${speaking ? 'on' : ''}`} role="status">
-                <Wave on={speaking} /> {speaking ? 'Speaking' : 'Ready'}
-              </span>
+              <span>AI CORE</span>
+              <small role="status" className={speaking ? 'on' : ''}><i /> {speaking ? 'Speaking' : 'Ready'}</small>
             </div>
           </div>
-          <button
-            className="cc-talk"
-            onClick={() => onAsk('', false, true)}
-            disabled={!speechSupported}
-            title={speechSupported ? 'Hands-free: say several tasks at once, Azarvis answers out loud' : 'Voice needs Chrome or Edge'}
-          >
-            <Icon name="mic" /> Talk to Azarvis
-          </button>
-          <small className="muted">Talk naturally. Interrupt any time, or say “stop” to finish.</small>
-          <form className="cc-askbar" onSubmit={submitAsk}>
-            <Icon name="sparkles" className="cc-ask-icon" />
+          <div className="hc-voice">
+            <button
+              type="button"
+              className="hc-mic"
+              onClick={() => onAsk('', false, true)}
+              disabled={!speechSupported}
+              aria-label="Talk to Azarvis"
+              title={speechSupported ? 'Hands-free: say several tasks at once, Azarvis answers out loud' : 'Voice needs Chrome or Edge'}
+            >
+              <Icon name="mic" size="1.5em" />
+            </button>
+            <div className="hc-voice-main">
+              <p className="hc-voice-title">AZARVIS AI CORE <em>{speaking ? 'Speaking' : speechSupported ? 'Ready to listen' : 'Voice unavailable'}</em></p>
+              <div className={`hc-wave ${speaking ? 'on' : ''}`} aria-hidden="true">
+                {Array.from({ length: 36 }, (_, i) => <i key={i} style={{ '--i': i }} />)}
+              </div>
+              <p className="hc-hint">Say “Hey Azarvis”, or tap the mic to talk. Interrupt any time; say “stop” to finish.</p>
+            </div>
+            <ul className="hc-steps" aria-label="What happens when you talk">
+              <li><Icon name="mic" size="1em" /> Listening</li>
+              <li><Icon name="brain" size="1em" /> Thinking</li>
+              <li><Icon name="workflow" size="1em" /> Planning</li>
+              <li><Icon name="zap" size="1em" /> Executing</li>
+            </ul>
+          </div>
+          <form className="hc-ask" onSubmit={submitAsk}>
+            <Icon name="sparkles" className="hc-ask-icon" />
             <input
               value={ask}
               onChange={(e) => setAsk(e.target.value)}
               placeholder="Ask or tell Azarvis… “Remind me to pay rent on Friday at 10am”"
               aria-label="Command for Azarvis"
             />
-            <button className="cc-go" aria-label="Ask Azarvis">
-              <Icon name="send" />
+            <button className="hc-go" aria-label="Ask Azarvis">
+              <Icon name="send" size="1em" />
               <span>Ask</span>
             </button>
           </form>
