@@ -57,6 +57,7 @@ frontend/ (React)                backend/
 | ML Lab: EDA, 7 algorithms with cross-validation, tuning, held-out testing, feature importance, PCA/K-means, model registry + experiment log; house price prediction (XGBoost, test R² 0.86) | [backend/fastapi-ai/app/mllab/](backend/fastapi-ai/app/mllab/), [docs/ML_LAB.md](docs/ML_LAB.md) |
 | NLP + ML intent model, computer vision | [backend/fastapi-ai/app/nlp/](backend/fastapi-ai/app/nlp/), [cv/](backend/fastapi-ai/app/cv/) |
 | Account deletion that erases data across MongoDB, SQL, vector store and S3 | `DELETE /api/auth/me` |
+| **Command Center** dashboard (tab after Home, Alt+0): live AI core, agents, mission timeline, intelligence feed, PC monitor, memory insights and LLM/provider status, all from real data | [frontend/src/components/CommandCenter.jsx](frontend/src/components/CommandCenter.jsx), [backend/fastapi-ai/app/routers/command_center.py](backend/fastapi-ai/app/routers/command_center.py) |
 | Request logging with request ids, graceful shutdown, JSON 404s | `app/main.py`, `backend/express-api/src/app.js` |
 | Tests: 63 Python, 39 Node, 38 frontend (voice, session start, alerts), 19 dashboard + 14 Playwright, CI on every push | [backend/fastapi-ai/tests/](backend/fastapi-ai/tests/), [backend/express-api/test/](backend/express-api/test/), [frontend/src/](frontend/src/) `*.test.js(x)`, [.github/workflows/ci.yml](.github/workflows/ci.yml) |
 

@@ -14,7 +14,7 @@ services:
   mongo:
     image: mongo:7
     volumes: [mongo_data:/data/db]
-    ports: ["27017:27017"]
+    ports: ["127.0.0.1:27017:27017"]   # this PC only: no password on the dev database
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 10s
@@ -30,7 +30,7 @@ services:
       POSTGRES_PASSWORD: jarvis
       POSTGRES_DB: jarvis
     volumes: [pg_data:/var/lib/postgresql/data]
-    ports: ["5432:5432"]
+    ports: ["127.0.0.1:5432:5432"]
 
   fastapi-ai:
     build: ./backend/fastapi-ai
@@ -40,7 +40,7 @@ services:
       DATA_DIR: /app/data
       SYSTEM_CONTROL: "false" # a container can't (and shouldn't) control the host PC
     volumes: [ai_data:/app/data]
-    ports: ["8000:8000"]
+    ports: ["127.0.0.1:8000:8000"]     # AI service: reach it through the gateway, not the LAN
     depends_on: [postgres]
 
   express-api:
@@ -71,7 +71,7 @@ services:
     env_file: .env
     environment:
       AI_SERVICE_URL: http://fastapi-ai:8000
-    ports: ["8501:8501"]
+    ports: ["127.0.0.1:8501:8501"]     # admin dashboard: this PC only
     depends_on: [fastapi-ai]
 
   frontend:

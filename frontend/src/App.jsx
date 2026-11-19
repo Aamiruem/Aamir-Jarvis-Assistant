@@ -58,6 +58,7 @@ const NotesPanel = lazy(() => import('./components/NotesPanel.jsx'));
 const DevicePanel = lazy(() => import('./components/DevicePanel.jsx'));
 const StudioPanel = lazy(() => import('./components/StudioPanel.jsx'));
 const GamesPanel = lazy(() => import('./components/GamesPanel.jsx'));
+const CommandCenter = lazy(() => import('./components/CommandCenter.jsx'));
 
 // Each tab has its own color (--hue), used for its icon in the top bar and the sidebar.
 const TABS = [
@@ -77,6 +78,8 @@ const TABS = [
   { id: 'account', label: 'Account', icon: 'user', hue: 220 },
   { id: 'admin', label: 'Admin', icon: 'shield', hue: 0, adminOnly: true },
 ].map((t, i) => ({ ...t, key: i + 1 })); // Alt+1 … Alt+9
+// The Command Center sits right after Home on Alt+0, so the older Alt+1…9 shortcuts don't move.
+TABS.splice(1, 0, { id: 'command', label: 'Command Center', icon: 'target', hue: 190, isNew: true, key: 0 });
 // The sidebar is the one place to switch screens (Account is the avatar at its bottom).
 const SIDEBAR_TABS = TABS.map((t) => t.id).filter((id) => id !== 'account');
 const SIDEBAR_QUICK_ACTIONS = {
@@ -293,8 +296,8 @@ export default function App() {
         e.preventDefault();
         setPaletteQuery('');
         setPaletteOpen((o) => !o);
-      } else if (e.altKey && /^[1-9]$/.test(e.key)) {
-        const t = TABS[Number(e.key) - 1];
+      } else if (e.altKey && /^[0-9]$/.test(e.key)) {
+        const t = TABS.find((x) => x.key === Number(e.key));
         if (t && (!t.adminOnly || user.role === 'admin')) {
           e.preventDefault();
           setTab(t.id);
@@ -558,6 +561,14 @@ export default function App() {
                 onAsk={ask}
                 onOpenConversation={openConversation}
                 onStartSession={startSession}
+              />
+            )}
+            {tab === 'command' && (
+              <CommandCenter
+                onOpenTab={(t) => { if (t === 'chat') setActiveId(null); setTab(t); }}
+                onAsk={ask}
+                onStartSession={() => startSession()}
+                onOpenPalette={() => { setPaletteQuery(''); setPaletteOpen(true); }}
               />
             )}
             {tab === 'chat' && (

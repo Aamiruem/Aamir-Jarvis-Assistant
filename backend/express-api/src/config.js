@@ -99,6 +99,18 @@ if (config.env === 'production') {
   for (const [name, value] of [['JWT_SECRET', config.auth.jwtSecret], ['OTP_SECRET', config.otp.secret]]) {
     if (!value || value.startsWith('dev-only')) throw new Error(`Set ${name} in production`);
   }
+  // The default internal key is public (it is in this repository): sending it to an AI service on
+  // another host would let anyone who can reach that host act as any user.
+  const aiHost = (() => {
+    try {
+      return new URL(config.aiServiceUrl).hostname;
+    } catch {
+      return '';
+    }
+  })();
+  const aiIsLocal = ['localhost', '127.0.0.1', '::1', '[::1]'].includes(aiHost);
+  if (!aiIsLocal && config.internalApiKey === 'change-me-internal-key')
+    throw new Error('Set INTERNAL_API_KEY in production (the AI service is on another host)');
   if (config.notifications.provider === 'console' && !config.demoMode && !config.auth.passwordOnly)
     throw new Error('Set OTP_PROVIDER=smtp or aws in production, or PASSWORD_ONLY=true for plain email + password');
 }

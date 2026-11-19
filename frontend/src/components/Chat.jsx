@@ -372,6 +372,9 @@ export default function Chat({ userId, history, conversationId, onConversation, 
               openUrl(ev.input.url);
               patchLast((m) => ({ ...m, links: [...(m.links || []), { label: new URL(ev.input.url).hostname.replace(/^www\./, ''), url: ev.input.url }] }));
             }
+          } else if (ev.type === 'safety') {
+            // Untrusted content (a web page, document, clipboard…) tried to give Azarvis orders.
+            patchLast((m) => ({ ...m, safety: ev.message }));
           } else if (ev.type === 'error') {
             failure = ev.message;
             patchLast((m) => ({ ...m, error: ev.message }));
@@ -471,6 +474,9 @@ export default function Chat({ userId, history, conversationId, onConversation, 
                   m.content
                 )}
                 {m.error && <MessageError message={m.error} explained={explained} onRetry={busy ? null : () => retry(i)} />}
+                {m.safety && (
+                  <p className="msg-safety" role="note"><Icon name="shield" size="1em" /> {m.safety}</p>
+                )}
                 {m.links?.length > 0 && (
                   <div className="link-row">
                     {m.links.map((l, j) => (

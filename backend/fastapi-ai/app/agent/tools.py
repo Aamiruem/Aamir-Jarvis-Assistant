@@ -18,6 +18,7 @@ import httpx
 from pydantic import BaseModel, Field
 
 from app.config import settings
+from app.agent import safety
 from app.db import sql
 from app.mllab import crop as crop_yield
 from app.mllab import housing
@@ -31,9 +32,13 @@ HTTP_HEADERS = {"User-Agent": "JarvisLearningProject/1.0 (educational assistant)
 IMAGE_KEY = "_image"  # a tool result holding (media_type, base64) under this key is sent to Claude as a picture
 
 
-@dataclass(frozen=True)
+@dataclass
 class ToolContext:
     user_id: str
+    # Prompt-injection guard (app/agent/safety.py): what untrusted content tried to give instructions
+    # in this request ("" = nothing). Set from pending_taint after each round of tool calls.
+    tainted: str = ""
+    pending_taint: str = ""
 
 
 # ---------- input models ----------
@@ -473,6 +478,9 @@ def run_tool(name: str, raw_input, ctx: ToolContext) -> tuple[str | list[dict], 
     """
     if name not in TOOLS:
         return json.dumps({"error": f"Unknown tool {name}"}), True
+    blocked = safety.blocked_reason(name, ctx.tainted)
+    if blocked:
+        return json.dumps({"error": blocked}), True
     _, model, fn = TOOLS[name]
     try:
         args = model.model_validate(raw_input)
@@ -484,8 +492,18 @@ def run_tool(name: str, raw_input, ctx: ToolContext) -> tuple[str | list[dict], 
         return json.dumps({"error": str(e)[:500]}), True
     if isinstance(result, dict) and IMAGE_KEY in result:
         media_type, data = result.pop(IMAGE_KEY)
+        text = json.dumps(result, default=str)
+        if name in safety.UNTRUSTED_TOOLS:
+            text, signals = safety.wrap_untrusted(name, text)
+            if signals:
+                ctx.pending_taint = safety.UNTRUSTED_TOOLS[name]
         return [
             {"type": "image", "source": {"type": "base64", "media_type": media_type, "data": data}},
-            {"type": "text", "text": json.dumps(result, default=str)},
+            {"type": "text", "text": text},
         ], False
-    return json.dumps(result, default=str), False
+    text = json.dumps(result, default=str)
+    if name in safety.UNTRUSTED_TOOLS:
+        text, signals = safety.wrap_untrusted(name, text)
+        if signals:
+            ctx.pending_taint = safety.UNTRUSTED_TOOLS[name]
+    return text, False

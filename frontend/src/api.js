@@ -205,6 +205,7 @@ export const api = {
   },
 
   systemStatus: () => request('/ai/system/status'),
+  commandCenter: () => request('/ai/command-center'),
   whatsappStatus: () => request('/ai/whatsapp/status'),
   whatsappTest: () => request('/ai/whatsapp/test', { method: 'POST' }),
   whatsappServer: () => request('/whatsapp/status'),

@@ -52,6 +52,10 @@ class Settings(BaseSettings):
     jarvis_user_id: str = ""    # older name of the same setting
     whatsapp_poll_seconds: float = 3.0
     groq_api_key: str = ""
+    # Other AI providers: shown on the Command Center (key set / not linked); Jarvis itself runs on Claude.
+    openai_api_key: str = ""
+    gemini_api_key: str = ""
+    openrouter_api_key: str = ""
 
     # Local bridge (app/routers/local_bridge.py): these websites may read this PC's read-only
     # device details (CPU, memory, disk, battery, wired/Wi-Fi) from the browser. "" turns it off.

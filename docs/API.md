@@ -104,6 +104,7 @@ Interactive docs: **http://localhost:8000/docs**. Every route except `/health` n
 | Analytics | GET | `/stats` | this user's usage |
 | | GET | `/admin/stats` | **admin**: all users |
 | Account | DELETE | `/me/data` | erase this user's tasks, memories, notifications, logs, documents, files |
+| Command Center | GET | `/command-center` | the dashboard in one call: status, AI core, agents (tool use in the last 24 h), today's timeline, live feed, this PC's CPU/RAM/disk/network, memory counts, AI providers (key set / not linked, Ollama models, Claude Code/Cursor/Copilot installed). Via the gateway: `/api/ai/command-center` |
 | Health | GET | `/health` | no auth |
 
 ### Chat stream events

@@ -260,6 +260,11 @@ MAX_MEMORIES = 200
 
 
 def add_memory(user_id: str, fact: str) -> dict:
+    from app.agent.safety import secret_kind  # (lazy: keeps the db layer importable on its own)
+
+    kind = secret_kind(fact)
+    if kind:
+        raise ValueError(f"Not saved: this looks like {kind}. Secrets never go into memory; keep them in a password manager.")
     with SessionLocal.begin() as s:
         count = s.scalar(select(func.count(Memory.id)).where(Memory.user_id == user_id)) or 0
         if count >= MAX_MEMORIES:
@@ -377,4 +382,50 @@ def delete_user_data(user_id: str) -> dict:
         return {
             model.__tablename__: s.execute(delete(model).where(model.user_id == user_id)).rowcount
             for model in (Task, Memory, Contact, Notification, ChatLog)
+        }
+
+
+def command_center_data(user_id: str, day_start: datetime, day_end: datetime, since: datetime) -> dict:
+    """Everything the Command Center shows from the database, for one user, in one session:
+    counts, today's timed tasks, overdue tasks, unread notifications and recent requests.
+    day_start/day_end: today in the user's time zone (UTC-aware). since: start of the activity window."""
+    now = _now()
+    with SessionLocal() as s:
+        open_tasks = s.scalar(select(func.count(Task.id)).where(Task.user_id == user_id, Task.done.is_(False))) or 0
+        overdue = s.scalars(
+            select(Task).where(Task.user_id == user_id, Task.done.is_(False), Task.remind_at.is_not(None), Task.remind_at < now)
+            .order_by(Task.remind_at).limit(20)
+        ).all()
+        today = s.scalars(
+            select(Task).where(Task.user_id == user_id, Task.remind_at >= day_start, Task.remind_at < day_end)
+            .order_by(Task.remind_at).limit(12)
+        ).all()
+        memories = s.scalar(select(func.count(Memory.id)).where(Memory.user_id == user_id)) or 0
+        unread = s.scalars(
+            select(Notification).where(Notification.user_id == user_id, Notification.read.is_(False))
+            .order_by(Notification.created_at.desc()).limit(6)
+        ).all()
+        unread_count = s.scalar(select(func.count(Notification.id)).where(Notification.user_id == user_id, Notification.read.is_(False))) or 0
+        messages = s.scalar(select(func.count(ChatLog.id)).where(ChatLog.user_id == user_id)) or 0
+        tool_rows = s.scalars(
+            select(ChatLog.tools_used).where(ChatLog.user_id == user_id, ChatLog.tools_used != "").order_by(ChatLog.created_at.desc()).limit(5000)
+        ).all()
+        window = s.execute(
+            select(ChatLog.tools_used, ChatLog.created_at).where(ChatLog.user_id == user_id, ChatLog.created_at >= since, ChatLog.tools_used != "")
+        ).all()
+        recent = s.scalars(select(ChatLog).where(ChatLog.user_id == user_id).order_by(ChatLog.created_at.desc()).limit(6)).all()
+        return {
+            "open_tasks": open_tasks,
+            "overdue": [t.to_dict() for t in overdue],
+            "today": [t.to_dict() for t in today],
+            "memories": memories,
+            "unread": [{"id": n.id, "title": n.title, "body": n.body, "at": _iso(n.created_at)} for n in unread],
+            "unread_count": unread_count,
+            "messages": messages,
+            "tool_calls": sum(len([t for t in row.split(",") if t]) for row in tool_rows),
+            "tool_uses": [(name, _aware(at)) for tools, at in window for name in tools.split(",") if name],
+            "recent": [
+                {"message": r.message[:140], "intent": r.intent, "tools": [t for t in r.tools_used.split(",") if t], "latency_ms": r.latency_ms, "at": _iso(r.created_at)}
+                for r in recent
+            ],
         }

@@ -1468,3 +1468,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .jv-style:hover { border-color: var(--border-strong); }
 .jv-style.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .jv-sub { margin: 8px 0 10px; font-size: 14px; color: var(--muted); font-weight: 600; }
+
+/* A reply where untrusted content (web page, document, clipboard) tried to give Azarvis orders. */
+.msg-safety { display: flex; align-items: flex-start; gap: 6px; margin: 8px 0 0; padding: 6px 10px; border-radius: 8px; font-size: 0.82rem;
+  color: #b45309; background: color-mix(in srgb, #f59e0b 12%, transparent); border: 1px solid color-mix(in srgb, #f59e0b 35%, transparent); }
+:root:not([data-theme='light']) .msg-safety { color: #fcd34d; }

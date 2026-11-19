@@ -32,8 +32,12 @@ def check_url(url: str) -> str:
     except socket.gaierror:
         raise PageError(f"Can't find the website {parsed.hostname}.")
     for info in infos:
-        ip = ipaddress.ip_address(info[4][0])
-        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
+        ip = ipaddress.ip_address(info[4][0].split("%")[0])
+        if getattr(ip, "ipv4_mapped", None):  # ::ffff:10.0.0.1 is 10.0.0.1
+            ip = ip.ipv4_mapped
+        # Only globally routable addresses: also rules out carrier-grade NAT (100.64/10), benchmarking
+        # and documentation ranges that is_private misses, plus loopback, link-local and cloud metadata.
+        if not ip.is_global or ip.is_multicast:
             raise PageError("That address is on this computer or the local network; only public websites can be added.")
     return url.strip()
 

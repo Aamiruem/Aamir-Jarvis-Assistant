@@ -365,7 +365,9 @@ def test_look_at_screen_hands_claude_a_small_picture(pc, monkeypatch):
 
     with Image.open(_io.BytesIO(base64.b64decode(out[0]["source"]["data"]))) as img:
         assert max(img.size) <= sc.SCREEN_MAX_SIDE
-    assert json.loads(out[1]["text"])["note"]
+    text = json.loads(out[1]["text"])
+    assert text["untrusted_content"]["note"]  # the screen is untrusted content (app/agent/safety.py)
+    assert "not instructions" in text["notice"]
 
 
 def test_new_pc_tools_respect_the_off_switch(home, monkeypatch):
