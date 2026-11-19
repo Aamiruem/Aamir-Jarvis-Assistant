@@ -158,7 +158,18 @@ export default function SiteFooter({ compact = false, onOpenTab, cta = false, on
         <span>© 2026 Aamir Hussain Azad · Azarvis AI Assistant · Made in India</span>
         <nav aria-label="Footer links">
           {onDemo && <button type="button" className="site-foot-barbtn" onClick={onDemo}>Demo</button>}
-          <a href={`mailto:${CONTACT_EMAIL}`}>Contact</a>
+          {/* The public content pages (static HTML built from seo/pages.js): crawlable links. */}
+          <a href="/features">Features</a>
+          <a href="/voice-assistant">Voice</a>
+          <a href="/ai-agents">AI agents</a>
+          <a href="/docs">Docs</a>
+          <a href="/about">About</a>
+          <a href="/contact">Contact</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          {typeof window !== 'undefined' && window.azarvisConsent && (
+            <button type="button" className="site-foot-barbtn" onClick={() => window.azarvisConsent.open()}>Analytics settings</button>
+          )}
           <a href={PORTFOLIO_URL} {...outside(PORTFOLIO_URL)}>Portfolio</a>
           <a href={REPO_URL} {...outside(REPO_URL)}>GitHub</a>
           <button type="button" className="site-foot-top" onClick={(e) => scrollUp(e.currentTarget)}>

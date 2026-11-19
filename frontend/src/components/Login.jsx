@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { auth, setAccessToken } from '../api.js';
 import { Icon } from '../icons.jsx';
+import { track } from '../analytics.js';
 import { passkeysSupported, signInWithPasskey, unlockName } from '../passkeys.js';
 
 // Mirrors backend/express-api/src/auth/PasswordPolicy.js so problems show while typing.
@@ -122,6 +123,8 @@ export default function Login({ onAuth, initialStep = 'login', onDemo, onHome })
   const handle = (result, purpose) => {
     if (result.accessToken) {
       setAccessToken(result.accessToken);
+      // Google Analytics (only with consent): which step, never who.
+      track(purpose === 'verify_email' ? 'sign_up' : 'login', { method: 'email' });
       onAuth(result.user);
       return;
     }

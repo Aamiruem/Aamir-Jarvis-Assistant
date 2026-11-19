@@ -4,6 +4,7 @@
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "cleanUrls": true,
   "rewrites": [{ "source": "/api/:path*", "destination": "https://azarvis-api.vercel.app/api/:path*" }],
   "headers": [
     {

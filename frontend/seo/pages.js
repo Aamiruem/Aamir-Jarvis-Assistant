@@ -28,7 +28,7 @@ export const PAGES = [
     path: '/voice-assistant',
     nav: 'Voice',
     title: 'AI Voice Assistant in 39 Languages – Azarvis',
-    description: 'Azarvis is a hands-free AI voice assistant: “Hey Azarvis” wake word, natural interruptions, and native neural voices for Hindi, Urdu, Hinglish, English and 35 more languages.',
+    description: 'A hands-free AI voice assistant: “Hey Azarvis” wake word, natural interruptions and native voices for Hindi, Urdu, Hinglish, English and 35 more languages.',
     h1: 'A voice assistant that talks like a person',
     intro: 'Azarvis is built to be spoken to. You talk, it listens until you pause, answers aloud and lets you interrupt, the way a conversation between people works.',
     sections: [
@@ -55,7 +55,7 @@ export const PAGES = [
     path: '/ai-ml',
     nav: 'AI & ML',
     title: 'Machine Learning Lab and AI Models – Azarvis',
-    description: 'Azarvis ML Lab: upload a CSV, explore it, train and compare seven machine-learning algorithms with cross-validation, tune them and predict, plus NLP and vision models.',
+    description: 'Azarvis ML Lab: upload a CSV, explore it, then train, compare and tune seven machine-learning algorithms with cross-validation. Plus NLP and vision models.',
     h1: 'AI and machine learning inside Azarvis',
     intro: 'Besides the language model, Azarvis includes classic machine learning you can use and learn from, with real metrics on held-out data.',
     sections: [
@@ -68,7 +68,7 @@ export const PAGES = [
     path: '/knowledge-base',
     nav: 'Knowledge base',
     title: 'Chat With Your Documents (RAG) – Azarvis',
-    description: 'Upload PDFs, notes and web pages to Azarvis and ask questions about them. Retrieval-augmented answers name their source documents. Each user has a private index.',
+    description: 'Upload PDFs, notes and web pages and ask Azarvis about them. Retrieval-augmented answers name their source documents, and each user has a private index.',
     h1: 'Ask questions about your own documents',
     intro: 'Azarvis uses retrieval-augmented generation (RAG): it finds the passages of your documents that match your question and answers from them, naming the sources it used.',
     sections: [
@@ -81,7 +81,7 @@ export const PAGES = [
     path: '/automation',
     nav: 'Automation',
     title: 'PC Automation and Workflows by Voice – Azarvis',
-    description: 'Control your Windows, macOS or Linux computer by voice with Azarvis: apps, files, volume, media, screen and PC health, with one-click workflows and safe, allowlisted actions.',
+    description: 'Control your Windows, macOS or Linux PC by voice: apps, files, volume, media, screen and PC health, with one-click workflows and only safe, allowlisted actions.',
     h1: 'Automate your computer and your routine',
     intro: 'When Azarvis runs on your own computer it can act on it, safely. When it runs in the cloud it cannot, by design.',
     sections: [
@@ -94,7 +94,7 @@ export const PAGES = [
     path: '/technology',
     nav: 'Technology',
     title: 'Technology Stack: React, FastAPI, Claude – Azarvis',
-    description: 'How Azarvis is built: React and Vite, a Next.js TypeScript dashboard, Express and MongoDB, Python FastAPI with SQLAlchemy, the Claude API, scikit-learn, XGBoost and Docker.',
+    description: 'How Azarvis is built: React and Vite, Next.js with TypeScript, Express and MongoDB, Python FastAPI and SQLAlchemy, the Claude API, scikit-learn and Docker.',
     h1: 'How Azarvis is built',
     intro: 'Azarvis is one project that touches the whole modern stack, written to be read and learned from.',
     sections: [
@@ -139,7 +139,7 @@ export const PAGES = [
     h1: 'Contact',
     intro: 'Questions, ideas or a problem to report: the quickest way is the feedback form on the home page. It needs no account.',
     sections: [
-      { h2: 'Ways to reach us', list: ['<a href="/#feedback">Feedback form</a> (no account needed)', '<a href="https://www.linkedin.com/in/aamir-hussain-azad-62623924b" rel="noopener">LinkedIn: Aamir Hussain Azad</a>', '<a href="https://github.com/Aamiruem" rel="noopener">GitHub: Aamiruem</a> for bugs and code'] },
+      { h2: 'Ways to reach us', list: ['<a href="/#feedback">Feedback form</a> (no account needed)', 'Email: <a href="mailto:aamirhussainazad786@gmail.com">aamirhussainazad786@gmail.com</a>', '<a href="https://www.linkedin.com/in/aamir-hussain-azad-62623924b" rel="noopener">LinkedIn: Aamir Hussain Azad</a>', '<a href="https://github.com/Aamiruem" rel="noopener">GitHub: Aamiruem</a> for bugs and code'] },
     ],
   },
   {

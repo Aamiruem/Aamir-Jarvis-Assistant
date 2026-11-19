@@ -179,6 +179,8 @@ export default function PublicSite({ theme, onAuth }) {
     document.querySelector('meta[name="description"]')?.setAttribute('content', description);
     const canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) canonical.href = new URL(urlFor(page), canonical.href).href;
+    // Sign-in and sign-up pages have nothing to rank for: keep them out of search results.
+    document.querySelector('meta[name="robots"]')?.setAttribute('content', page === 'login' || page === 'signup' ? 'noindex, follow' : 'index, follow, max-image-preview:large');
     pageView(title);
     if (page === 'demo') track('demo_open', { section: section || 'home' });
     if (page === 'signup') track('sign_up_start');

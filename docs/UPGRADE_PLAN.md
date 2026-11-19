@@ -77,6 +77,21 @@ Last updated: 2026-11-19 (Phase 1 done).
 - [x] Command Center (live data)
 - [ ] Security Center (audit log, sessions, safety events, approvals)
 
+### Public website, SEO and Google (Master Prompt 3, 2026-11-19) ✅ first pass
+- [x] 12 static, crawlable content pages (`frontend/seo/pages.js` → `/features` … `/privacy`, `/terms`) with unique titles, descriptions, canonical, Open Graph, `WebPage`/`AboutPage`/`ContactPage` + `BreadcrumbList` JSON-LD; linked from the site footer; `cleanUrls` on Vercel
+- [x] Sitemap lists home, demo and every content page; sign-in pages left out and `noindex`
+- [x] GA4 behind a consent notice (nothing loads before "Accept"; "Decline" clears `_ga` cookies); `sign_up` / `login` events added; no private data in any event
+- [x] Search Console (Domain DNS + HTML tag) and GA4 (key events, DebugView) guide in `docs/SEO.md`
+- [ ] Choose one canonical public site (azarvis-app vs azarvis-ai both self-canonical today), owner's decision
+- [ ] Owner: Search Console verification code, GA4 Measurement ID, then redeploy
+- [ ] Prerender the home page itself (today: the splash and JS render; content pages are static)
+
+### Google Cloud deployment ✅ prepared (not deployed)
+- [x] AI service Dockerfile: `$PORT` for Cloud Run, non-root user (no `--proxy-headers`, which would let a forged `X-Forwarded-For` pass the loopback check)
+- [x] Cloud Storage via the S3-compatible API (`S3_ENDPOINT_URL`); account deletion removes files one by one (GCS has no batch delete); tested
+- [x] `infra/gcp/deploy.sh` (Cloud Build → Artifact Registry → Cloud Run, Secret Manager, Cloud SQL, bucket mount, smoke test) + `docs/GOOGLE_CLOUD.md`
+- [ ] Owner: create the project/resources (billed) and run the script; Docker and gcloud are not installed on the dev PC, so images were not built here
+
 ### Phase 11: Monitoring and deployment
 - [ ] Alembic baseline migration; `/metrics` (Prometheus format); backup/restore script
 

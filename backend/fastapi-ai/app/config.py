@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     # AWS
     s3_bucket: str | None = None
+    s3_endpoint_url: str | None = None  # S3-compatible store, e.g. https://storage.googleapis.com (Google Cloud Storage)
     aws_region: str = "ap-south-1"
 
     # Security / networking

@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url';
 import net from 'node:net';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
+import { analyticsSnippet, PAGES, renderPage, sitemap } from './seo/render.js';
 
 // The local API the dev server forwards /api to. AZARVIS_API_URL picks another one (e.g. a
 // second, throwaway API for testing while your normal one keeps running on 4000).
@@ -135,38 +136,21 @@ function seo(env) {
         injectTo: 'head',
       });
       if (gaId) {
-        // Google Analytics 4. The ID was checked against /^G-[A-Z0-9]+$/, so it is safe inside the script.
-        tags.push({ tag: 'script', attrs: { async: true, src: `https://www.googletagmanager.com/gtag/js?id=${gaId}` }, injectTo: 'head' });
-        tags.push({
-          tag: 'script',
-          children: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${gaId}');`,
-          injectTo: 'head',
-        });
+        // Google Analytics 4, only after the visitor accepts (seo/render.js). The ID was checked
+        // against /^G-[A-Z0-9]+$/, so it is safe inside the script.
+        tags.push({ tag: 'script', children: analyticsSnippet(gaId), injectTo: 'head' });
       }
       return tags;
     },
     generateBundle() {
       const robots = ['User-agent: *', 'Allow: /', 'Disallow: /api/', ...(site ? [`Sitemap: ${site}/sitemap.xml`] : [])];
       this.emitFile({ type: 'asset', fileName: 'robots.txt', source: `${robots.join('\n')}\n` });
-      if (site) {
-        const today = new Date().toISOString().slice(0, 10);
-        this.emitFile({
-          type: 'asset',
-          fileName: 'sitemap.xml',
-          source: [
-            '<?xml version="1.0" encoding="UTF-8"?>',
-            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-            ...[
-              ['/', 'weekly', '1.0'],
-              ['/?page=demo', 'weekly', '0.8'],
-              ['/?page=signup', 'monthly', '0.6'],
-              ['/?page=login', 'monthly', '0.5'],
-            ].map(([path, freq, priority]) => `  <url><loc>${site}${path.replace('&', '&amp;')}</loc><lastmod>${today}</lastmod><changefreq>${freq}</changefreq><priority>${priority}</priority></url>`),
-            '</urlset>',
-            '',
-          ].join('\n'),
-        });
+      // The public content pages as static HTML: /features serves features.html (vercel.json cleanUrls).
+      for (const page of PAGES) {
+        this.emitFile({ type: 'asset', fileName: `${page.path.slice(1)}.html`, source: renderPage(page, { site, gaId, verification }) });
       }
+      // Sign-in pages are left out of the sitemap (and marked noindex by PublicSite.jsx).
+      if (site) this.emitFile({ type: 'asset', fileName: 'sitemap.xml', source: sitemap(site, new Date().toISOString().slice(0, 10)) });
     },
   };
 }

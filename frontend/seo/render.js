@@ -37,7 +37,7 @@ const CSS = `:root{--bg:#0b0d12;--panel:#121722;--text:#e3ecff;--muted:#9aa8c4;-
 a{color:var(--accent)}.wrap{max-width:860px;margin:0 auto;padding:0 20px}
 header{border-bottom:1px solid var(--line);background:var(--panel)}header .wrap{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;padding-block:12px}
 .brand{display:flex;align-items:center;gap:8px;font:700 20px Rajdhani,Inter,sans-serif;letter-spacing:.12em;color:var(--text);text-decoration:none;margin-right:auto}
-nav.top a{color:var(--muted);text-decoration:none;font-size:14px}nav.top a:hover,nav.top a[aria-current]{color:var(--text)}
+nav.top{display:flex;flex-wrap:wrap;gap:4px 16px}nav.top a{color:var(--muted);text-decoration:none;font-size:14px;white-space:nowrap}nav.top a:hover,nav.top a[aria-current]{color:var(--text)}
 .crumbs{font-size:13px;color:var(--muted);margin:22px 0 0}.crumbs a{color:var(--muted)}
 h1{font:700 clamp(28px,5vw,40px)/1.15 Rajdhani,Inter,sans-serif;letter-spacing:.01em;margin:10px 0 12px}h2{font:700 22px/1.3 Rajdhani,Inter,sans-serif;margin:30px 0 6px}
 .intro{font-size:18px;color:var(--muted);margin:0 0 8px}ul{padding-left:20px}li{margin:4px 0}code{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:.9em}
