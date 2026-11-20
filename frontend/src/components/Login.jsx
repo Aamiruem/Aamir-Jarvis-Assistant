@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { auth, setAccessToken } from '../api.js';
 import { Icon } from '../icons.jsx';
+import { Brand } from '../ui.jsx';
 import { track } from '../analytics.js';
 import { passkeysSupported, signInWithPasskey, unlockName } from '../passkeys.js';
 
@@ -78,6 +79,24 @@ function PasswordChecklist({ password, name, email }) {
 //   forgot   -> otp(reset_password) + new password -> back to login
 // initialStep: 'login' or 'register' (the website's Sign in / Get started buttons).
 // onDemo: opens the demo, for visitors who want to look around without an account.
+// What a failed request means for the person signing in, in plain words.
+function friendlyError(err) {
+  if (err?.data?.code === 'NOT_CONFIGURED' || err?.status === 503) {
+    return "Sign-in is down for a moment: the Azarvis server can't reach its database. Your account and data are safe. Please try again a little later, or explore the demo meanwhile.";
+  }
+  return err?.message || 'Something went wrong. Please try again.';
+}
+
+/** A field with a visible label (and an optional link on the right of the label, like "Forgot password?"). */
+function Labeled({ label, extra, children }) {
+  return (
+    <div className="auth-field">
+      <div className="auth-label-row"><span className="auth-label">{label}</span>{extra}</div>
+      {children}
+    </div>
+  );
+}
+
 export default function Login({ onAuth, initialStep = 'login', onDemo, onHome }) {
   const [step, setStep] = useState(initialStep);
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '', code: '', newPassword: '', newConfirm: '' });
@@ -113,7 +132,7 @@ export default function Login({ onAuth, initialStep = 'login', onDemo, onHome })
     try {
       await fn();
     } catch (err) {
-      setError(err.message);
+      setError(friendlyError(err));
     } finally {
       setBusy(false);
     }
@@ -191,28 +210,41 @@ export default function Login({ onAuth, initialStep = 'login', onDemo, onHome })
   return (
     <div className="auth-page pub-wrap">
       <aside className="auth-aside" aria-label="Why Azarvis">
-        <span className="section-kicker">Azarvis AI Assistant</span>
-        <h2>Your day, handled by voice.</h2>
-        <p className="muted">Sign in to pick up where you left off: your chats, reminders, notes and documents are waiting.</p>
+        <span className="auth-kicker"><Icon name="sparkles" size="0.95em" /> Azarvis AI Assistant</span>
+        <h2>Your day, handled <span className="auth-grad">by voice.</span></h2>
+        <p className="auth-lead">{step === 'register' ? 'Create a free account in a minute. Azarvis learns how you like things done.' : 'Pick up where you left off: your chats, reminders, notes and documents are waiting.'}</p>
+
+        <figure className="auth-visual" aria-hidden="true">
+          <img src="/art/chat-assistant.webp" alt="" width="475" height="539" />
+          <figcaption className="auth-bubble auth-bubble--you"><Icon name="mic" size="1em" /> “Hey Azarvis, remind me to call Mom at 6.”</figcaption>
+          <span className="auth-bubble auth-bubble--ai"><Icon name="check" size="1em" /> Done. I'll remind you at 6:00 PM.</span>
+        </figure>
+
         <ul className="auth-points">
-          <li><span><Icon name="mic" size="1.05em" /></span><div><strong>Hands-free</strong><p className="muted">Say “Hey Azarvis” and hear the answer out loud.</p></div></li>
-          <li><span><Icon name="tasks" size="1.05em" /></span><div><strong>Never miss a thing</strong><p className="muted">Reminders read to you at the start of the day.</p></div></li>
-          <li><span><Icon name="shield" size="1.05em" /></span><div><strong>No password needed</strong><p className="muted">Add a passkey and sign in with Face ID, Touch ID, Windows Hello or a fingerprint.</p></div></li>
+          <li><span><Icon name="mic" size="1.05em" /></span><div><strong>Hands-free</strong><p>Say “Hey Azarvis” and hear the answer out loud, in your language.</p></div></li>
+          <li><span><Icon name="tasks" size="1.05em" /></span><div><strong>Never miss a thing</strong><p>Reminders read to you at the start of the day.</p></div></li>
+          <li><span><Icon name="shield" size="1.05em" /></span><div><strong>No password needed</strong><p>Use a passkey: Face ID, Touch ID, Windows Hello or a fingerprint.</p></div></li>
         </ul>
         {onDemo && (
           <button type="button" className="auth-demo" onClick={onDemo}>
-            <span className="badge-icon" style={{ '--hue': 300 }}><Icon name="sparkles" /></span>
-            <span className="grow"><strong>Just looking?</strong><span className="muted">Try the demo, no account needed</span></span>
+            <Icon name="sparkles" size="1.05em" />
+            <span className="grow"><strong>Just looking?</strong> Try the demo, no account needed</span>
             <Icon name="chevron" size="1em" />
           </button>
         )}
       </aside>
       <div className="card login">
         <header className="login-brand">
-          <img src="/icon.svg" alt="" width="56" height="56" className="login-logo" />
-          <span className="login-wordmark az-brand-name" style={{ '--bs': '42px' }}>Azarvis</span>
+          <Brand size={40} />
           <span className="login-tagline">AI voice assistant by Aamir Hussain Azad</span>
         </header>
+
+        {(step === 'login' || step === 'register') && (
+          <div className="auth-tabs" role="tablist" aria-label="Sign in or create an account">
+            <button type="button" role="tab" aria-selected={step === 'login'} className={step === 'login' ? 'on' : ''} onClick={() => go('login')}>Sign in</button>
+            <button type="button" role="tab" aria-selected={step === 'register'} className={step === 'register' ? 'on' : ''} onClick={() => go('register')}>Create account</button>
+          </div>
+        )}
 
         <div className="login-heading">
           <h1>{title}</h1>
@@ -223,12 +255,16 @@ export default function Login({ onAuth, initialStep = 'login', onDemo, onHome })
 
         {step === 'login' && (
           <form onSubmit={submitLogin} className="stack">
-            <Field icon="mail">
-              <input type="email" placeholder="Email address" value={form.email} onChange={update('email')} autoComplete="username" required />
-            </Field>
-            <PasswordField value={form.password} onChange={update('password')} placeholder="Password" autoComplete="current-password" />
-            {error && <div className="error">{error}</div>}
-            <button className="btn primary full" disabled={busy}>{busy ? 'Checking…' : 'Sign in'}</button>
+            <Labeled label="Email">
+              <Field icon="mail">
+                <input type="email" placeholder="you@example.com" value={form.email} onChange={update('email')} autoComplete="username" aria-label="Email" required />
+              </Field>
+            </Labeled>
+            <Labeled label="Password" extra={<button type="button" className="link-btn auth-forgot" onClick={() => go('forgot')}>Forgot password?</button>}>
+              <PasswordField value={form.password} onChange={update('password')} placeholder="Your password" autoComplete="current-password" />
+            </Labeled>
+            {error && <div className="error" role="alert">{error}</div>}
+            <button className="btn primary full auth-submit" disabled={busy}>{busy ? 'Checking…' : 'Sign in'}</button>
             {canPasskey && (
               <>
                 <div className="login-or" role="separator"><span>or, without a password</span></div>
@@ -238,36 +274,39 @@ export default function Login({ onAuth, initialStep = 'login', onDemo, onHome })
                 </button>
               </>
             )}
-            <button type="button" className="btn ghost full" onClick={() => go('forgot')}>Forgot password?</button>
-            <p className="login-switch">
-              New to Azarvis? <button type="button" className="link-btn" onClick={() => go('register')}>Create an account</button>
-            </p>
+
           </form>
         )}
 
         {step === 'register' && (
           <form onSubmit={submitRegister} className="stack">
-            <Field icon="user">
-              <input placeholder="Full name" value={form.name} onChange={update('name')} autoComplete="name" required />
-            </Field>
-            <Field icon="mail">
-              <input type="email" placeholder="Email address" value={form.email} onChange={update('email')} autoComplete="username" required />
-            </Field>
-            <PasswordField value={form.password} onChange={update('password')} placeholder="Create a password" autoComplete="new-password" />
+            <Labeled label="Full name">
+              <Field icon="user">
+                <input placeholder="Your name" value={form.name} onChange={update('name')} autoComplete="name" aria-label="Full name" required />
+              </Field>
+            </Labeled>
+            <Labeled label="Email">
+              <Field icon="mail">
+                <input type="email" placeholder="you@example.com" value={form.email} onChange={update('email')} autoComplete="username" aria-label="Email" required />
+              </Field>
+            </Labeled>
+            <Labeled label="Password">
+              <PasswordField value={form.password} onChange={update('password')} placeholder="Create a password" autoComplete="new-password" />
+            </Labeled>
             <PasswordChecklist password={form.password} name={form.name} email={form.email} />
-            <PasswordField
-              value={form.confirm}
-              onChange={update('confirm')}
-              placeholder="Confirm password"
-              autoComplete="new-password"
-              invalid={mismatch(form.password, form.confirm)}
-            />
+            <Labeled label="Confirm password">
+              <PasswordField
+                value={form.confirm}
+                onChange={update('confirm')}
+                placeholder="Type it again"
+                autoComplete="new-password"
+                invalid={mismatch(form.password, form.confirm)}
+              />
+            </Labeled>
             {mismatch(form.password, form.confirm) && <p className="field-error">Passwords don't match yet.</p>}
-            {error && <div className="error">{error}</div>}
-            <button className="btn primary full" disabled={busy}>{busy ? 'Creating…' : 'Create account'}</button>
-            <p className="login-switch">
-              Already have an account? <button type="button" className="link-btn" onClick={() => go('login')}>Sign in</button>
-            </p>
+            {error && <div className="error" role="alert">{error}</div>}
+            <button className="btn primary full auth-submit" disabled={busy}>{busy ? 'Creating…' : 'Create free account'}</button>
+            <p className="auth-terms">By creating an account you agree to keep your login private. Your data stays in your account.</p>
           </form>
         )}
 
@@ -276,8 +315,8 @@ export default function Login({ onAuth, initialStep = 'login', onDemo, onHome })
             <Field icon="mail">
               <input type="email" placeholder="Email address" value={form.email} onChange={update('email')} required />
             </Field>
-            {error && <div className="error">{error}</div>}
-            <button className="btn primary full" disabled={busy}>Send code</button>
+            {error && <div className="error" role="alert">{error}</div>}
+            <button className="btn primary full auth-submit" disabled={busy}>Send code</button>
             <button type="button" className="btn ghost full" onClick={() => go('login')}>Back to sign in</button>
           </form>
         )}
@@ -316,8 +355,8 @@ export default function Login({ onAuth, initialStep = 'login', onDemo, onHome })
                 {mismatch(form.newPassword, form.newConfirm) && <p className="field-error">Passwords don't match yet.</p>}
               </>
             )}
-            {error && <div className="error">{error}</div>}
-            <button className="btn primary full" disabled={busy || form.code.length !== 6}>{busy ? 'Verifying…' : 'Verify'}</button>
+            {error && <div className="error" role="alert">{error}</div>}
+            <button className="btn primary full auth-submit" disabled={busy || form.code.length !== 6}>{busy ? 'Verifying…' : 'Verify'}</button>
             {challenge.purpose !== 'reset_password' && (
               <button type="button" className="btn ghost full" disabled={busy || resendIn > 0} onClick={resend}>
                 {resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}
@@ -331,7 +370,7 @@ export default function Login({ onAuth, initialStep = 'login', onDemo, onHome })
         )}
 
         {onDemo && (step === 'login' || step === 'register') && (
-          <button type="button" className="btn full login-demo" onClick={onDemo}>
+          <button type="button" className="btn ghost full login-demo" onClick={onDemo}>
             <Icon name="sparkles" size="1em" /> Explore the demo without an account
           </button>
         )}

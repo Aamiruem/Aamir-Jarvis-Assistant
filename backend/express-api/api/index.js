@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     res.statusCode = 503;
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Retry-After', '60');
-    res.end(JSON.stringify({ error: 'Azarvis is still being set up. Please try again in a little while.', code: 'NOT_CONFIGURED' }));
+    res.end(JSON.stringify({ error: "Sign-in is down for a moment: the Azarvis server can't reach its database. Please try again a little later.", code: 'NOT_CONFIGURED' }));
     return;
   }
   return app(req, res);
