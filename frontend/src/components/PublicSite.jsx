@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { pageView, track } from '../analytics.js';
 import { Icon } from '../icons.jsx';
-import { Toaster } from '../ui.jsx';
+import { Brand, Toaster } from '../ui.jsx';
 import Landing from './Landing.jsx';
 import Login from './Login.jsx';
 import SiteFooter from './SiteFooter.jsx';
@@ -111,8 +111,7 @@ function PublicNav({ page, theme, onNavigate, onSection }) {
           }}
           aria-label="Azarvis home"
         >
-          <img src="/icon.svg" alt="" width="32" height="32" />
-          <span>Azarvis</span>
+          <Brand size={34} />
         </a>
 
         <nav className="snav-links" aria-label="Website">

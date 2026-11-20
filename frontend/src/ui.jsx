@@ -26,6 +26,20 @@ export function PageHeader({ icon, hue = 190, title, subtitle, children, art, ar
   );
 }
 
+/**
+ * The Azarvis logo and name, the same everywhere (sidebar, phone top bar, website, sign-in).
+ * `size` is the logo's height in px; the name scales with it. `tag` adds the small "AI" badge.
+ */
+export function Brand({ size = 30, tag = false, className = '' }) {
+  return (
+    <span className={`az-brand ${className}`} style={{ '--bs': `${size}px` }}>
+      <img className="az-brand-logo" src="/icon.svg" alt="" width={size} height={size} />
+      <span className="az-brand-name">Azarvis</span>
+      {tag && <span className="az-brand-tag">AI</span>}
+    </span>
+  );
+}
+
 export function EmptyState({ icon = 'sparkles', title, children }) {
   return (
     <div className="empty">

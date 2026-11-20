@@ -10,7 +10,7 @@ import './components/AppShell.css';
 import ThemeMenu from './components/ThemeMenu.jsx';
 import { Icon } from './icons.jsx';
 import { useTheme } from './theme.js';
-import { toast, Toaster } from './ui.jsx';
+import { Brand, toast, Toaster } from './ui.jsx';
 import { share, useInstall } from './pwa.js';
 
 // Aamir Hussain Azad's portfolio: linked from the top bar and the command palette.
@@ -177,8 +177,9 @@ const SIDEBAR_QUICK_ACTIONS = {
     { icon: 'help', label: 'Troubleshoot the service', hint: 'Describe an admin issue', prompt: 'Help me troubleshoot this Azarvis admin issue: ', send: false },
   ],
 };
-// Phones: the main tabs sit in a bar at the bottom, everything else is under "More" (the sidebar).
-const BOTTOM_TABS = ['home', 'chat', 'notes', 'mllab'];
+// Phones: the main tabs sit in a bar at the bottom around a big voice button; everything else is
+// under "More" (the sidebar, which slides in).
+const BOTTOM_TABS = ['home', 'chat', 'tasks'];
 // A link like /?tab=mllab (the installed app's shortcuts) opens that tab.
 const startTab = () => {
   const wanted = new URLSearchParams(window.location.search).get('tab');
@@ -391,6 +392,7 @@ export default function App() {
     ...(installer.installed ? [] : [{ icon: 'download', label: 'Install app', onClick: installApp }]),
     { icon: 'share', label: 'Share Azarvis', onClick: shareJarvis },
     { icon: 'phone', label: 'Azarvis on your phone', onClick: () => go('automate') },
+    ...(isPhone() ? [{ icon: 'eye', label: roomWatchOn ? 'Turn off Room Watch' : 'Turn on Room Watch', onClick: () => setRoomWatchOn((on) => !on) }] : []),
     { icon: 'help', label: 'Help & commands', hint: 'Ctrl K', onClick: () => { setPaletteQuery(''); setPaletteOpen(true); } },
     'divider',
     { icon: 'logout', label: 'Sign out', onClick: logout, danger: true },
@@ -438,11 +440,11 @@ export default function App() {
       <aside className={`sidebar sb ${menuOpen ? 'open' : ''}`}>
         <div className="sb-head">
           <button type="button" className="sb-brand" onClick={() => go('home')} aria-label="Azarvis home">
-            <img src="/icon.svg" alt="" width="28" height="28" />
-            <span>Azarvis</span>
+            <Brand size={32} tag />
           </button>
-          <button className="sb-icon" onClick={toggleMenu} title="Collapse sidebar" aria-label="Collapse sidebar">
-            <Icon name="panelClose" size="1.15em" />
+          <button className="sb-icon" onClick={toggleMenu} title={menuOpen ? 'Close menu' : 'Collapse sidebar'} aria-label={menuOpen ? 'Close menu' : 'Collapse sidebar'}>
+            <Icon name="panelClose" size="1.15em" className="sb-when-desk" />
+            <Icon name="x" size="1.25em" className="sb-when-phone" />
           </button>
         </div>
         <div className="sb-start">
@@ -501,7 +503,7 @@ export default function App() {
       <main className="main">
         <header className="topbar">
           <button className={`icon-btn menu ${collapsed ? 'menu--expand' : ''}`} onClick={toggleMenu} aria-label={collapsed ? 'Show sidebar' : 'Menu'} title={collapsed ? 'Show sidebar' : 'Menu'}><Icon name="menu" className="menu-burger" /><Icon name="panelOpen" className="menu-expand" /></button>
-          <span className="topbar-brand" aria-hidden="true"><img className="brand-logo" src="/icon.svg" alt="" width="26" height="26" />Azarvis</span>
+          <button type="button" className="topbar-brand" onClick={() => go('home')} aria-label="Azarvis home"><Brand size={30} /></button>
           {/* Where you are (the sidebar is where you switch); not a second menu. */}
           {(() => {
             const current = TABS.find((t) => t.id === tab);
@@ -539,6 +541,7 @@ export default function App() {
               enterKeyHint="search"
             />
           </form>
+          <button type="button" className="icon-btn topbar-search-btn" onClick={() => openSearch('')} aria-label="Search everything" title="Search everything"><Icon name="search" /></button>
           <SystemStatusPill onOpen={() => go('command')} />
           <div className="topbar-tools" role="toolbar" aria-label="Quick actions">
           <button
@@ -634,13 +637,25 @@ export default function App() {
       </Suspense>
       )}
       <nav className="bottom-nav" aria-label="Main (phone)">
-        {tabs.filter((t) => BOTTOM_TABS.includes(t.id)).map((t) => (
-          <button key={t.id} className={tab === t.id ? 'active' : ''} style={{ '--hue': t.hue }} onClick={() => go(t.id)} aria-current={tab === t.id ? 'page' : undefined}>
-            <Icon name={t.icon} size="1.4em" />
-            <span>{t.label}</span>
-          </button>
-        ))}
-        <button className={menuOpen || !BOTTOM_TABS.includes(tab) ? 'active' : ''} onClick={() => setMenuOpen(true)} aria-label="More: tasks, memory, settings">
+        {BOTTOM_TABS.map((id, i) => {
+          const t = tabs.find((x) => x.id === id);
+          if (!t) return null;
+          const button = (
+            <button key={t.id} className={tab === t.id ? 'active' : ''} style={{ '--hue': NAV_HUES[t.id] ?? t.hue }} onClick={() => go(t.id)} aria-current={tab === t.id ? 'page' : undefined}>
+              <Icon name={t.icon} size="1.4em" />
+              <span>{t.id === 'tasks' ? 'Tasks' : t.label}</span>
+            </button>
+          );
+          return i === 2 ? [
+            <button key="voice" className="bottom-voice" onClick={() => startSession()} disabled={!voiceSupported}
+              aria-label={voiceSupported ? 'Talk to Azarvis' : 'Voice needs Chrome or Edge'} title={voiceSupported ? 'Talk to Azarvis' : 'Voice needs Chrome or Edge'}>
+              <span className="bottom-voice-orb"><Icon name="mic" size="1.5em" /></span>
+              <span>Talk</span>
+            </button>,
+            button,
+          ] : button;
+        })}
+        <button className={menuOpen || !BOTTOM_TABS.includes(tab) ? 'active' : ''} style={{ '--hue': 220 }} onClick={() => setMenuOpen(true)} aria-label="More: every screen, settings and your account">
           <Icon name="menu" size="1.4em" />
           <span>More</span>
         </button>

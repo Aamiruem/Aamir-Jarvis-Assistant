@@ -16,7 +16,7 @@ the public website (`frontend/src/public.css`, last block) and the static conten
 | `--on-accent` | `#04121A` | `#FFFFFF` | Text on `--accent` (cyan needs dark text for contrast) |
 | `--violet` | `#8067FF` | `#6851D9` | Secondary accent |
 | `--ok` / `--warn` / `--danger` | `#22C58B` / `#F5B942` / `#FF5263` | `#16875D` / `#B87912` / `#D83F51` | Status only |
-| `--text` / `--muted` | `#F4F7FF` / `#A4B0C4` | `#142033` / `#637087` | Text |
+| `--text` / `--muted` | `#F4F7FF` / `#B9C3D6` | `#142033` / `#4E5B74` | Text |
 | `--border` | `#26344B` | `#DCE4EF` | Lines and card edges |
 
 ## Type

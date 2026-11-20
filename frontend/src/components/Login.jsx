@@ -210,7 +210,7 @@ export default function Login({ onAuth, initialStep = 'login', onDemo, onHome })
       <div className="card login">
         <header className="login-brand">
           <img src="/icon.svg" alt="" width="56" height="56" className="login-logo" />
-          <span className="login-wordmark">Azarvis</span>
+          <span className="login-wordmark az-brand-name" style={{ '--bs': '42px' }}>Azarvis</span>
           <span className="login-tagline">AI voice assistant by Aamir Hussain Azad</span>
         </header>
 
