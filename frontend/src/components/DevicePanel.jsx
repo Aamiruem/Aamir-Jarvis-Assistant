@@ -11,7 +11,6 @@ export default function DevicePanel() {
         title="Your device"
         art="/art/planner.webp"
         artAlt="A desk computer with an AI assistant hologram beside calendar and project panels"
-        artPos="50% 45%"
         subtitle="Live details about this computer or phone, with AI insights: battery forecast, connection quality and slowdowns."
       />
       <DeviceCard />

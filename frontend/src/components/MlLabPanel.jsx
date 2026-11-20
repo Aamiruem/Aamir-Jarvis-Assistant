@@ -452,7 +452,7 @@ export default function MlLabPanel({ onAsk }) {
 
   return (
     <div className="panel ml-lab">
-      <PageHeader icon="flask" hue={160} title="ML Lab" art="/art/analytics.webp" artAlt="An analyst studying charts and model metrics on holographic screens" artPos="50% 35%" subtitle="Machine learning on real data. Every score is measured on rows the model never saw while training." />
+      <PageHeader icon="flask" hue={160} title="ML Lab" art="/art/analytics.webp" artAlt="An analyst studying charts and model metrics on holographic screens" subtitle="Machine learning on real data. Every score is measured on rows the model never saw while training." />
       <div className="notice ml-honest">
         <span className="notice-icon"><Icon name="check" /></span>
         <div className="notice-body">

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '../icons.jsx';
 import { useSpeech } from '../useSpeech.js';
 import { advance, CAPABILITIES, COUNTRIES, qualify, startConversation } from '../voiceAgentDemo.js';
-import HomeArt from './HomeArt.jsx';
+import { ImageViewer } from '../ui.jsx';
 import './VoiceAgent.css';
 
 // A capability button, when tapped, puts a realistic student line into the live call so the
@@ -25,6 +25,7 @@ export default function VoiceAgent({ onClose, onAsk, embedded = false }) {
   const [convo, setConvo] = useState(null); // null until the call starts
   const [draft, setDraft] = useState('');
   const [voiceOut, setVoiceOut] = useState(true);
+  const [viewing, setViewing] = useState(false); // the hero picture, full screen
   const logRef = useRef(null);
   const convoRef = useRef(null);
   convoRef.current = convo;
@@ -126,10 +127,11 @@ export default function VoiceAgent({ onClose, onAsk, embedded = false }) {
               {onAsk && <button className="va-ghost" onClick={() => onAsk('How would an AI voice agent help my consultancy get more enrollments?', true)}>Ask Azarvis <Icon name="chevron" size="0.9em" /></button>}
             </div>
           </div>
-          <div className="va-hero-art">
-            <div className="va-art va-art-globe va-art-photo"><img src="/art/voice.webp" alt="A holographic head speaking into a studio microphone" loading="lazy" decoding="async" /></div>
-            <div className="va-art va-art-phone"><HomeArt motif="phone" hue={262} /></div>
-          </div>
+          <button type="button" className="va-hero-art va-photo" onClick={() => setViewing(true)} title="View full size" aria-label="View picture full size: a holographic head speaking into a studio microphone">
+            <img src="/art/voice.webp" alt="A holographic head speaking into a studio microphone" width="1024" height="1024" decoding="async" />
+            <span className="page-art-zoom" aria-hidden="true"><Icon name="search" size="1em" /></span>
+          </button>
+          {viewing && <ImageViewer src="/art/voice.webp" alt="A holographic head speaking into a studio microphone" onClose={() => setViewing(false)} />}
         </header>
 
         {/* ---- live call ---- */}
