@@ -119,7 +119,7 @@ def _status_for(e: Exception) -> str | None:
     if isinstance(e, anthropic.AuthenticationError) or (openai and isinstance(e, openai.AuthenticationError)):
         return "invalid_key"
     text = str(e).lower()
-    if "credit balance" in text or "insufficient_quota" in text or "exceeded your current quota" in text:
+    if any(t in text for t in ("credit balance", "no credits", "insufficient_quota", "exceeded your current quota", "billing")):
         return "no_credits"
     if isinstance(e, anthropic.APIConnectionError) or (openai and isinstance(e, openai.APIConnectionError)):
         return "unreachable"

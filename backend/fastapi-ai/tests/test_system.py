@@ -259,13 +259,14 @@ def test_key_status_is_checked_in_the_background(monkeypatch):
             return self
 
     monkeypatch.setattr(claude, "_current_key", lambda: "sk-ant-test")
-    monkeypatch.setattr(claude, "get_client", lambda: FakeClient())
-    monkeypatch.setattr(claude, "_key_status", {"status": "unknown", "key": None, "at": 0.0})
-    monkeypatch.setattr(claude, "_key_check", None)
+    monkeypatch.setattr(claude, "_openai_key", lambda: "")
+    monkeypatch.setattr(claude.anthropic, "AsyncAnthropic", lambda **kw: FakeClient())
+    monkeypatch.setattr(claude, "_status", {})
+    monkeypatch.setattr(claude, "_checks", {})
 
     async def scenario():
         assert claude.key_status() == "unknown"  # answers at once, checks in the background
-        await claude._key_check
+        await claude._checks["anthropic"]
         assert claude.key_status() == "invalid_key"
         claude.key_status()
         assert calls == [1]  # cached: no second API call
@@ -275,9 +276,10 @@ def test_key_status_is_checked_in_the_background(monkeypatch):
 
 def test_failed_chat_updates_key_status(monkeypatch):
     monkeypatch.setattr(claude, "_current_key", lambda: "sk-ant-test")
-    monkeypatch.setattr(claude, "_key_status", {"status": "ok", "key": "sk-ant-test", "at": time.monotonic()})
+    monkeypatch.setattr(claude, "_openai_key", lambda: "")
+    monkeypatch.setattr(claude, "_status", {("anthropic", "sk-ant-test"): {"status": "ok", "at": time.monotonic()}})
     claude.note_api_error(_api_error(anthropic.BadRequestError, 400, "Your credit balance is too low"))
-    assert claude._key_status["status"] == "no_credits"
+    assert claude._status[("anthropic", "sk-ant-test")]["status"] == "no_credits"
 
 
 def test_friendly_errors():

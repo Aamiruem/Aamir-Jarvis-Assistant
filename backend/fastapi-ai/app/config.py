@@ -53,8 +53,12 @@ class Settings(BaseSettings):
     jarvis_user_id: str = ""    # older name of the same setting
     whatsapp_poll_seconds: float = 3.0
     groq_api_key: str = ""
-    # Other AI providers: shown on the Command Center (key set / not linked); Jarvis itself runs on Claude.
+    # OpenAI: answers instead of Claude when the Claude key is missing, rejected or out of credits
+    # (AI_PROVIDER=auto), or always (AI_PROVIDER=openai). See app/llm/openai_shim.py.
     openai_api_key: str = ""
+    ai_provider: str = "auto"              # auto | anthropic | openai
+    openai_model: str = "gpt-5.5"
+    openai_max_tokens: int = 16000
     gemini_api_key: str = ""
     openrouter_api_key: str = ""
 

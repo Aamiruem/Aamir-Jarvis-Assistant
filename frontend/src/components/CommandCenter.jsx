@@ -12,6 +12,8 @@ import CoreOrb from './CoreOrb.jsx';
 // schedule says so, a provider without a key says "Not linked".
 
 const POLL_MS = 5000;
+// The "start it with npm run dev" hint only makes sense on the PC that runs Azarvis, not on the website.
+const onThisPc = typeof window !== 'undefined' && /^(localhost|127\.0\.0\.1|\[::1\]|192\.168\.|10\.)/.test(window.location.hostname);
 // Quick actions: each opens the screen that does it, or asks Azarvis (send: true runs at once).
 const QUICK = [
   { label: 'Start listening', hint: 'Activate voice input', icon: 'mic', voice: true },
@@ -149,7 +151,7 @@ export default function CommandCenter({ onOpenTab, onAsk, onStartSession, onOpen
             <Icon name="alert" />
             <div>
               <strong>The Command Center can't reach the AI service.</strong>
-              <p>{error} Start Azarvis on this PC (npm run dev), then try again.</p>
+              <p>{error}{onThisPc && !/npm run dev/.test(error || '') ? ' Start Azarvis on this PC (npm run dev), then try again.' : ''}</p>
             </div>
             <button type="button" className="cc-btn" onClick={retry}><Icon name="refresh" size="1em" /> Retry</button>
           </div>

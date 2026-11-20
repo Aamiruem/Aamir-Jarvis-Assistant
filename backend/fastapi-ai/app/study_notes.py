@@ -9,7 +9,7 @@ and the notes say so.
 """
 import anthropic
 
-from app.llm.claude import _current_key, base_params
+from app.llm.claude import _current_key, _openai_key, base_params, provider
 
 MAX_TOKENS = 32_000
 
@@ -120,9 +120,11 @@ def request_text(topic: str, lecture: dict | None = None, context: str = "") -> 
 
 def generate(topic: str, lecture: dict | None, context: str, progress) -> dict:
     """Runs in a background thread: a synchronous client, so no event loop is shared with the API."""
+    if provider() == "openai":
+        return _generate_openai(topic, lecture, context, progress)
     key = _current_key()
     if not key:
-        raise ValueError("No Claude API key is set. Run \"npm run set-key\" in the project folder.")
+        raise ValueError("No AI key is set. Run \"npm run set-key\" in the project folder (a Claude or an OpenAI key).")
     client = anthropic.Anthropic(api_key=key)
     progress("Azarvis is writing your notes…", 3)
     chunks: list[str] = []
@@ -143,6 +145,34 @@ def generate(topic: str, lecture: dict | None, context: str, progress) -> dict:
         raise ValueError(f"Claude couldn't write the notes right now ({e.status_code}). Try again in a minute.")
     if final.stop_reason == "refusal":
         raise ValueError("Claude declined to write notes on this topic.")
+    markdown = "".join(chunks).strip()
+    if final.stop_reason == "max_tokens":
+        markdown += "\n\n> The notes reached the length limit here. Ask again for the remaining sections."
+    return {"markdown": markdown, "output_tokens": final.usage.output_tokens, "stop_reason": final.stop_reason}
+
+
+def _generate_openai(topic: str, lecture: dict | None, context: str, progress) -> dict:
+    """The same notes, written by OpenAI (no working Claude key, OPENAI_API_KEY set)."""
+    import openai
+
+    from app.llm.openai_shim import stream_text_sync
+
+    progress("Azarvis is writing your notes…", 3)
+    chunks: list[str] = []
+
+    def on_text(piece: str) -> None:
+        chunks.append(piece)
+        written = sum(len(c) for c in chunks)
+        progress(f"Writing… {written:,} characters so far", min(95, 3 + written // 900))
+
+    try:
+        final = stream_text_sync(_openai_key(), MASTER_PROMPT, request_text(topic, lecture, context), MAX_TOKENS, on_text)
+    except openai.AuthenticationError:
+        raise ValueError("Your OpenAI API key was rejected. Run \"npm run set-key\" with a new key.")
+    except openai.APIStatusError as e:
+        raise ValueError(f"OpenAI couldn't write the notes right now ({e.status_code}). Try again in a minute.")
+    if final.stop_reason == "refusal":
+        raise ValueError("The AI declined to write notes on this topic.")
     markdown = "".join(chunks).strip()
     if final.stop_reason == "max_tokens":
         markdown += "\n\n> The notes reached the length limit here. Ask again for the remaining sections."

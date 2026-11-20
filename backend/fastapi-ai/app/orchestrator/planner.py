@@ -9,7 +9,7 @@ import json
 
 from pydantic import BaseModel, Field
 
-from app.llm.claude import base_params, get_client
+from app.llm.claude import base_params, ready_client
 from app.orchestrator.agents import AGENTS
 from app.timeutil import now_local
 
@@ -99,7 +99,7 @@ async def make_plan(instruction: str) -> Plan:
     params = base_params(max_tokens=8000)
     params["output_config"] = {**params.get("output_config", {}), "format": {"type": "json_schema", "schema": PLAN_SCHEMA}}
     now = now_local()
-    response = await get_client().beta.messages.create(
+    response = await (await ready_client()).beta.messages.create(
         system=PLANNER_SYSTEM,
         messages=[{"role": "user", "content": f"Current time: {now.isoformat(timespec='minutes')} ({now.strftime('%A')}).\n\nRequest:\n{instruction}"}],
         **params,

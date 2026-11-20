@@ -23,7 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.db.sql import init_db
-from app.llm.claude import key_status
+from app.llm.claude import key_status, provider
 from app.system_control import current_os
 from app.nlp.intent import get_classifier
 from app.rag.store import get_store
@@ -108,7 +108,8 @@ async def health():
         "status": "ok",
         "model": settings.claude_model,
         "api_key_in_env": bool(settings.anthropic_api_key),
-        "claude": key_status(),
+        "claude": key_status(),  # the key in use (Claude, or OpenAI standing in)
+        "provider": provider(),
         "system_control": settings.system_control,
         "os": current_os(),
         "database": settings.sqlalchemy_url.split(":")[0],

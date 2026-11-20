@@ -15,7 +15,7 @@ from app.agent import safety
 from app.agent.tools import ToolContext, run_tool, tool_specs
 from app.config import settings
 from app.db import sql
-from app.llm.claude import base_params, get_client
+from app.llm.claude import base_params, ready_client
 from app.timeutil import now_local
 
 SYSTEM_PROMPT = """You are Azarvis, a personal AI assistant: warm, sharp, a little witty, and concise.
@@ -137,7 +137,7 @@ async def run_agent(
 ) -> AsyncIterator[dict]:
     """ctx: a prepared tool context (the orchestrator passes one with allowed_tools / propose_only).
     role: an extra system note for a specialist agent (who it is and what it should hand back)."""
-    client = get_client()
+    client = await ready_client()  # Claude, or OpenAI standing in for a missing/rejected Claude key
     ctx = ctx or ToolContext(user_id=user_id)
     messages = [*_clean_history(history or []), {"role": "user", "content": user_message}]
     allowed = ctx.allowed_tools

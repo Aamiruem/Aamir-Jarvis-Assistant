@@ -73,5 +73,9 @@ export function aiGate(maxMs = config.aiWaitMs) {
 }
 
 export function aiDownMessage() {
+  // On the hosted website (Vercel) there is no "npm run dev" for a visitor to run: say what is true there.
+  if (process.env.VERCEL && /localhost|127\.0\.0\.1/.test(config.aiServiceUrl)) {
+    return "Azarvis's AI service isn't connected to the live website yet, so chat, tasks, notes and the Command Center can't load here. Your account works; the demo works fully in your browser meanwhile.";
+  }
   return `The AI service isn't running (nothing answered at ${config.aiServiceUrl}). Start everything with "npm run dev" in the project folder, or "python main.py" in backend/fastapi-ai/app.`;
 }

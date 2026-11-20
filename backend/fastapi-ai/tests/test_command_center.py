@@ -24,6 +24,9 @@ def fresh(monkeypatch):
 
     monkeypatch.setattr(cc, "_ollama", no_ollama)
     monkeypatch.setattr(cc, "key_status", lambda: "ok")
+    monkeypatch.setattr(cc, "claude_key_status", lambda: "ok")
+    monkeypatch.setattr(cc, "openai_key_status", lambda: "no_key")
+    monkeypatch.setattr(cc, "provider", lambda: "anthropic")
 
 
 def run(user_id):

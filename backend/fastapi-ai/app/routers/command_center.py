@@ -28,7 +28,7 @@ from fastapi import APIRouter, Depends
 
 from app.config import settings
 from app.db import sql
-from app.llm.claude import key_status
+from app.llm.claude import claude_key_status, key_status, openai_key_status, provider
 from app.rag.store import get_store
 from app.security import Caller, get_caller
 from app.timeutil import now_local
@@ -97,9 +97,9 @@ async def _providers() -> list[dict]:
     global _providers_cache
     if _providers_cache and time.monotonic() - _providers_cache[0] < PROVIDERS_TTL:
         return _providers_cache[1]
-    claude = key_status()
+    claude = claude_key_status()
     claude_detail = {
-        "ok": "Connected · powers Jarvis", "no_key": "No API key", "invalid_key": "Key rejected",
+        "ok": "Connected · powers Jarvis" if provider() == "anthropic" else "Connected", "no_key": "No API key", "invalid_key": "Key rejected",
         "no_credits": "Out of credits", "unreachable": "Can't reach the API", "unknown": "Checking…",
     }.get(claude, claude)
 
@@ -113,7 +113,9 @@ async def _providers() -> list[dict]:
     providers = [
         {"id": "claude", "name": "Claude", "kind": "llm", "state": "connected" if claude == "ok" else ("not_linked" if claude == "no_key" else "problem" if claude != "unknown" else "checking"), "detail": claude_detail},
         {"id": "groq", "name": "Groq", "kind": "llm", **key(settings.groq_api_key, "Whisper voice notes")},
-        {"id": "openai", "name": "OpenAI", "kind": "llm", **key(settings.openai_api_key, "not used by Jarvis yet")},
+        {"id": "openai", "name": "OpenAI", "kind": "llm",
+         "state": "connected" if openai_key_status() == "ok" else ("not_linked" if openai_key_status() == "no_key" else "problem" if openai_key_status() != "unknown" else "checking"),
+         "detail": ("answering now (" + settings.openai_model + ")") if provider() == "openai" else ("standby: answers if Claude is unavailable" if openai_key_status() == "ok" else "add OPENAI_API_KEY to use it")},
         {"id": "gemini", "name": "Gemini", "kind": "llm", **key(settings.gemini_api_key, "not used by Jarvis yet")},
         {"id": "openrouter", "name": "OpenRouter", "kind": "llm", **key(settings.openrouter_api_key, "not used by Jarvis yet")},
         {"id": "ollama", "name": "Ollama", "kind": "llm", **(await _ollama())},
@@ -173,7 +175,9 @@ async def command_center(caller: Caller = Depends(get_caller)):
         asyncio.to_thread(lambda: get_store().list_documents(caller.user_id)),
         _providers(),
     )
-    claude_state = providers[0]["state"]
+    # The AI in use (Claude, or OpenAI standing in for it): degraded only when nothing can answer.
+    ai = key_status()
+    claude_state = "connected" if ai == "ok" else "not_linked" if ai == "no_key" else "checking" if ai == "unknown" else "problem"
     agents = _agents(db.pop("tool_uses"), now)
     feed = _feed(db, device, claude_state, now)
     voice_neural = importlib.util.find_spec("edge_tts") is not None

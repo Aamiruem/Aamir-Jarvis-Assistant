@@ -19,8 +19,8 @@ export const AI_PROBLEMS = {
     fixKey: true,
   },
   no_credits: {
-    title: 'Your Anthropic account is out of credits',
-    body: 'Add credits at console.anthropic.com and AI answers come back right away. Quick commands still work.',
+    title: 'Your AI account is out of credits',
+    body: 'Add credits to the account whose key Azarvis uses (console.anthropic.com for Claude, platform.openai.com → Billing for OpenAI) and AI answers come back right away. Quick commands still work.',
   },
   unreachable: {
     title: "Can't reach Claude right now",
@@ -36,15 +36,15 @@ export function aiProblemOf(health) {
 }
 
 /** "setup" for a missing/rejected key or credits, else "error". */
-export const isSetupError = (message) => /api[_ ]?key|anthropic|credit|billing/i.test(message || '');
+export const isSetupError = (message) => /api[_ ]?key|anthropic|openai|credit|billing/i.test(message || '');
 
 /** What Azarvis says out loud when a request fails: short, and never a URL read out letter by letter. */
 export function spokenFailure(message) {
   if (/credit|billing/i.test(message || '')) {
-    return "I can't answer that right now, because the Anthropic account is out of credits. Quick commands like open YouTube still work.";
+    return "I can't answer that right now, because the AI account is out of credits. Quick commands like open YouTube still work.";
   }
   if (isSetupError(message)) {
-    return "I can't answer that right now, because my Claude API key was rejected. Quick commands like open YouTube still work, and the note on screen shows how to fix it.";
+    return "I can't answer that right now, because my API key was rejected. Quick commands like open YouTube still work, and the note on screen shows how to fix it.";
   }
   return `Sorry, that didn't work. ${String(message || '').replace(/https?:\/\/\S+/g, 'the link on screen')}`;
 }

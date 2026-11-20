@@ -6,6 +6,7 @@ pydantic-settings>=2.6
 
 # --- LLM / Generative AI ---
 anthropic>=1.0
+openai>=1.50              # optional stand-in when there is no working Claude key (app/llm/openai_shim.py)
 
 # --- ML / NLP ---
 scikit-learn>=1.6
