@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { cleanForSpeech, isBargeIn, isEcho, pauseFor, pickVoice, takeSentences } from './speechText.js';
-import { createNeuralQueue, neuralAvailable, neuralKnownAvailable } from './neuralVoice.js';
+import { cleanForSpeech, isBargeIn, isEcho, pauseFor, pickVoice, prosodyFor, takeSentences } from './speechText.js';
+import { createNeuralQueue, neuralAvailable, neuralKnownAvailable, pauseNeural, resumeNeural } from './neuralVoice.js';
+import { createVoiceActivity } from './voiceActivity.js';
 import { applyVoice, currentVoice, readVoiceExtras, VOICE_EVENT } from './voiceSettings.js';
 import { browserVoiceFor, detectLanguage, neuralVoiceFor, speechLocale } from './languages.js';
 import { useLanguage } from './useLanguage.js';
@@ -58,11 +59,54 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang: 
   const utterances = useRef([]); // kept on purpose: Chrome can drop onend for garbage-collected utterances
   const voiceRef = useRef(null);
   const neural = useRef(null); // the neural voice's sentence queue (one per hook)
+  // A human voice on the microphone (voiceActivity.js, echo cancellation on): Azarvis pauses the
+  // moment someone talks over it and waits for people to finish before it starts a reply.
+  const vad = useRef(null);
+  const hold = useRef({ on: false, timer: null, falseHolds: 0, disabled: false });
+
+  const releaseHold = () => {
+    const h = hold.current;
+    clearTimeout(h.timer);
+    if (!h.on) return;
+    h.on = false;
+    window.speechSynthesis?.resume();
+    resumeNeural();
+  };
+  // Someone started talking while Azarvis speaks: pause at once. The recogniser then decides:
+  // real words mean barge-in (Azarvis stops); no words within 1.4 s (a cough, a door) and it carries
+  // on. Two false alarms in one reply (a noisy room) and it stops pausing for the rest of that reply.
+  const onHumanStart = () => {
+    const h = hold.current;
+    if (!speakingRef.current || h.on || h.disabled) return;
+    h.on = true;
+    window.speechSynthesis?.pause();
+    pauseNeural();
+    clearTimeout(h.timer);
+    h.timer = setTimeout(() => {
+      if (!h.on) return;
+      h.falseHolds += 1;
+      if (h.falseHolds >= 2) h.disabled = true;
+      releaseHold();
+    }, 1400);
+  };
+  const ensureVad = () => {
+    if (vad.current) return;
+    const detector = createVoiceActivity({ onStart: onHumanStart, isAssistantTalking: () => speakingRef.current && !hold.current.on });
+    vad.current = detector;
+    detector.start().then((ok) => {
+      if (!ok && vad.current === detector) vad.current = null; // no mic access: words alone decide, as before
+    });
+  };
+  const stopVad = () => {
+    vad.current?.stop();
+    vad.current = null;
+  };
 
   // Stops Azarvis talking. An unfinished spoken reply still runs its "finished" callback.
   const quiet = () => {
     const s = activeStream.current;
     activeStream.current = null;
+    if (hold.current.on) releaseHold(); // resume first: a paused synthesizer can swallow the next reply
     window.speechSynthesis?.cancel();
     neural.current?.stop();
     if (speakingRef.current) session.current.echoUntil = Date.now() + ECHO_TAIL_MS;
@@ -73,7 +117,14 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang: 
 
   useEffect(() => {
     neuralAvailable();
+    return () => {
+      clearTimeout(hold.current.timer);
+      stopVad();
+    };
   }, []);
+  useEffect(() => {
+    if (!listening) stopVad();
+  }, [listening]);
 
   // The chosen voice, else the most natural one installed (voices load asynchronously in Chrome),
   // reloaded when the voice settings change.
@@ -155,7 +206,9 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang: 
         return;
       }
       if (speakingRef.current) {
-        if (!isBargeIn(heard, spokenRef.current) || callbacks.current.shouldBargeIn?.(heard) === false) return;
+        // A human voice already heard on the mic: one new word is enough to stop Azarvis.
+        const humanHeard = hold.current.on || vad.current?.isSpeaking();
+        if (!isBargeIn(heard, spokenRef.current, humanHeard ? 1 : 2) || callbacks.current.shouldBargeIn?.(heard) === false) return;
         quiet();
         callbacks.current.onBargeIn?.();
         s.base = Math.max(s.base, e.resultIndex);
@@ -235,6 +288,7 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang: 
       return;
     }
     if (!keepOpen) quiet(); // pressing the mic means "my turn"
+    ensureVad();
     Object.assign(s, { final: '', interim: '', failed: false, cancelled: false, keepOpen, quickEnds: 0 });
     setError('');
     const begin = () => {
@@ -280,8 +334,15 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang: 
   const speakStream = useCallback(() => {
     const synth = window.speechSynthesis;
     quiet();
+    hold.current.falseHolds = 0;
+    hold.current.disabled = false;
     utterances.current = [];
     spokenRef.current = '';
+    // Turn-taking: if someone is talking (or just was), hold the reply until they pause.
+    const detector = vad.current;
+    let gateOpen = !(detector?.running && detector.quietMs() < 450);
+    const waitingLine = []; // sentences ready while the gate is closed, in order
+    let pending = 0; // sentences queued but not yet handed to a voice
     let buffer = '';
     let queued = 0;
     let done = 0;
@@ -321,7 +382,6 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang: 
       if (ended && done >= queued) finish();
     };
     const startSpeaking = (text) => {
-      queued += 1;
       spokenRef.current += ` ${text}`;
       if (!speakingRef.current) {
         speakingRef.current = true;
@@ -329,26 +389,44 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang: 
       }
     };
     // The browser's voice, in the sentence's own language (Hindi text gets a Hindi voice, etc.).
-    const browserUtter = (text) => {
+    const browserUtter = (text, st = style) => {
       if (!synth) return sentenceDone();
       const code = detectLanguage(text, lang);
       const voice = browserVoiceFor(code, voiceRef.current, synth.getVoices(), pickVoice);
       const u = applyVoice(new SpeechSynthesisUtterance(text), voice, speechLocale(code));
-      u.rate = Math.min(2, Math.max(0.5, u.rate * style.rate));
-      u.pitch = Math.min(2, Math.max(0, u.pitch * style.pitch));
+      u.rate = Math.min(2, Math.max(0.5, u.rate * st.rate));
+      u.pitch = Math.min(2, Math.max(0, u.pitch * st.pitch));
       u.onend = u.onerror = sentenceDone;
       utterances.current.push(u);
       synth.speak(u);
+    };
+    const voiceIt = ({ text, neuralId, tone }) => {
+      pending -= 1;
+      if (interrupted) return;
+      startSpeaking(text);
+      if (!neuralId) return browserUtter(text, tone);
+      neural.current ??= createNeuralQueue({ onError: (_err, item) => browserUtter(item.text, tone) });
+      neural.current.say(text, tone, sentenceDone, neuralId);
     };
     const utter = (text) => {
       // A native neural voice for this sentence's language (null: none exists, the browser reads it).
       const neuralId = neuralKnownAvailable() ? neuralVoiceFor(text, lang, readVoiceExtras().neuralVoice) : null;
       if (!neuralId && !synth) return;
-      startSpeaking(text);
-      if (!neuralId) return browserUtter(text);
-      neural.current ??= createNeuralQueue({ onError: (_err, item) => browserUtter(item.text) });
-      neural.current.say(text, style, sentenceDone, neuralId);
+      queued += 1;
+      pending += 1;
+      // The reply's mood times this sentence's own intonation (questions rise, and so on).
+      const p = prosodyFor(text);
+      const item = { text, neuralId, tone: { rate: style.rate * p.rate, pitch: style.pitch * p.pitch } };
+      if (gateOpen) voiceIt(item);
+      else waitingLine.push(item);
     };
+    if (!gateOpen) {
+      detector.whenQuiet({ quietMs: 450, maxMs: 4000 }).then(() => {
+        gateOpen = true;
+        waitingLine.splice(0).forEach(voiceIt);
+        if (ended && done >= queued) finish();
+      });
+    }
     const handle = {
       /** Sets how the rest of this reply sounds ({ rate, pitch } multipliers, clamped to a gentle range). */
       setStyle(next) {
@@ -369,12 +447,12 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang: 
         if (interrupted) return finish();
         takeSentences(buffer, true).chunks.forEach(utter);
         buffer = '';
-        if (done >= queued || (!synth && !neural.current?.busy)) return finish();
+        if (done >= queued || (!synth && !neural.current?.busy && !pending)) return finish();
         // Safety net: Chrome sometimes never fires onend at all.
         const startedAt = Date.now();
         watch = setInterval(() => {
           const browserIdle = !synth || (!synth.speaking && !synth.pending);
-          if (browserIdle && !neural.current?.busy && Date.now() - startedAt > 1000) finish();
+          if (browserIdle && !neural.current?.busy && !pending && !hold.current.on && Date.now() - startedAt > 1000) finish();
         }, 500);
       },
       interrupt() {

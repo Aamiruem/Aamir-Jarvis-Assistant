@@ -76,11 +76,35 @@ export function isEcho(heard, spoken) {
   return overlap >= 0.6;
 }
 
-/** At least two words Azarvis isn't saying: the user is talking over Azarvis (barge-in). */
-export function isBargeIn(heard, spoken) {
+/**
+ * Words Azarvis isn't saying: the user is talking over Azarvis (barge-in). Two new words are
+ * needed from the recogniser alone; one is enough once the microphone has already heard a human
+ * voice (voiceActivity.js), so Azarvis stops sooner.
+ */
+export function isBargeIn(heard, spoken, minFresh = 2) {
   const said = new Set(words(spoken));
   const fresh = words(heard).filter((w) => !said.has(w));
-  return fresh.length >= 2 && !isEcho(heard, spoken);
+  return fresh.length >= minFresh && !isEcho(heard, spoken);
+}
+
+/**
+ * A little natural intonation per sentence, as multipliers on the voice's rate and pitch:
+ * questions rise, exclamations are livelier, short acknowledgements are quicker, long sentences
+ * a touch slower so they stay clear. Small on purpose: it should sound human, not theatrical.
+ */
+export function prosodyFor(text) {
+  const t = (text || '').trim();
+  let rate = 1;
+  let pitch = 1;
+  if (/[?？؟]\s*$/.test(t)) pitch *= 1.05;
+  if (/[!！]\s*$/.test(t)) {
+    rate *= 1.04;
+    pitch *= 1.04;
+  }
+  const n = (t.match(/[\p{L}\p{N}']+/gu) || []).length;
+  if (n > 0 && n <= 3) rate *= 1.06;
+  else if (n > 28) rate *= 0.96;
+  return { rate: Math.round(rate * 1000) / 1000, pitch: Math.round(pitch * 1000) / 1000 };
 }
 
 /**

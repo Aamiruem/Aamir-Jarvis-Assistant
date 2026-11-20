@@ -60,6 +60,10 @@ export async function neuralAvailable() {
 }
 export const neuralKnownAvailable = () => available === true && readVoiceExtras().engine !== 'browser';
 
+/** Pauses / resumes the neural voice mid-word (someone started talking over Azarvis). */
+export const pauseNeural = () => ctx?.state === 'running' && ctx.suspend().catch(() => {});
+export const resumeNeural = () => ctx?.state === 'suspended' && ctx.resume().catch(() => {});
+
 /** The browser only allows sound after a click or key press: call this from one. */
 export function unlockAudio() {
   const c = audio();
