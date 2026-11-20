@@ -24,6 +24,8 @@ export default function StudioPanel({ onAsk }) {
         icon="workflow"
         hue={85}
         title="Agent Studio"
+        art="/art/workflows.webp"
+        artAlt="A workflow of connected AI agents and tools shown as a hologram"
         subtitle="Talk or type once. A manager and a team of specialists write a week of content and design images, or diagnose a problem and plan the fix."
       />
       <AgentStudio onAsk={onAsk} onAddTask={addTask} />

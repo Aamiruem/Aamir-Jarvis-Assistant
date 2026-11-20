@@ -87,7 +87,7 @@ export default function KnowledgePanel() {
 
   return (
     <div className="panel">
-      <PageHeader icon="book" hue={205} title="Knowledge base" subtitle="Upload your documents and Azarvis answers questions from them in chat.">
+      <PageHeader icon="book" hue={205} title="Knowledge base" art="/art/memory.webp" artAlt="A glowing brain connected to folders of documents" subtitle="Upload your documents and Azarvis answers questions from them in chat.">
         <span className="stat-pill"><strong>{docs.length}</strong> {docs.length === 1 ? 'document' : 'documents'}</span>
       </PageHeader>
 

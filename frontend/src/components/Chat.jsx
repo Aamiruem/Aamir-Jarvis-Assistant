@@ -429,7 +429,7 @@ export default function Chat({ userId, history, conversationId, onConversation, 
         {aiProblem && !aiNoteHidden && <AiNotice problem={aiProblem} onDismiss={() => setAiNoteHidden(true)} className="chat-notice" />}
         {messages.length === 0 && (
           <div className="chat-welcome">
-            <div className={`orb big ${speech.listening ? 'pulse' : ''}`} />
+            <div className={`chat-bot ${speech.listening ? 'pulse' : ''}`}><img src="/art/chat-assistant.webp" alt="" width="120" height="120" /></div>
             <h2>Good to see you. <span className="grad-text">How can I help?</span></h2>
             <p className="muted">Ask anything, give several tasks at once, or turn on Voice mode and just talk.</p>
             <div className="suggestions">

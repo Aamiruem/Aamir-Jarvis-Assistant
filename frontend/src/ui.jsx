@@ -3,15 +3,25 @@ import { useEffect, useState } from 'react';
 import { Icon } from './icons.jsx';
 
 /** Title row of a tab: colored icon badge, title, one-line description and optional actions. */
-export function PageHeader({ icon, hue = 190, title, subtitle, children }) {
+/**
+ * A page's title row. `art` (an image in /public/art) turns it into a banner card: the picture sits
+ * on the right on wide screens and becomes a short strip above the title on phones.
+ * `artAlt` describes the picture; leave it empty when it is decoration only. `artPos` sets which
+ * part of the picture stays in view when it is cropped (a CSS object-position).
+ */
+export function PageHeader({ icon, hue = 190, title, subtitle, children, art, artAlt = '', artPos }) {
   return (
-    <header className="page-head" style={{ '--hue': hue }}>
+    <header className={`page-head${art ? ' has-art' : ''}`} style={{ '--hue': hue }}>
       <span className="badge-icon lg"><Icon name={icon} /></span>
       <div className="grow">
         <h2>{title}</h2>
         {subtitle && <p className="muted">{subtitle}</p>}
       </div>
       {children && <div className="page-actions">{children}</div>}
+      {art && (
+        <img className="page-art" src={art} alt={artAlt} loading="lazy" decoding="async"
+          style={artPos ? { objectPosition: artPos } : undefined} />
+      )}
     </header>
   );
 }

@@ -127,7 +127,7 @@ export default function VoiceAgent({ onClose, onAsk, embedded = false }) {
             </div>
           </div>
           <div className="va-hero-art">
-            <div className="va-art va-art-globe"><HomeArt motif="globe" hue={205} /></div>
+            <div className="va-art va-art-globe va-art-photo"><img src="/art/voice.webp" alt="A holographic head speaking into a studio microphone" loading="lazy" decoding="async" /></div>
             <div className="va-art va-art-phone"><HomeArt motif="phone" hue={262} /></div>
           </div>
         </header>

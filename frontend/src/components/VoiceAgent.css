@@ -77,6 +77,8 @@
 .va-art svg { display: block; width: 100%; height: 100%; }
 .va-art-globe { position: absolute; inset: 0 30% 40% 0; animation: va-float 6s ease-in-out infinite; }
 .va-art-phone { position: absolute; inset: 40% 0 0 34%; animation: va-float 6s ease-in-out infinite 1.5s; }
+.va-art-photo { background: #0b1020; }
+.va-art-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 38%; }
 @keyframes va-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
 /* ---- live call ---- */

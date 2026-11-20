@@ -183,7 +183,7 @@ export default function AgentsPanel({ initialInstruction = '' }) {
 
   return (
     <div className="panel ag">
-      <PageHeader icon="target" hue={190} title="Agents" subtitle="Give one instruction. Azarvis plans it, runs specialist agents in parallel, checks the results, and asks before anything acts for you." />
+      <PageHeader icon="target" hue={190} title="Agents" art="/art/agents.webp" artAlt="An operator at a control desk surrounded by screens for coding, outreach, data analysis and monitoring agents" artPos="50% 40%" subtitle="Give one instruction. Azarvis plans it, runs specialist agents in parallel, checks the results, and asks before anything acts for you." />
 
       <form className="ag-compose" onSubmit={start}>
         <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} placeholder="Describe everything you need done, in one go…" aria-label="Instruction for the agents"

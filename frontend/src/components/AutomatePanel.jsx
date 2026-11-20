@@ -228,7 +228,7 @@ export default function AutomatePanel({ onAsk, onOpenTab }) {
 
   return (
     <div className="panel automate">
-      <PageHeader icon="rocket" hue={300} title="Automate" subtitle="Hand your routine work to Azarvis: one click, or just say it." />
+      <PageHeader icon="rocket" hue={300} title="Automate" art="/art/email.webp" artAlt="An AI email assistant sorting an inbox into priority mail, drafts and a daily digest" artPos="60% 50%" subtitle="Hand your routine work to Azarvis: one click, or just say it." />
 
       <section className="auto-hero">
         <div>

@@ -43,6 +43,9 @@ export default function MemoryPanel() {
         icon="brain"
         hue={330}
         title="Long-term memory"
+        art="/art/memory.webp"
+        artAlt="A glowing brain connected to folders of saved knowledge"
+        artPos="50% 40%"
         subtitle="Facts Azarvis remembers about you in every conversation. Azarvis adds them itself when you share something worth keeping."
       >
         <span className="stat-pill"><strong>{memories.length}</strong> {memories.length === 1 ? 'fact' : 'facts'}</span>
