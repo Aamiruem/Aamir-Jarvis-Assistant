@@ -21,7 +21,7 @@ function addTask({ text, time }) {
 // Spots on the page picture (agents, chat, status, activity, builder, templates): each runs that feature.
 const SPOTS = [
   { x: 31, y: 30, label: 'Agent team', hint: 'Run several agents at once', run: () => openTab('agents') },
-  { x: 54, y: 30, label: 'AI chat', hint: 'Open a chat', run: () => openTab('chat') },
+  { x: 53, y: 40, label: 'AI chat', hint: 'Open a chat', run: () => openTab('chat') },
   { x: 70, y: 22, label: 'System status', hint: 'This device, live', run: () => openTab('device') },
   { x: 71, y: 46, label: 'Activity', hint: 'Live activity in the Command Center', run: () => openTab('command') },
   { x: 37, y: 68, label: 'Solve a problem', hint: 'Diagnose it and plan the fix', run: () => reach('.as-seg button', { click: true, text: 'Solve a problem' }) },

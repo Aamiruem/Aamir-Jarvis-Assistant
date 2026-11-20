@@ -215,9 +215,9 @@ function WhatsAppCard() {
 
 // Spots on the page picture (inbox, AI router, priority, drafts, digest): each runs that feature.
 const SPOTS = [
-  { x: 22, y: 57, label: 'Reply to an email', hint: 'Paste an email, get a reply draft', run: () => askAzarvis('Draft a polite reply to this email:\n\n', false) },
+  { x: 22, y: 41, label: 'Reply to an email', hint: 'Paste an email, get a reply draft', run: () => askAzarvis('Draft a polite reply to this email:\n\n', false) },
   { x: 40, y: 57, label: 'Automations', hint: 'One-click routines', run: () => reach('.recipe-grid') },
-  { x: 58, y: 63, label: 'Priorities', hint: 'What to focus on today', run: () => askAzarvis('What should I focus on today? Rank my open tasks and reminders by urgency.', true) },
+  { x: 58, y: 72, label: 'Priorities', hint: 'What to focus on today', run: () => askAzarvis('What should I focus on today? Rank my open tasks and reminders by urgency.', true) },
   { x: 77, y: 45, label: 'Write an email', hint: 'Azarvis drafts it, you send it', run: () => askAzarvis('Write an email to ', false) },
   { x: 77, y: 76, label: 'Daily digest', hint: 'Tasks, reminders and highlights', run: () => askAzarvis('Give me my daily digest: tasks due today, upcoming reminders and anything important you remember about me.', true) },
 ];

@@ -1705,6 +1705,7 @@ code, pre, kbd, samp { font-family: var(--font-mono); }
   .page-head-main { gap: 12px; padding-left: 4px; }
   .page-head-main > .grow { flex: 1 1 calc(100% - 64px); }
   .art-spot-list button { font-size: 12.5px; }
+  .page-art-wrap .art-spot, .page-art-wrap .art-spot.at-l, .page-art-wrap .art-spot.at-r { padding: 0; }
 }
 :root[data-theme='light'] .page-head.has-art { box-shadow: 0 6px 22px rgba(20, 40, 80, 0.08); }
 :root[data-theme='light'] .page-art-wrap { box-shadow: 0 12px 28px rgba(20, 40, 80, 0.2), 0 0 0 1px hsl(var(--hue, 200) 60% 50% / 0.35); }

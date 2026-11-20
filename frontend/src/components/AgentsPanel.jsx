@@ -180,11 +180,11 @@ export default function AgentsPanel({ initialInstruction = '' }) {
   // Spots on the page picture: each screen is a specialist agent; tapping one fills in a job for it.
   const fill = (t) => { setText(t); setTimeout(() => reach('.ag-compose textarea'), 0); };
   const spots = [
-    { x: 17, y: 37, label: 'Coding', hint: 'Give the coding agent a job', run: () => fill('Write a Python script that renames the photos in a folder by the date they were taken, and explain how to run it safely.') },
-    { x: 36, y: 31, label: 'Outreach', hint: 'Job search and recruiter emails', run: () => fill(EXAMPLES[0]) },
-    { x: 52, y: 26, label: 'Research', hint: 'Compare options, save the pick', run: () => fill(EXAMPLES[1]) },
-    { x: 69, y: 31, label: 'System check', hint: 'PC health, files and a task', run: () => fill(EXAMPLES[2]) },
-    { x: 85, y: 40, label: 'Content', hint: 'A week of content in Agent Studio', run: () => openTab('studio') },
+    { x: 19, y: 30, label: 'Coding', hint: 'Give the coding agent a job', run: () => fill('Write a Python script that renames the photos in a folder by the date they were taken, and explain how to run it safely.') },
+    { x: 36, y: 47, label: 'Outreach', hint: 'Job search and recruiter emails', run: () => fill(EXAMPLES[0]) },
+    { x: 52, y: 22, label: 'Research', hint: 'Compare options, save the pick', run: () => fill(EXAMPLES[1]) },
+    { x: 69, y: 47, label: 'System check', hint: 'PC health, files and a task', run: () => fill(EXAMPLES[2]) },
+    { x: 85, y: 30, label: 'Content', hint: 'A week of content in Agent Studio', run: () => openTab('studio') },
     { x: 51, y: 66, label: 'Run agents', hint: 'Start the instruction you typed', run: () => (text.trim().length >= 3 ? start() : reach('.ag-compose textarea')) },
   ];
   const changed = (run) => {

@@ -29,12 +29,12 @@ function relative(iso) {
 // Spots on the page picture (calendar, to-do list, alarm, mail, bell, rings): each runs that feature.
 const SPOTS = [
   { x: 38, y: 40, label: 'Due today', hint: 'Show tasks due today', run: () => reach('[role=tab]', { click: true, text: 'Today' }) },
-  { x: 68, y: 40, label: 'Add a task', hint: 'Type a new task', run: () => reach('input[aria-label="New task"]') },
+  { x: 66, y: 53, label: 'Add a task', hint: 'Type a new task', run: () => reach('input[aria-label="New task"]') },
   { x: 14, y: 48, label: 'Reminder', hint: 'Pick when Azarvis reminds you', run: () => reach('input[aria-label="Remind me at"]') },
   { x: 14, y: 67, label: 'Email my tasks', hint: 'Draft an email listing your open tasks', run: () => askAzarvis('Write an email summarizing my open tasks and their due dates to ', false) },
   { x: 14, y: 80, label: 'Overdue', hint: 'Show overdue tasks', run: () => reach('[role=tab]', { click: true, text: 'Overdue' }) },
   { x: 61, y: 77, label: 'Completed', hint: 'Show finished tasks', run: () => reach('[role=tab]', { click: true, text: 'Done' }) },
-  { x: 84, y: 37, label: 'Plan my day', hint: 'Azarvis orders your day', run: () => askAzarvis('Plan my day from my open tasks and reminders, in time order.', true) },
+  { x: 84, y: 28, label: 'Plan my day', hint: 'Azarvis orders your day', run: () => askAzarvis('Plan my day from my open tasks and reminders, in time order.', true) },
 ];
 
 export default function TasksPanel() {
