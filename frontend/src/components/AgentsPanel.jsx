@@ -4,6 +4,7 @@ import { Icon } from '../icons.jsx';
 import { PageHeader, toast } from '../ui.jsx';
 import MarkdownView from './MarkdownView.jsx';
 import './AgentsPanel.css';
+import { openTab, reach } from '../artActions.js';
 
 // Agents: one instruction → a plan → specialist agents running in parallel → verification →
 // your approval for anything that acts for you. Backend: app/orchestrator (runner.py).
@@ -176,6 +177,16 @@ export default function AgentsPanel({ initialInstruction = '' }) {
       setStarting(false);
     }
   };
+  // Spots on the page picture: each screen is a specialist agent; tapping one fills in a job for it.
+  const fill = (t) => { setText(t); setTimeout(() => reach('.ag-compose textarea'), 0); };
+  const spots = [
+    { x: 17, y: 37, label: 'Coding', hint: 'Give the coding agent a job', run: () => fill('Write a Python script that renames the photos in a folder by the date they were taken, and explain how to run it safely.') },
+    { x: 36, y: 31, label: 'Outreach', hint: 'Job search and recruiter emails', run: () => fill(EXAMPLES[0]) },
+    { x: 52, y: 26, label: 'Research', hint: 'Compare options, save the pick', run: () => fill(EXAMPLES[1]) },
+    { x: 69, y: 31, label: 'System check', hint: 'PC health, files and a task', run: () => fill(EXAMPLES[2]) },
+    { x: 85, y: 40, label: 'Content', hint: 'A week of content in Agent Studio', run: () => openTab('studio') },
+    { x: 51, y: 66, label: 'Run agents', hint: 'Start the instruction you typed', run: () => (text.trim().length >= 3 ? start() : reach('.ag-compose textarea')) },
+  ];
   const changed = (run) => {
     setCurrent(run);
     loadRuns();
@@ -183,7 +194,7 @@ export default function AgentsPanel({ initialInstruction = '' }) {
 
   return (
     <div className="panel ag">
-      <PageHeader icon="target" hue={190} title="Agents" art="/art/agents.webp" artAlt="An operator at a control desk surrounded by screens for coding, outreach, data analysis and monitoring agents" subtitle="Give one instruction. Azarvis plans it, runs specialist agents in parallel, checks the results, and asks before anything acts for you." />
+      <PageHeader icon="target" hue={190} title="Agents" art="/art/agents.webp" spots={spots} artAlt="An operator at a control desk surrounded by screens for coding, outreach, data analysis and monitoring agents" subtitle="Give one instruction. Azarvis plans it, runs specialist agents in parallel, checks the results, and asks before anything acts for you." />
 
       <form className="ag-compose" onSubmit={start}>
         <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} placeholder="Describe everything you need done, in one go…" aria-label="Instruction for the agents"

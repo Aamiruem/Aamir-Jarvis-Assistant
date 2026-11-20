@@ -10,18 +10,70 @@ const ART_SIZE = {
   '/art/workflows.webp': [1920, 1080],
 };
 
-/** A picture shown whole on a dark backdrop. Escape, the ✕ or a click outside closes it. */
-export function ImageViewer({ src, alt = '', onClose }) {
+/**
+ * Tappable spots on a picture: each sits on something the picture shows (a calendar, an inbox,
+ * an agent's screen…) and runs the real feature that does it. spot = { x, y (percent of the
+ * picture), label, hint, run }.
+ */
+function Spots({ spots, onPick }) {
+  return spots.map((s, i) => (
+    <button key={s.label} type="button" className={`art-spot${s.x < 20 ? ' at-l' : s.x > 80 ? ' at-r' : ''}`} style={{ left: `${s.x}%`, top: `${s.y}%` }}
+      onClick={(e) => { e.stopPropagation(); onPick(s); }} title={s.hint || s.label} aria-label={s.hint ? `${s.label}: ${s.hint}` : s.label}>
+      <span className="art-spot-dot" aria-hidden="true">{i + 1}</span>
+      <span className="art-spot-label">{s.label}</span>
+    </button>
+  ));
+}
+
+/** The same spots as a list of numbered buttons (phones, and under the full-screen picture). */
+export function SpotList({ spots, onPick, className = '' }) {
+  return (
+    <div className={`art-spot-list ${className}`} role="group" aria-label="What this picture can do">
+      {spots.map((s, i) => (
+        <button key={s.label} type="button" onClick={() => onPick(s)} title={s.hint || s.label}>
+          <span className="art-spot-dot" aria-hidden="true">{i + 1}</span>{s.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** A picture shown whole on a dark backdrop, with its spots. Escape, the ✕ or a click outside closes it. */
+export function ImageViewer({ src, alt = '', spots, onClose }) {
   useEffect(() => {
     const onKey = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
+  const pick = (s) => { onClose(); s.run(); };
   return (
     <div className="img-viewer" role="dialog" aria-modal="true" aria-label={alt || 'Picture'} onClick={onClose}>
       <button type="button" className="img-viewer-close" onClick={onClose} aria-label="Close picture" autoFocus><Icon name="x" /></button>
-      <img src={src} alt={alt} onClick={(e) => e.stopPropagation()} />
+      <div className="img-viewer-frame" onClick={(e) => e.stopPropagation()}>
+        <img src={src} alt={alt} />
+        {spots?.length > 0 && <Spots spots={spots} onPick={pick} />}
+      </div>
       {alt && <p className="img-viewer-caption">{alt}</p>}
+      {spots?.length > 0 && <div onClick={(e) => e.stopPropagation()}><SpotList spots={spots} onPick={pick} className="in-viewer" /></div>}
+    </div>
+  );
+}
+
+/**
+ * A picture from /public/art shown whole (never cropped), with its tappable spots and a button
+ * that opens it full screen. Tapping the picture itself also opens it.
+ */
+export function ArtPicture({ src, alt = '', spots, className = '' }) {
+  const [viewing, setViewing] = useState(false);
+  const [w, h] = ART_SIZE[src] || [];
+  return (
+    <div className={`page-art-wrap ${className}`}>
+      <img className="page-art" src={src} alt={alt} width={w} height={h} decoding="async" onClick={() => setViewing(true)} />
+      {spots?.length > 0 && <Spots spots={spots} onPick={(s) => s.run()} />}
+      <button type="button" className="page-art-zoom" onClick={() => setViewing(true)} title="View full size" aria-label={`View picture full size${alt ? `: ${alt}` : ''}`}>
+        <Icon name="search" size="1em" />
+      </button>
+      {viewing && <ImageViewer src={src} alt={alt} spots={spots} onClose={() => setViewing(false)} />}
     </div>
   );
 }
@@ -29,11 +81,10 @@ export function ImageViewer({ src, alt = '', onClose }) {
 /**
  * A page's title row: colored icon badge, title, description and optional actions.
  * `art` (an image in /public/art) adds the whole picture, uncropped: beside the title on wide
- * screens, full width above it on phones. Tapping it opens it full screen.
+ * screens, full width above it on phones. `spots` make the things in the picture work (see Spots).
  * `artAlt` describes the picture.
  */
-export function PageHeader({ icon, hue = 190, title, subtitle, children, art, artAlt = '' }) {
-  const [viewing, setViewing] = useState(false);
+export function PageHeader({ icon, hue = 190, title, subtitle, children, art, artAlt = '', spots }) {
   const text = (
     <>
       <span className="badge-icon lg"><Icon name={icon} /></span>
@@ -45,15 +96,11 @@ export function PageHeader({ icon, hue = 190, title, subtitle, children, art, ar
     </>
   );
   if (!art) return <header className="page-head" style={{ '--hue': hue }}>{text}</header>;
-  const [w, h] = ART_SIZE[art] || [];
   return (
     <header className="page-head has-art" style={{ '--hue': hue }}>
       <div className="page-head-main">{text}</div>
-      <button type="button" className="page-art-btn" onClick={() => setViewing(true)} title="View full size" aria-label={`View picture full size${artAlt ? `: ${artAlt}` : ''}`}>
-        <img className="page-art" src={art} alt={artAlt} width={w} height={h} decoding="async" />
-        <span className="page-art-zoom" aria-hidden="true"><Icon name="search" size="1em" /></span>
-      </button>
-      {viewing && <ImageViewer src={art} alt={artAlt} onClose={() => setViewing(false)} />}
+      <ArtPicture src={art} alt={artAlt} spots={spots} />
+      {spots?.length > 0 && <SpotList spots={spots} onPick={(s) => s.run()} className="for-phone" />}
     </header>
   );
 }

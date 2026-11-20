@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { api, auth, onSessionExpired } from './api.js';
 import { sessionPlan } from './session.js';
 import { useRoomWatch } from './useRoomWatch.js';
@@ -11,6 +11,7 @@ import ThemeMenu from './components/ThemeMenu.jsx';
 import { Icon } from './icons.jsx';
 import { useTheme } from './theme.js';
 import { Brand, toast, Toaster } from './ui.jsx';
+import { ACTION_EVENT, reachWhenReady } from './artActions.js';
 import { share, useInstall } from './pwa.js';
 
 // Aamir Hussain Azad's portfolio: linked from the top bar and the command palette.
@@ -337,6 +338,14 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey);
   }, [user]);
 
+  // Spots on page pictures (artActions.js) ask the app to open a screen, ask, talk or search.
+  const pictureAction = useRef(null);
+  useEffect(() => {
+    const onAction = (e) => pictureAction.current?.(e.detail || {});
+    window.addEventListener(ACTION_EVENT, onAction);
+    return () => window.removeEventListener(ACTION_EVENT, onAction);
+  }, []);
+
   if (checking) return <Spinner />;
   // Signed out: the public website (landing page, sign in / sign up, and the demo without an account).
   if (!user) return <Suspense fallback={<Spinner />}><PublicSite theme={theme} onAuth={(u) => setUser(u)} /></Suspense>;
@@ -409,6 +418,15 @@ export default function App() {
   const openSearch = (q = '') => {
     setPaletteQuery(q);
     setPaletteOpen(true);
+  };
+  pictureAction.current = (d) => {
+    if (d.voice) return startSession();
+    if (d.search !== undefined) return openSearch(d.search);
+    if (d.ask !== undefined) return ask(d.ask, Boolean(d.send));
+    if (d.tab && tabs.some((t) => t.id === d.tab)) {
+      go(d.tab);
+      if (d.anchor) reachWhenReady(d.anchor);
+    }
   };
   const newChat = () => {
     setActiveId(null);

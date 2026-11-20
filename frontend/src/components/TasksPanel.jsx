@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { EmptyState, PageHeader, toast } from '../ui.jsx';
+import { askAzarvis, reach } from '../artActions.js';
 
 const FILTERS = [
   ['all', 'All'],
@@ -24,6 +25,17 @@ function relative(iso) {
   if (d.toDateString() === tomorrow.toDateString()) return `tomorrow ${time}`;
   return `${d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} ${time}`;
 }
+
+// Spots on the page picture (calendar, to-do list, alarm, mail, bell, rings): each runs that feature.
+const SPOTS = [
+  { x: 38, y: 40, label: 'Due today', hint: 'Show tasks due today', run: () => reach('[role=tab]', { click: true, text: 'Today' }) },
+  { x: 68, y: 40, label: 'Add a task', hint: 'Type a new task', run: () => reach('input[aria-label="New task"]') },
+  { x: 14, y: 48, label: 'Reminder', hint: 'Pick when Azarvis reminds you', run: () => reach('input[aria-label="Remind me at"]') },
+  { x: 14, y: 67, label: 'Email my tasks', hint: 'Draft an email listing your open tasks', run: () => askAzarvis('Write an email summarizing my open tasks and their due dates to ', false) },
+  { x: 14, y: 80, label: 'Overdue', hint: 'Show overdue tasks', run: () => reach('[role=tab]', { click: true, text: 'Overdue' }) },
+  { x: 61, y: 77, label: 'Completed', hint: 'Show finished tasks', run: () => reach('[role=tab]', { click: true, text: 'Done' }) },
+  { x: 84, y: 37, label: 'Plan my day', hint: 'Azarvis orders your day', run: () => askAzarvis('Plan my day from my open tasks and reminders, in time order.', true) },
+];
 
 export default function TasksPanel() {
   const [tasks, setTasks] = useState([]);
@@ -96,7 +108,7 @@ export default function TasksPanel() {
 
   return (
     <div className="panel">
-      <PageHeader icon="tasks" hue={265} title="Tasks & reminders" art="/art/tasks.webp" artAlt="A schedule calendar beside a to-do list with progress rings" subtitle="Azarvis can add and complete these for you from chat or voice.">
+      <PageHeader icon="tasks" hue={265} title="Tasks & reminders" art="/art/tasks.webp" spots={SPOTS} artAlt="A schedule calendar beside a to-do list with progress rings" subtitle="Azarvis can add and complete these for you from chat or voice.">
         {counts.done > 0 && <button className="btn ghost" onClick={clearDone}><Icon name="trash" /> Clear completed</button>}
       </PageHeader>
 

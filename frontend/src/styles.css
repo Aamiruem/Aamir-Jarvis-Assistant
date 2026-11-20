@@ -1635,8 +1635,9 @@ code, pre, kbd, samp { font-family: var(--font-mono); }
 /* ===================== Page pictures: whole illustrations in page headers (2026-11-20) =====================
    PageHeader art="/art/x.webp" → a header card with the picture shown whole, never cropped.
    Wide: title on the left, picture on the right. Phone: picture full width on top, title below.
-   Tapping the picture opens it full screen (.img-viewer). The pictures are dark scenes, so they keep a
-   dark frame in both themes. */
+   Numbered spots (.art-spot) sit on the things a picture shows and run that real feature; phones get the
+   same spots as a list of buttons. Tapping the picture opens it full screen (.img-viewer), spots included.
+   The pictures are dark scenes, so they keep a dark frame in both themes. */
 .page-head.has-art {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, min(52%, 680px)); align-items: center; gap: 18px 26px;
   padding: 20px; border-radius: 22px; border: 1px solid var(--border); overflow: hidden;
@@ -1648,35 +1649,66 @@ code, pre, kbd, samp { font-family: var(--font-mono); }
 .page-head-main > .grow { flex: 1 1 260px; min-width: 0; }
 .page-head.has-art h2 { font-size: clamp(26px, 2.6vw, 34px); font-weight: 800; }
 .page-head.has-art p { max-width: 60ch; font-size: 15px; line-height: 1.55; }
-.page-art-btn {
-  position: relative; justify-self: end; display: block; width: fit-content; max-width: 100%; padding: 0; border: 0; border-radius: 16px;
-  background: #0b1020; cursor: zoom-in; overflow: hidden;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.32), 0 0 0 1px hsl(var(--hue) 70% 60% / 0.4), 0 0 0 5px hsl(var(--hue) 85% 60% / 0.07);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+.page-art-wrap {
+  position: relative; justify-self: end; width: fit-content; max-width: 100%; border-radius: 16px; overflow: hidden; background: #0b1020;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.32), 0 0 0 1px hsl(var(--hue, 200) 70% 60% / 0.4), 0 0 0 5px hsl(var(--hue, 200) 85% 60% / 0.07);
 }
-.page-art-btn:hover { transform: translateY(-2px); box-shadow: 0 20px 44px rgba(0, 0, 0, 0.38), 0 0 0 1px hsl(var(--hue) 80% 62% / 0.7), 0 0 0 5px hsl(var(--hue) 85% 60% / 0.12); }
-.page-art-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-.page-art { display: block; width: auto; max-width: 100%; height: auto; max-height: min(72vh, 620px); }
+.page-art { display: block; width: auto; max-width: 100%; height: auto; max-height: min(72vh, 620px); cursor: zoom-in; }
 .page-art-zoom {
-  position: absolute; right: 10px; bottom: 10px; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px;
-  color: #fff; background: rgba(8, 11, 20, 0.62); border: 1px solid rgba(255, 255, 255, 0.25); backdrop-filter: blur(6px);
-  opacity: 0.85; transition: opacity 0.15s;
+  position: absolute; right: 10px; bottom: 10px; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; cursor: zoom-in;
+  color: #fff; background: rgba(8, 11, 20, 0.66); border: 1px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(6px);
 }
-.page-art-btn:hover .page-art-zoom { opacity: 1; }
+.page-art-zoom:hover { background: rgba(8, 11, 20, 0.85); border-color: #fff; }
+.page-art-zoom:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+/* Spots: numbered, labelled buttons on the things a picture shows; each runs that feature. */
+.art-spot {
+  position: absolute; z-index: 1; translate: -50% -50%; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px;
+  border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.6); background: rgba(6, 10, 22, 0.74); color: #fff; white-space: nowrap;
+  font: 700 12.5px/1 var(--font-sans, Inter, sans-serif); cursor: pointer; backdrop-filter: blur(6px); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  transition: scale 0.15s ease, background 0.15s ease;
+}
+/* Near an edge the label opens inward, so it is never cut off. */
+.art-spot.at-l { translate: -13px -50%; }
+.art-spot.at-r { translate: calc(-100% + 13px) -50%; }
+.art-spot:hover, .art-spot:focus-visible { z-index: 2; background: rgba(0, 120, 190, 0.92); border-color: #fff; scale: 1.07; outline: none; }
+.art-spot-dot {
+  display: inline-grid; place-items: center; flex: none; width: 21px; height: 21px; border-radius: 50%; color: #fff;
+  font: 800 11px/1 var(--font-sans, Inter, sans-serif); background: linear-gradient(135deg, #00d4ff, #8067ff);
+}
+.art-spot .art-spot-dot { animation: spot-ping 2.4s ease-out infinite; }
+@keyframes spot-ping { 0% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0.6); } 70% { box-shadow: 0 0 0 9px rgba(0, 212, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 212, 255, 0); } }
+.art-spot-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.art-spot-list button {
+  display: inline-flex; align-items: center; gap: 7px; min-height: 36px; padding: 4px 12px 4px 5px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface-2, var(--panel-2)); color: var(--text); font: 600 13px/1.2 var(--font-sans, Inter, sans-serif);
+}
+.art-spot-list button:hover { border-color: var(--accent); }
+.art-spot-list.for-phone { display: none; }
+.art-spot-list.in-viewer { justify-content: center; max-width: 900px; }
+.art-spot-list.in-viewer button { border-color: rgba(255, 255, 255, 0.25); background: rgba(255, 255, 255, 0.08); color: #fff; }
+/* Where a spot took you: a short glow on the field or section. */
+.spot-flash { animation: spot-flash 1.6s ease; }
+@keyframes spot-flash { 0%, 60% { box-shadow: 0 0 0 3px var(--accent), 0 0 24px color-mix(in srgb, var(--accent) 50%, transparent); } 100% { box-shadow: none; } }
+
 @media (max-width: 1000px) {
   .page-head.has-art { grid-template-columns: minmax(0, 1fr); }
-  .page-art-btn { order: -1; justify-self: stretch; width: 100%; }
+  .page-art-wrap { order: -2; justify-self: stretch; width: 100%; }
   .page-art { width: 100%; max-height: none; }
+  .art-spot-list.for-phone { display: flex; order: -1; }
+  .page-art-wrap .art-spot, .page-art-wrap .art-spot.at-l, .page-art-wrap .art-spot.at-r { padding: 3px; translate: -50% -50%; }
+  .page-art-wrap .art-spot-label { display: none; }
 }
 @media (max-width: 760px) {
-  .page-head.has-art { padding: 10px 10px 16px; border-radius: 18px; gap: 14px; }
-  .page-art-btn { border-radius: 13px; }
+  .page-head.has-art { padding: 10px 10px 16px; border-radius: 18px; gap: 12px; }
+  .page-art-wrap { border-radius: 13px; }
   .page-head-main { gap: 12px; padding-left: 4px; }
   .page-head-main > .grow { flex: 1 1 calc(100% - 64px); }
+  .art-spot-list button { font-size: 12.5px; }
 }
 :root[data-theme='light'] .page-head.has-art { box-shadow: 0 6px 22px rgba(20, 40, 80, 0.08); }
-:root[data-theme='light'] .page-art-btn { box-shadow: 0 12px 28px rgba(20, 40, 80, 0.2), 0 0 0 1px hsl(var(--hue) 60% 50% / 0.35); }
-@media (prefers-reduced-motion: reduce) { .page-art-btn, .page-art-btn:hover { transition: none; transform: none; } }
+:root[data-theme='light'] .page-art-wrap { box-shadow: 0 12px 28px rgba(20, 40, 80, 0.2), 0 0 0 1px hsl(var(--hue, 200) 60% 50% / 0.35); }
+@media (prefers-reduced-motion: reduce) { .art-spot .art-spot-dot, .spot-flash { animation: none; } .art-spot, .art-spot:hover { transition: none; scale: none; } }
 
 /* Full-screen picture viewer. */
 .img-viewer {
@@ -1684,7 +1716,8 @@ code, pre, kbd, samp { font-family: var(--font-mono); }
   padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
   background: rgba(3, 6, 14, 0.95); backdrop-filter: blur(10px); cursor: zoom-out; animation: img-viewer-in 0.16s ease;
 }
-.img-viewer img { display: block; max-width: min(100%, 1920px); max-height: calc(100vh - 110px); width: auto; height: auto; border-radius: 14px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6); cursor: default; }
+.img-viewer-frame { position: relative; max-width: min(100%, 1920px); border-radius: 14px; overflow: hidden; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6); cursor: default; }
+.img-viewer-frame img { display: block; max-width: 100%; max-height: calc(100vh - 170px); width: auto; height: auto; }
 .img-viewer-caption { margin: 0; max-width: min(70ch, 100%); text-align: center; color: #dbe3f2; font-size: 14px; line-height: 1.5; }
 .img-viewer-close {
   position: absolute; top: max(14px, env(safe-area-inset-top)); right: 14px; display: grid; place-items: center; width: 44px; height: 44px;
@@ -1695,11 +1728,15 @@ code, pre, kbd, samp { font-family: var(--font-mono); }
 @media (prefers-reduced-motion: reduce) { .img-viewer { animation: none; } }
 
 /* Chat welcome: the assistant's whole portrait; it glows while listening. */
-.chat-bot { position: relative; width: 210px; max-width: 60vw; margin: 0 auto; border-radius: 26px; padding: 3px;
+.chat-bot { position: relative; display: block; width: 210px; max-width: 60vw; margin: 0 auto; border: 0; cursor: pointer; border-radius: 26px; padding: 3px;
   background: conic-gradient(from 200deg, #38e1ff, #7c6cff, #c04dff, #38e1ff); box-shadow: 0 0 40px rgba(56, 225, 255, 0.35); }
 .chat-bot img { display: block; width: 100%; height: auto; border-radius: 23px; background: #0b1020; }
 .chat-bot.pulse { animation: pulse 1.4s ease-in-out infinite; }
 @media (max-width: 760px) { .chat-bot { width: 170px; } }
+.chat-bot-hint { position: absolute; left: 50%; bottom: 12px; translate: -50% 0; display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 999px;
+  font: 700 12.5px/1 var(--font-sans, Inter, sans-serif); color: #fff; white-space: nowrap; background: rgba(6, 10, 22, 0.72); border: 1px solid rgba(255, 255, 255, 0.45); backdrop-filter: blur(6px); }
+.chat-bot:hover .chat-bot-hint, .chat-bot:focus-visible .chat-bot-hint { background: rgba(0, 120, 190, 0.92); }
+.chat-bot:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
 @media (prefers-reduced-motion: reduce) { .chat-bot.pulse { animation: none; box-shadow: 0 0 0 4px #38e1ff; } }
 
 /* ===================== Brand + phone navigation (2026-11-20) =====================

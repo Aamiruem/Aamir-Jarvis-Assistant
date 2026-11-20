@@ -4,6 +4,7 @@ import { Icon } from '../icons.jsx';
 import { openUrl } from '../quickCommands.js';
 import { readAlertsAloud, setReadAlertsAloud } from '../alerts.js';
 import { PageHeader, toast } from '../ui.jsx';
+import { askAzarvis, reach } from '../artActions.js';
 
 // Automate: one-click automations, your apps, and using Azarvis from your phone.
 // Every button here does something real today. What needs an app connection first is labeled
@@ -212,6 +213,15 @@ function WhatsAppCard() {
   );
 }
 
+// Spots on the page picture (inbox, AI router, priority, drafts, digest): each runs that feature.
+const SPOTS = [
+  { x: 22, y: 57, label: 'Reply to an email', hint: 'Paste an email, get a reply draft', run: () => askAzarvis('Draft a polite reply to this email:\n\n', false) },
+  { x: 40, y: 57, label: 'Automations', hint: 'One-click routines', run: () => reach('.recipe-grid') },
+  { x: 58, y: 63, label: 'Priorities', hint: 'What to focus on today', run: () => askAzarvis('What should I focus on today? Rank my open tasks and reminders by urgency.', true) },
+  { x: 77, y: 45, label: 'Write an email', hint: 'Azarvis drafts it, you send it', run: () => askAzarvis('Write an email to ', false) },
+  { x: 77, y: 76, label: 'Daily digest', hint: 'Tasks, reminders and highlights', run: () => askAzarvis('Give me my daily digest: tasks due today, upcoming reminders and anything important you remember about me.', true) },
+];
+
 export default function AutomatePanel({ onAsk, onOpenTab }) {
   const [lan, setLan] = useState(null); // null = loading, [] = none found
   useEffect(() => {
@@ -228,7 +238,7 @@ export default function AutomatePanel({ onAsk, onOpenTab }) {
 
   return (
     <div className="panel automate">
-      <PageHeader icon="rocket" hue={300} title="Automate" art="/art/email.webp" artAlt="An AI email assistant sorting an inbox into priority mail, drafts and a daily digest" subtitle="Hand your routine work to Azarvis: one click, or just say it." />
+      <PageHeader icon="rocket" hue={300} title="Automate" art="/art/email.webp" spots={SPOTS} artAlt="An AI email assistant sorting an inbox into priority mail, drafts and a daily digest" subtitle="Hand your routine work to Azarvis: one click, or just say it." />
 
       <section className="auto-hero">
         <div>

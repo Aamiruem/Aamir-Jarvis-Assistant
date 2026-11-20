@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState } from 'react';
 import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { EmptyState, PageHeader, toast } from '../ui.jsx';
+import { askAzarvis, reach } from '../artActions.js';
 
 const ACCEPT = ['.pdf', '.txt', '.md'];
 const okType = (f) => ACCEPT.some((ext) => f.name.toLowerCase().endsWith(ext));
@@ -13,6 +14,14 @@ function Highlight({ text, query }) {
   const re = new RegExp(`(${words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})`, 'gi');
   return text.split(re).map((part, i) => (i % 2 ? <mark key={i}>{part}</mark> : <Fragment key={i}>{part}</Fragment>));
 }
+
+// Spots on the page picture (brain, folders, documents, AI node): each runs that feature.
+const SPOTS = [
+  { x: 55, y: 52, label: 'Ask your documents', hint: 'Search inside everything you uploaded', run: () => reach('input[aria-label="Search documents"]') || toast('Upload a document first.') },
+  { x: 14, y: 27, label: 'Upload', hint: 'PDF, Word, text and more', run: () => reach('.dropzone input[type="file"]', { click: true }) },
+  { x: 86, y: 27, label: 'Add a web page', hint: 'Azarvis reads it for you', run: () => reach('input[placeholder^="Add a web page"]') },
+  { x: 57, y: 14, label: 'Summarize all', hint: 'One line per document', run: () => askAzarvis('Summarize the documents in my knowledge base: one line on what each is about.', true) },
+];
 
 export default function KnowledgePanel() {
   const [docs, setDocs] = useState([]);
@@ -87,7 +96,7 @@ export default function KnowledgePanel() {
 
   return (
     <div className="panel">
-      <PageHeader icon="book" hue={205} title="Knowledge base" art="/art/memory.webp" artAlt="A glowing brain connected to folders of documents" subtitle="Upload your documents and Azarvis answers questions from them in chat.">
+      <PageHeader icon="book" hue={205} title="Knowledge base" art="/art/memory.webp" spots={SPOTS} artAlt="A glowing brain connected to folders of documents" subtitle="Upload your documents and Azarvis answers questions from them in chat.">
         <span className="stat-pill"><strong>{docs.length}</strong> {docs.length === 1 ? 'document' : 'documents'}</span>
       </PageHeader>
 

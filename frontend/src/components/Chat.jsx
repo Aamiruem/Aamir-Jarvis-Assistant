@@ -12,6 +12,7 @@ import { toast } from '../ui.jsx';
 import { useSpeech } from '../useSpeech.js';
 import { languageCommand, languageInfo, readLanguage, saveLanguage } from '../languages.js';
 import { afterWakeWord } from '../wakeWord.js';
+import { startVoice } from '../artActions.js';
 
 const SUGGESTIONS = [
   { icon: 'weather', hue: 205, text: "What's the weather in Mumbai?" },
@@ -429,7 +430,10 @@ export default function Chat({ userId, history, conversationId, onConversation, 
         {aiProblem && !aiNoteHidden && <AiNotice problem={aiProblem} onDismiss={() => setAiNoteHidden(true)} className="chat-notice" />}
         {messages.length === 0 && (
           <div className="chat-welcome">
-            <div className={`chat-bot ${speech.listening ? 'pulse' : ''}`}><img src="/art/chat-assistant.webp" alt="" width="475" height="539" /></div>
+            <button type="button" className={`chat-bot ${speech.listening ? 'pulse' : ''}`} onClick={() => startVoice()} title="Talk to Azarvis" aria-label="Talk to Azarvis (start a voice conversation)">
+              <img src="/art/chat-assistant.webp" alt="" width="475" height="539" />
+              <span className="chat-bot-hint"><Icon name="mic" size="1em" /> Tap to talk</span>
+            </button>
             <h2>Good to see you. <span className="grad-text">How can I help?</span></h2>
             <p className="muted">Ask anything, give several tasks at once, or turn on Voice mode and just talk.</p>
             <div className="suggestions">

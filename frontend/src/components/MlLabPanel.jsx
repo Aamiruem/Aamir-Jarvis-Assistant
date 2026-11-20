@@ -3,6 +3,7 @@ import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { EmptyState, PageHeader, toast } from '../ui.jsx';
 import NeuralAlgos from './NeuralAlgos.jsx';
+import { askAzarvis, reach } from '../artActions.js';
 
 // ML Lab: the house price project, training on your own CSV files, your models and the experiment
 // log. Every score shown was measured on rows the model never saw while training.
@@ -441,6 +442,15 @@ function RunsLog({ runs }) {
   );
 }
 
+// Spots on the page picture (network, charts, analyst): each runs that feature.
+const SPOTS = [
+  { x: 47, y: 37, label: 'Neural networks', hint: '20 algorithms explained', run: () => reach('#ml-neural') },
+  { x: 22, y: 33, label: 'House prices', hint: 'A real model on real data', run: () => reach('.ml-project', { nth: 0 }) },
+  { x: 23, y: 48, label: 'Train on your data', hint: 'Upload a CSV and train', run: () => reach('.ml-project', { nth: 1 }) },
+  { x: 79, y: 24, label: 'Your models', hint: 'Models and experiment log', run: () => reach('#ml-models') },
+  { x: 62, y: 62, label: 'Ask about ML', hint: 'Any idea, explained simply', run: () => askAzarvis('Explain this machine learning idea simply, with an example: ', false) },
+];
+
 export default function MlLabPanel({ onAsk }) {
   const [models, setModels] = useState([]);
   const [runs, setRuns] = useState([]);
@@ -452,7 +462,7 @@ export default function MlLabPanel({ onAsk }) {
 
   return (
     <div className="panel ml-lab">
-      <PageHeader icon="flask" hue={160} title="ML Lab" art="/art/analytics.webp" artAlt="An analyst studying charts and model metrics on holographic screens" subtitle="Machine learning on real data. Every score is measured on rows the model never saw while training." />
+      <PageHeader icon="flask" hue={160} title="ML Lab" art="/art/analytics.webp" spots={SPOTS} artAlt="An analyst studying charts and model metrics on holographic screens" subtitle="Machine learning on real data. Every score is measured on rows the model never saw while training." />
       <div className="notice ml-honest">
         <span className="notice-icon"><Icon name="check" /></span>
         <div className="notice-body">
@@ -465,11 +475,11 @@ export default function MlLabPanel({ onAsk }) {
       </div>
       <HouseProject />
       <TrainOnYourData onTrained={refresh} />
-      <h3 className="section-title"><Icon name="flask" /> Your models</h3>
+      <h3 className="section-title" id="ml-models"><Icon name="flask" /> Your models</h3>
       <YourModels models={models} onChange={refresh} />
       {runs.length > 0 && <h3 className="section-title"><Icon name="timeline" /> Experiment log</h3>}
       <RunsLog runs={runs} />
-      <h3 className="section-title"><Icon name="brain" /> Neural network algorithms</h3>
+      <h3 className="section-title" id="ml-neural"><Icon name="brain" /> Neural network algorithms</h3>
       <NeuralAlgos onAsk={onAsk} />
     </div>
   );

@@ -2,8 +2,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { EmptyState, PageHeader, toast } from '../ui.jsx';
+import { askAzarvis, openTab, reach } from '../artActions.js';
 
 const EXAMPLES = ["I'm vegetarian", 'I work from 10am to 7pm', 'My manager is Priya', 'Reply to me in short bullet points'];
+
+// Spots on the page picture (brain, AI node, documents, folders): each runs that feature.
+const SPOTS = [
+  { x: 55, y: 52, label: 'Teach a fact', hint: 'Azarvis remembers it in every chat', run: () => reach('input[aria-label="New fact"]') },
+  { x: 57, y: 14, label: 'What I know', hint: 'Azarvis lists what it remembers', run: () => askAzarvis('What do you remember about me? List it briefly.', true) },
+  { x: 86, y: 27, label: 'Search', hint: 'Search your saved facts', run: () => reach('input[aria-label="Search memories"]') || toast('Nothing saved yet. Teach Azarvis a fact first.') },
+  { x: 14, y: 27, label: 'Files', hint: 'Documents Azarvis can read', run: () => openTab('files') },
+];
 
 export default function MemoryPanel() {
   const [memories, setMemories] = useState([]);
@@ -43,7 +52,7 @@ export default function MemoryPanel() {
         icon="brain"
         hue={330}
         title="Long-term memory"
-        art="/art/memory.webp"
+        art="/art/memory.webp" spots={SPOTS}
         artAlt="A glowing brain connected to folders of saved knowledge"
         subtitle="Facts Azarvis remembers about you in every conversation. Azarvis adds them itself when you share something worth keeping."
       >

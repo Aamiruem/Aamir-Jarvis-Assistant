@@ -17,6 +17,7 @@ import {
 import { EmptyState, PageHeader, toast } from '../ui.jsx';
 import CoursePanel from './CoursePanel.jsx';
 import MarkdownView from './MarkdownView.jsx';
+import { askAzarvis, openSearch, openTab, reach } from '../artActions.js';
 
 // Notes: your study notes, word for word and in syllabus order, to read and practice.
 // target: { chapter, heading } from the search palette.
@@ -144,6 +145,16 @@ function Practice({ book, chapter, text }) {
     </div>
   );
 }
+
+// Spots on the page picture (code screens, assistant, keyboard, phone): each runs that feature.
+const SPOTS = [
+  { x: 13, y: 46, label: 'Debug code', hint: 'Paste code, Azarvis finds the bug', run: () => askAzarvis('Help me find and fix the bug in this code:\n\n', false) },
+  { x: 37, y: 38, label: 'Explain code', hint: 'Step-by-step explanation', run: () => askAzarvis('Explain this code step by step:\n\n', false) },
+  { x: 52, y: 26, label: 'Quiz me', hint: 'Practice questions, answers checked', run: () => askAzarvis('Quiz me with 5 questions on machine learning basics, one at a time, and check my answers.', true) },
+  { x: 76, y: 27, label: 'Teach Azarvis', hint: "Add this notebook's notes to Azarvis's knowledge", run: () => reach('.page-actions button', { click: true, text: 'Teach Azarvis' }) || toast('Open a notebook first, then Azarvis can learn its notes.') },
+  { x: 48, y: 62, label: 'Search notes', hint: 'Find any chapter or heading', run: () => openSearch('') },
+  { x: 26, y: 72, label: 'On your phone', hint: 'Use Azarvis from anywhere', run: () => openTab('automate', '#remote') },
+];
 
 export default function NotesPanel({ target }) {
   const [library, setLibrary] = useState(null);
@@ -446,7 +457,7 @@ export default function NotesPanel({ target }) {
 
   return (
     <div className="panel notes-panel">
-      <PageHeader icon="notes" hue={45} title="Notes" art="/art/coding.webp" artAlt="A developer studying code on several monitors" subtitle={courseView ? 'CampusX: study notes for all 244 lectures, the CampusX notes book and your own notes' : book ? `${book.title} · ${book.chapters} chapters · ${done.size} read` : ''}>
+      <PageHeader icon="notes" hue={45} title="Notes" art="/art/coding.webp" spots={SPOTS} artAlt="A developer studying code on several monitors" subtitle={courseView ? 'CampusX: study notes for all 244 lectures, the CampusX notes book and your own notes' : book ? `${book.title} · ${book.chapters} chapters · ${done.size} read` : ''}>
         <button className="btn sm" onClick={teach} disabled={Boolean(teaching) || !book || book.custom} title="Add these notes to Azarvis's knowledge base">
           <Icon name="brain" size="1em" /> {teaching ? `Teaching Azarvis… ${teaching.done}/${teaching.total}` : 'Teach Azarvis these notes'}
         </button>
