@@ -12,6 +12,22 @@ import CoreOrb from './CoreOrb.jsx';
 // schedule says so, a provider without a key says "Not linked".
 
 const POLL_MS = 5000;
+// Quick actions: each opens the screen that does it, or asks Azarvis (send: true runs at once).
+const QUICK = [
+  { label: 'Start listening', hint: 'Activate voice input', icon: 'mic', voice: true },
+  { label: 'New chat', hint: 'Start a conversation', icon: 'chat', tab: 'chat' },
+  { label: 'Research', hint: 'Research a topic', icon: 'search', ask: 'Research ', send: false },
+  { label: 'Create task', hint: 'Add a new task', icon: 'plus', tab: 'tasks' },
+  { label: 'Schedule', hint: 'Plan an event', icon: 'calendar', ask: 'Schedule ', send: false },
+  { label: 'Upload file', hint: 'Analyze a document', icon: 'upload', tab: 'files' },
+  { label: 'Code assistant', hint: 'Generate or debug code', icon: 'code', ask: 'Help me write or debug this code: ', send: false },
+  { label: 'Run automation', hint: 'Run an approved workflow', icon: 'play', tab: 'automate' },
+  { label: 'Run multiple tasks', hint: 'Agents in parallel', icon: 'target', tab: 'agents' },
+  { label: 'Memory search', hint: 'Search saved knowledge', icon: 'brain', tab: 'memory' },
+  { label: 'Email', hint: 'Draft an email', icon: 'mail', ask: 'Write an email to ', send: false },
+  { label: 'System monitor', hint: 'Check this computer', icon: 'cpu', tab: 'device' },
+  { label: 'Security center', hint: 'Review protection', icon: 'shield', tab: 'security' },
+];
 const STATUS_LABEL = { optimal: 'Optimal', attention: 'Attention', degraded: 'Degraded' };
 const PROVIDER_TONE = { connected: 'ok', key_set: 'ok', installed: 'ok', no_models: 'warn', checking: 'muted', problem: 'bad', not_linked: 'muted', not_found: 'muted' };
 const BRIEFING = 'Give me an executive briefing: my overdue and upcoming tasks today, unread notifications, anything on this PC that needs attention, and the three things I should focus on next. Keep it short.';
@@ -279,11 +295,11 @@ export default function CommandCenter({ onOpenTab, onAsk, onStartSession, onOpen
 
         <Panel title="Quick commands" className="cc-quick">
           <div className="cc-quick-list">
-            <button type="button" onClick={() => onAsk?.('Add a task: ', false)}><Icon name="plus" size="1em" /> Start new task</button>
-            <button type="button" onClick={() => onAsk?.("Summarize today's schedule from my tasks and reminders, in time order.", true)}><Icon name="calendar" size="1em" /> Today's schedule</button>
-            <button type="button" onClick={() => onStartSession?.()}><Icon name="mic" size="1em" /> Start voice chat</button>
-            <button type="button" onClick={() => go('automate')}><Icon name="play" size="1em" /> Run workflow</button>
-            <button type="button" onClick={() => onAsk?.('Check this PC’s health and tell me if anything needs attention.', true)}><Icon name="pulse" size="1em" /> PC health check</button>
+            {QUICK.map((q) => (
+              <button key={q.label} type="button" title={q.hint} onClick={() => (q.voice ? onStartSession?.() : q.tab ? go(q.tab) : onAsk?.(q.ask, q.send))}>
+                <Icon name={q.icon} size="1em" /> <span><b>{q.label}</b><small>{q.hint}</small></span>
+              </button>
+            ))}
           </div>
         </Panel>
 

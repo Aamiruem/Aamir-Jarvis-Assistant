@@ -9,7 +9,7 @@ import ast
 import json
 import math
 import operator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from urllib.parse import quote, urlencode
 from zoneinfo import ZoneInfo
@@ -39,6 +39,11 @@ class ToolContext:
     # in this request ("" = nothing). Set from pending_taint after each round of tool calls.
     tainted: str = ""
     pending_taint: str = ""
+    # Orchestrated runs (app/orchestrator): only these tools (None = all), and actions that act for
+    # the user are recorded as proposals awaiting approval instead of being executed.
+    allowed_tools: frozenset | None = None
+    propose_only: bool = False
+    proposals: list = field(default_factory=list)
 
 
 # ---------- input models ----------
@@ -478,6 +483,8 @@ def run_tool(name: str, raw_input, ctx: ToolContext) -> tuple[str | list[dict], 
     """
     if name not in TOOLS:
         return json.dumps({"error": f"Unknown tool {name}"}), True
+    if ctx.allowed_tools is not None and name not in ctx.allowed_tools:
+        return json.dumps({"error": f"'{name}' is not one of this agent's tools"}), True
     blocked = safety.blocked_reason(name, ctx.tainted)
     if blocked:
         return json.dumps({"error": blocked}), True
@@ -486,6 +493,10 @@ def run_tool(name: str, raw_input, ctx: ToolContext) -> tuple[str | list[dict], 
         args = model.model_validate(raw_input)
     except Exception as e:
         return json.dumps({"error": "INVALID_INPUT", "detail": str(e)[:500]}), True
+    if ctx.propose_only and name in safety.APPROVAL_TOOLS:
+        # Prepare, don't act: the user approves or rejects it in the run (app/orchestrator).
+        ctx.proposals.append({"tool": name, "input": args.model_dump(mode="json")})
+        return json.dumps({"status": "awaiting_approval", "note": "Prepared but NOT done. The user must approve this action first; say so, never claim it happened."}), False
     try:
         result = fn(args, ctx)
     except Exception as e:

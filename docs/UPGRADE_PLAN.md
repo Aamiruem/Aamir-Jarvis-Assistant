@@ -100,6 +100,12 @@ Last updated: 2026-11-19 (Phase 1 done).
 - [ ] Not built by design: password vault (secrets are never stored), IRCTC booking automation (IRCTC forbids automated booking software), arbitrary terminal execution
 - [ ] Still open: Computer Control, Browser Automation (Playwright), Coding Studio, Agent Management pages; Framer Motion / TypeScript migration
 
+### Multi-agent orchestrator + navigation (2026-11-20) ✅ built, not yet run against the live Claude API
+- [x] `app/orchestrator`: Claude plans one instruction into a subtask graph (structured output, validated: known agents, real dependencies, no cycles); 9 specialist agents = the agent loop with narrowed tool lists; independent subtasks in parallel (max 3), dependents get their inputs; one automatic retry, skip on failed input, manual retry, pause/resume/cancel; verification report; acting tools (email, open app/file/site, PC control, clipboard writes, new contacts) are prepared and wait for approval; per-user runs
+- [x] Agents page (live flow, agent cards, report, approve/reject), Command Center quick actions (13), sidebar: Agents, Files (documents), Settings
+- [ ] Runs are in memory (lost when the AI service restarts): persist to SQL
+- [ ] Still missing from the requested navigation: Calendar (Google Calendar), Developer workspace, Research page, Analytics page, a dedicated Voice page
+
 ### Phase 11: Monitoring and deployment
 - [ ] Alembic baseline migration; `/metrics` (Prometheus format); backup/restore script
 

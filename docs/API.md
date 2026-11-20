@@ -105,6 +105,12 @@ Interactive docs: **http://localhost:8000/docs**. Every route except `/health` n
 | | GET | `/admin/stats` | **admin**: all users |
 | Account | DELETE | `/me/data` | erase this user's tasks, memories, notifications, logs, documents, files |
 | Command Center | GET | `/command-center` | the dashboard in one call: status, AI core, agents (tool use in the last 24 h), today's timeline, live feed, this PC's CPU/RAM/disk/network, memory counts, AI providers (key set / not linked, Ollama models, Claude Code/Cursor/Copilot installed). Via the gateway: `/api/ai/command-center` |
+| Orchestrator | POST | `/orchestrator/runs` | `{instruction}` → a multi-agent run: Claude plans subtasks (structured output), specialist agents run in parallel (max 3), results are verified; actions that act for the user wait for approval |
+| | GET | `/orchestrator/runs`, `/orchestrator/runs/{id}` | this user's runs (in memory while the AI service runs) |
+| | POST | `/orchestrator/runs/{id}/pause` · `resume` · `cancel` | run control |
+| | POST | `/orchestrator/runs/{id}/subtasks/{sid}/retry` | retry a failed/skipped subtask of a finished run |
+| | POST | `/orchestrator/runs/{id}/approvals/{aid}` | `{approve: bool}`: runs the prepared action, or rejects it |
+| | GET | `/orchestrator/agents` | the specialist agents and their tools |
 | Health | GET | `/health` | no auth |
 
 ### Chat stream events

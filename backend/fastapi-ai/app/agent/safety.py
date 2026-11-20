@@ -26,6 +26,10 @@ UNTRUSTED_TOOLS = {
 # Anthropic's server tools: their results arrive inside the model response.
 UNTRUSTED_SERVER_RESULTS = {"web_search_tool_result": "a web search", "web_fetch_tool_result": "a web page"}
 
+# Tools that act for the user outside Azarvis. In an orchestrated run (app/orchestrator) these are
+# prepared, not done: they wait in the run's approval list until the user approves each one.
+APPROVAL_TOOLS = {"system_control", "open_website", "open_file", "compose_email", "copy_to_clipboard", "add_contact"}
+
 # Tools that act or send something: refused once untrusted content tried to give instructions.
 HIGH_IMPACT_TOOLS = {
     "system_control", "open_website", "open_file", "compose_email", "copy_to_clipboard",

@@ -132,21 +132,29 @@ def _clean_history(history: list[dict]) -> list[dict]:
 
 
 async def run_agent(
-    user_message: str, history: list[dict] | None = None, user_id: str = "local", fast: bool = False, guidance: str | None = None
+    user_message: str, history: list[dict] | None = None, user_id: str = "local", fast: bool = False, guidance: str | None = None,
+    ctx: ToolContext | None = None, role: str | None = None,
 ) -> AsyncIterator[dict]:
+    """ctx: a prepared tool context (the orchestrator passes one with allowed_tools / propose_only).
+    role: an extra system note for a specialist agent (who it is and what it should hand back)."""
     client = get_client()
-    ctx = ToolContext(user_id=user_id)
+    ctx = ctx or ToolContext(user_id=user_id)
     messages = [*_clean_history(history or []), {"role": "user", "content": user_message}]
+    allowed = ctx.allowed_tools
 
-    tools = tool_specs()
+    tools = [t for t in tool_specs() if allowed is None or t["name"] in allowed]
     if settings.enable_web_search:  # live knowledge: search the web, and read pages the user links
-        tools.append({"type": "web_search_20260209", "name": "web_search", "max_uses": 3})
-        tools.append({"type": "web_fetch_20260209", "name": "web_fetch", "max_uses": 3})
+        if allowed is None or "web_search" in allowed:
+            tools.append({"type": "web_search_20260209", "name": "web_search", "max_uses": 3})
+        if allowed is None or "web_fetch" in allowed:
+            tools.append({"type": "web_fetch_20260209", "name": "web_fetch", "max_uses": 3})
 
     system = [
         {"type": "text", "text": SYSTEM_PROMPT, "cache_control": {"type": "ephemeral"}},
         {"type": "text", "text": await asyncio.to_thread(_user_context, user_id, fast, guidance)},
     ]
+    if role:
+        system.append({"type": "text", "text": role})
     params = {**base_params(max_tokens=32000), "system": system, "tools": tools}
     if fast:  # voice: a quick answer matters more than deep thinking
         params["output_config"] = {**params.get("output_config", {}), "effort": "low"}

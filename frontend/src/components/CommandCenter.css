@@ -292,3 +292,11 @@
 @media (prefers-reduced-motion: reduce) {
   .cc *, .cc *::before { animation: none !important; transition: none !important; }
 }
+
+/* Quick actions grid: label + hint per action (13 actions). */
+.cc-quick-list { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.cc-quick-list button { align-items: flex-start; padding: 8px 10px; }
+.cc-quick-list button .icon { margin-top: 2px; flex: none; }
+.cc-quick-list button span { display: grid; gap: 1px; min-width: 0; }
+.cc-quick-list button b { font-weight: 600; font-size: 13px; }
+.cc-quick-list button small { font-size: 11px; color: var(--cc-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
