@@ -232,6 +232,7 @@ def test_compose_email_without_system_control_still_answers(pc, monkeypatch):
 
 def test_health_reports_key_and_system_control(client, monkeypatch):
     monkeypatch.setattr(claude, "_current_key", lambda: None)
+    monkeypatch.setattr(claude, "_openai_key", lambda: "")  # independent of keys in the local .env
     body = client.get("/health").json()
     assert body["status"] == "ok" and body["claude"] == "no_key"
     assert "system_control" in body
@@ -378,3 +379,12 @@ def test_new_pc_tools_respect_the_off_switch(home, monkeypatch):
                        ("look_at_screen", {}), ("open_file", {"path": str(home["downloads"] / "resume_final.pdf")})]:
         out, err = run_tool(name, args, ToolContext("alice"))
         assert err and "turned off" in json.loads(out)["error"], name
+
+
+def test_host_postgres_urls_use_the_installed_driver(monkeypatch):
+    monkeypatch.setattr(settings, "database_url", "postgresql://u:p@db.example.com/azarvis")
+    assert settings.sqlalchemy_url == "postgresql+psycopg://u:p@db.example.com/azarvis"
+    monkeypatch.setattr(settings, "database_url", "postgres://u:p@db/x")
+    assert settings.sqlalchemy_url == "postgresql+psycopg://u:p@db/x"
+    monkeypatch.setattr(settings, "database_url", "postgresql+psycopg://u:p@db/x")
+    assert settings.sqlalchemy_url == "postgresql+psycopg://u:p@db/x"

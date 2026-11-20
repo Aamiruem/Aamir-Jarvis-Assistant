@@ -68,7 +68,14 @@ class Settings(BaseSettings):
 
     @property
     def sqlalchemy_url(self) -> str:
-        return self.database_url or f"sqlite:///{(self.data_dir / 'jarvis.db').as_posix()}"
+        url = self.database_url.strip()
+        if not url:
+            return f"sqlite:///{(self.data_dir / 'jarvis.db').as_posix()}"
+        # Hosts (Render, Heroku, Neon) give postgres:// or postgresql:// URLs; the installed driver is psycopg 3.
+        for prefix in ("postgres://", "postgresql://"):
+            if url.startswith(prefix):
+                return "postgresql+psycopg://" + url[len(prefix):]
+        return url
 
 
 settings = Settings()

@@ -1,0 +1,46 @@
+# Render Blueprint: Azarvis's AI service (FastAPI, backend/fastapi-ai) and its Postgres database.
+# Render → New → Blueprint → pick this repository. Render asks for the values marked sync: false
+# (secrets are never stored in this file). Then set on Vercel (project azarvis-api):
+#   AI_SERVICE_URL   = https://<this service>.onrender.com
+#   INTERNAL_API_KEY = the same value as here
+# The live website (azarvis-app.vercel.app) then reaches the AI through the API on Vercel.
+services:
+  - type: web
+    name: azarvis-ai
+    runtime: docker
+    rootDir: backend/fastapi-ai
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    region: singapore          # closest Render region to the API on Vercel (Mumbai, bom1)
+    plan: free                 # sleeps after 15 min idle; "starter" stays awake
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Shared secret between the API on Vercel and this service (the X-Internal-Key header).
+      - key: INTERNAL_API_KEY
+        sync: false
+      # AI keys: Claude answers when its key works; OpenAI takes over when it doesn't (AI_PROVIDER=auto).
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AI_PROVIDER
+        value: auto
+      # A server is not your PC: no opening apps, volume or locking the screen.
+      - key: SYSTEM_CONTROL
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: azarvis-db
+          property: connectionString
+      - key: CORS_ORIGINS
+        value: https://azarvis-app.vercel.app,https://azarvis-ai.vercel.app
+      - key: DEFAULT_TIMEZONE
+        value: Asia/Kolkata
+
+databases:
+  - name: azarvis-db
+    region: singapore
+    plan: free                 # Render's free Postgres expires after 30 days; upgrade it, or put a Neon URL in DATABASE_URL
+    databaseName: azarvis
+    user: azarvis
