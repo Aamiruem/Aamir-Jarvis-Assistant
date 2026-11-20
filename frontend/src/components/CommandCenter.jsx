@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
-import { languageInfo } from '../languages.js';
+import { languageLabel } from '../languages.js';
 import { useLanguage } from '../useLanguage.js';
 import './CommandCenter.css';
 import CoreOrb from './CoreOrb.jsx';
@@ -168,7 +168,7 @@ export default function CommandCenter({ onOpenTab, onAsk, onStartSession, onOpen
   const coreRows = [
     { icon: 'sparkles', label: 'AI Core', value: core.claude === 'connected' ? 'Active' : core.claude === 'checking' ? 'Checking…' : 'Offline', tone: core.claude === 'connected' ? 'ok' : core.claude === 'checking' ? 'muted' : 'bad', tab: 'account' },
     { icon: 'brain', label: 'Memory', value: `${memory.memories.toLocaleString()} stored`, tone: 'ok', tab: 'memory' },
-    { icon: 'mic', label: 'Voice', value: `${core.voice.neural ? 'Neural' : 'Browser'} · ${languageInfo(lang).name}`, tone: 'ok', tab: 'account' },
+    { icon: 'mic', label: 'Voice', value: `${core.voice.neural ? 'Neural' : 'Browser'} · ${languageLabel(lang)}`, tone: 'ok', tab: 'account' },
     { icon: 'workflow', label: 'Agents', value: core.agents_active ? `${core.agents_active} running` : `${core.agents_total} ready`, tone: core.agents_active ? 'live' : 'ok', tab: 'studio' },
     { icon: 'zap', label: 'Providers', value: `${linkedCount} connected`, tone: linkedCount ? 'ok' : 'warn' },
     { icon: 'shield', label: 'System', value: STATUS_LABEL[status.level], tone: status.level === 'optimal' ? 'ok' : status.level === 'attention' ? 'warn' : 'bad', tab: 'device' },
@@ -347,7 +347,7 @@ export default function CommandCenter({ onOpenTab, onAsk, onStartSession, onOpen
         </div>
         <button type="button" className="cc-talk" onClick={() => onStartSession?.()}>
           <span className="cc-talk-wave" aria-hidden="true">{Array.from({ length: 9 }, (_, i) => <i key={i} style={{ '--i': i }} />)}</span>
-          <span><strong>Talk to Jarvis</strong><small>Hands-free · {languageInfo(lang).name}</small></span>
+          <span><strong>Talk to Jarvis</strong><small>Hands-free · {languageLabel(lang)}</small></span>
           <span className="cc-talk-wave" aria-hidden="true">{Array.from({ length: 9 }, (_, i) => <i key={i} style={{ '--i': 8 - i }} />)}</span>
         </button>
         <div className="cc-bar-end">

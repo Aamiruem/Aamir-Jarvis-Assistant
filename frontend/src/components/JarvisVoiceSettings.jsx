@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { requestRaw } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { neuralAvailable, speakOnce, unlockAudio } from '../neuralVoice.js';
-import { LANGUAGES, languageInfo, saveLanguage } from '../languages.js';
+import { AUTO, chooseLanguage, LANGUAGES, languageInfo, readLanguageMode } from '../languages.js';
 import { useLanguage } from '../useLanguage.js';
 import { applyVoiceStyle, DEFAULT_EXTRAS, utteranceFor, readVoiceExtras, saveVoiceExtras, VOICE_STYLES } from '../voiceSettings.js';
 
@@ -41,10 +41,13 @@ export default function JarvisVoiceSettings() {
     speakOnce(SAMPLE, browserSay);
   };
   // A new language: Jarvis listens for it from now on and says hello in it.
+  // Auto: Jarvis listens for the language you last spoke or typed, and answers in it.
+  const [mode, setMode] = useState(readLanguageMode);
   const pickLanguage = (code) => {
-    saveLanguage(code);
+    chooseLanguage(code);
+    setMode(readLanguageMode());
     unlockAudio();
-    speakOnce(languageInfo(code).hello, browserSay);
+    speakOnce(code === AUTO ? "Okay. I'll listen for whatever language you speak, and answer in it." : languageInfo(code).hello, browserSay);
   };
   const test = () => {
     unlockAudio();
@@ -74,16 +77,19 @@ export default function JarvisVoiceSettings() {
       <div className="jv-language">
         <label className="voice-pick">
           <strong>Language you speak</strong>
-          <select value={lang} onChange={(e) => pickLanguage(e.target.value)}>
+          <select value={mode === AUTO ? AUTO : lang} onChange={(e) => pickLanguage(e.target.value)}>
+            <option value={AUTO}>Auto: follow the language I speak{mode === AUTO ? ` (now ${languageInfo(lang).name})` : ''}</option>
             {LANGUAGES.map((l) => (
               <option key={l.code} value={l.code}>{l.name.startsWith('English') ? l.name : `${l.name} · ${l.native}`}</option>
             ))}
           </select>
         </label>
         <p className="muted small">
-          Jarvis listens for this language, and answers in whatever language you use, each in a native
-          human voice: Hindi in a Hindi voice, Urdu in an Urdu voice, Tamil in a Tamil voice. Hinglish works
-          on English (India). You can also just say “speak in Hindi” or “Urdu mein baat karo”.
+          On Auto, Jarvis notices the language you speak or type and listens and answers in it from your
+          next sentence, each in a native human voice: Hindi in a Hindi voice, Urdu in an Urdu voice, Tamil in
+          a Tamil voice. Hinglish works too. Pick a language to keep Jarvis on it, or just say “speak in Hindi”;
+          say “speak in my language” to go back to Auto. If Jarvis didn't catch a new language, type one
+          sentence in it or say its name: the browser hears one language at a time.
         </p>
       </div>
 

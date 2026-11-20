@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { followSpeaker } from './languages.js';
 import { useLanguage } from './useLanguage.js';
 
 // Speech-to-text with the browser's own recognizer (Chrome, Edge, Safari; not Firefox).
@@ -42,7 +43,10 @@ export function useListen(onFinal, fixedLang) {
     r.onend = () => {
       setListening(false);
       rec.current = null;
-      if (heard) finalRef.current?.(heard);
+      if (heard) {
+        if (!fixedLang) followSpeaker(heard); // Auto language: listen in theirs next time
+        finalRef.current?.(heard);
+      }
     };
     setError('');
     setTranscript('');

@@ -91,3 +91,56 @@ describe('languageCommand', () => {
     expect(languageCommand('translate good morning to Hindi and copy it to my clipboard please', 'en-IN')).toBeNull();
   });
 });
+
+// ---------- Auto: Jarvis follows the language the person speaks ----------
+import { AUTO, browserLanguage, chooseLanguage, followSpeaker, languageLabel, readLanguage, readLanguageMode, speakerLanguage } from './languages.js';
+
+describe('speakerLanguage (what to listen for next)', () => {
+  it.each([
+    ['आप कैसे हैं, सब ठीक?', 'en-IN', 'hi-IN'],
+    ['aap kaise ho, kya haal hai', 'en-IN', 'hi-IN'], // Hinglish: the Hindi recognizer hears it best
+    ['آپ کیسے ہیں؟', 'en-IN', 'ur-IN'],
+    ['வணக்கம் எப்படி இருக்கீங்க', 'en-IN', 'ta-IN'],
+    ['hola, ¿cómo estás? que tal', 'en-IN', 'es-ES'],
+    ['what is the weather in delhi today', 'hi-IN', browserLanguage()], // clear English: back to the browser's English
+    ['what is the weather in delhi today', 'en-GB', 'en-GB'], // already English: keep the variety
+  ])('%s (on %s) → %s', (text, current, next) => {
+    expect(speakerLanguage(text, current)).toBe(next);
+  });
+
+  it('keeps listening as before when a phrase is too short or unclear', () => {
+    expect(speakerLanguage('ok', 'hi-IN')).toBeNull();
+    expect(speakerLanguage('open youtube', 'hi-IN')).toBeNull();
+    expect(speakerLanguage('', 'en-IN')).toBeNull();
+  });
+});
+
+describe('Auto language mode', () => {
+  const reset = () => localStorage.clear();
+
+  it('is the default, starts from the browser language, and follows each sentence', () => {
+    reset();
+    expect(readLanguageMode()).toBe(AUTO);
+    expect(browserLanguage(['hi', 'en-US'])).toBe('hi-IN');
+    expect(browserLanguage(['xx-YY'])).toBe('en-IN');
+    localStorage.setItem('azarvis-language', 'en-IN');
+    expect(followSpeaker('मुझे कल सुबह याद दिलाना')).toBe('hi-IN');
+    expect(readLanguage()).toBe('hi-IN');
+    expect(languageLabel()).toBe('Auto · Hindi');
+    expect(followSpeaker('please remind me to call the bank tomorrow')).toBe('en-IN'); // back to the English used before
+    expect(followSpeaker('thanks a lot for the help')).toBeNull(); // no change
+  });
+
+  it('a chosen language stays put; "my language" turns Auto back on', () => {
+    reset();
+    chooseLanguage('ta-IN');
+    expect(readLanguageMode()).toBe('fixed');
+    expect(followSpeaker('what is the weather in delhi today')).toBeNull();
+    expect(readLanguage()).toBe('ta-IN');
+    expect(languageCommand('speak in my language')).toBe(AUTO);
+    expect(languageCommand('detect my language')).toBe(AUTO);
+    chooseLanguage(AUTO);
+    expect(readLanguageMode()).toBe(AUTO);
+    expect(followSpeaker('what is the weather in delhi today')).toBe(browserLanguage()); // no English used here yet
+  });
+});

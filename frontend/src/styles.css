@@ -503,8 +503,14 @@ input[type='checkbox'] { accent-color: var(--violet); width: 16px; height: 16px;
 .notice-body strong { display: block; color: var(--text); font-size: 14.5px; }
 .notice-body p { margin: 3px 0 0; color: var(--muted); }
 .notice-body .btn { margin-top: 10px; }
-.notice-steps { margin: 10px 0 0; padding-left: 20px; color: var(--text); display: grid; gap: 6px; }
-.notice-steps a { color: var(--accent); font-weight: 500; }
+.notice-steps { margin: 12px 0 0; padding: 0; list-style: none; counter-reset: step; color: var(--text); display: grid; gap: 8px; }
+.notice-steps li { position: relative; counter-increment: step; padding: 3px 0 3px 36px; min-height: 26px; }
+.notice-steps li::before {
+  content: counter(step); position: absolute; left: 0; top: 2px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  font: 800 12.5px/1 var(--font-sans, Inter, sans-serif); color: var(--tone); background: color-mix(in srgb, var(--tone) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent);
+}
+.notice-steps a { color: var(--accent); font-weight: 600; }
 .cmd {
   display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 8px; cursor: pointer; vertical-align: baseline;
   border: 1px solid var(--border); background: var(--field); color: var(--accent);
@@ -1819,15 +1825,6 @@ code, pre, kbd, samp { font-family: var(--font-mono); }
 @media (prefers-reduced-motion: reduce) { .bottom-voice-orb { transition: none; } }
 @media (max-width: 760px) {
   .app .topbar .icon-btn.room-watch { display: none; }
-  /* Home on phones: the two main buttons side by side at the same height, status underneath. */
-  .cc .cc-hero-side { display: grid; grid-template-columns: 1fr 1fr; grid-template-areas: 'start game' 'link link' 'pill op'; gap: 10px; align-items: center; width: 100%; }
-  .cc .cc-start { display: contents; }
-  .cc .cc-start-btn { grid-area: start; }
-  .cc .cc-game-btn { grid-area: game; }
-  .cc .cc-start-btn, .cc .cc-game-btn { width: 100%; min-height: 50px; margin: 0; justify-content: center; font-size: 15.5px; font-weight: 700; }
-  .cc .cc-start-link { grid-area: link; justify-self: start; }
-  .cc .cc-pill { grid-area: pill; justify-self: start; }
-  .cc .cc-operator { grid-area: op; justify-self: end; }
   .cc .cc-insights-head { flex-wrap: wrap; row-gap: 2px; }
   .cc .cc-insights-head strong { white-space: nowrap; }
   .cc .cc-insights-head small { flex-basis: 100%; margin-left: 0; }

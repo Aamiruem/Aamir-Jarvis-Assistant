@@ -8,6 +8,7 @@ import { speechSupported } from '../useSpeech.js';
 import { utteranceFor } from '../voiceSettings.js';
 import { buildInsights } from '../homeInsights.js';
 import { AiNotice, aiProblemOf } from './AiNotice.jsx';
+import { reach } from '../artActions.js';
 import HomeArt from './HomeArt.jsx';
 import './HomePanel.css';
 import BrainGym from './BrainGym.jsx';
@@ -83,21 +84,31 @@ const fmtWhen = (iso) => {
 const greeting = (h) => (h < 5 ? 'Working late' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening');
 
 // Only this component re-renders every second, not the whole page.
-const Clock = memo(function Clock({ name }) {
+const Clock = memo(function Clock({ name, summary }) {
   const now = useNow(1000);
   return (
     <div className="cc-hello">
       <p className="cc-date">
-        <Icon name="clock" size="1em" />
+        <Icon name="calendar" size="1em" />
         {now.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
       </p>
       <h1>
         {greeting(now.getHours())}, <span className="cc-grad">{name.split(' ')[0]}</span>
       </h1>
-      <strong className="cc-time">{now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</strong>
+      <div className="cc-hello-meta">
+        <strong className="cc-time"><Icon name="clock" size="0.95em" />{now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</strong>
+        {summary && <span className="cc-summary">{summary}</span>}
+      </div>
     </div>
   );
 });
+
+/** One line about the day, from the real counts: "2 open tasks · 1 due today · 2 memories". */
+function daySummary(open, dueToday, memories) {
+  const n = (count, one, many) => `${count} ${count === 1 ? one : many}`;
+  if (!open && !memories) return 'A clear day. Ask Azarvis anything, or give it several tasks at once.';
+  return [open ? n(open, 'open task', 'open tasks') : 'No open tasks', dueToday ? `${dueToday} due today` : null, n(memories, 'memory', 'memories')].filter(Boolean).join(' · ');
+}
 
 function Ring({ value, max, label, text, hue, warn = false }) {
   const pct = max ? Math.min(100, Math.round((value / max) * 100)) : 0;
@@ -113,10 +124,11 @@ function Ring({ value, max, label, text, hue, warn = false }) {
 
 function Stat({ icon, hue, value, label, onClick }) {
   return (
-    <button className="cc-stat" style={{ '--hue': hue }} onClick={onClick}>
+    <button className="cc-stat" style={{ '--hue': hue }} onClick={onClick} aria-label={`${value} ${label}: open`}>
       <span className="cc-badge"><Icon name={icon} /></span>
       <strong>{value}</strong>
       <small>{label}</small>
+      <Icon name="chevron" size="1.05em" className="cc-stat-go" />
     </button>
   );
 }
@@ -240,32 +252,40 @@ export default function HomePanel({ user, conversations, onOpenTab, onAsk, onOpe
       <div className="cc-bg" aria-hidden="true" />
 
       <header className="cc-hero">
-        <Clock name={user.name} />
+        <Clock name={user.name} summary={daySummary(open.length, dueToday, memories.length)} />
         <div className="cc-hero-side">
-          {speechSupported && (
-            <div className="cc-start">
-              <button className="btn primary cc-start-btn" onClick={() => onStartSession()} title="Azarvis greets you, reads today's reminders and starts listening">
-                <Icon name="mic" size="1.1em" /> Start Azarvis
-              </button>
-              <button className="cc-start-link" onClick={() => onStartSession({ interview: true })}>
-                Tell Azarvis about you
+          <div className="cc-hero-meta">
+            <button type="button" className={`cc-pill ${health ? (allUp ? 'ok' : 'bad') : ''}`}
+              onClick={() => (aiProblem || problem ? reach('.cc-notice') : onOpenTab('command'))}
+              title={aiProblem || problem ? 'See what needs attention' : 'Open the Command Center'}>
+              <i />
+              {health ? (allUp ? 'All systems ready' : aiProblem ? 'Needs attention' : 'Partly offline') : 'Checking systems…'}
+            </button>
+            <span className="cc-operator">
+              <span className="cc-avatar">{user.name.slice(0, 1).toUpperCase()}</span>
+              <span>
+                {user.name}
+                <small>{user.role === 'admin' ? 'Administrator' : 'Operator'}</small>
+              </span>
+            </span>
+          </div>
+          <div className="cc-hero-cta">
+            <div className="cc-hero-actions">
+              {speechSupported && (
+                <button className="btn primary cc-start-btn" onClick={() => onStartSession()} title="Azarvis greets you, reads today's reminders and starts listening">
+                  <Icon name="mic" size="1.1em" /> Start Azarvis
+                </button>
+              )}
+              <button className="btn cc-game-btn" onClick={() => setBrainGymOpen(true)}>
+                <Icon name="brain" size="1.1em" /> Brain Gym
               </button>
             </div>
-          )}
-          <button className="btn cc-game-btn" onClick={() => setBrainGymOpen(true)}>
-            <Icon name="brain" size="1.1em" /> Brain Gym
-          </button>
-          <span className={`cc-pill ${health ? (allUp ? 'ok' : 'bad') : ''}`}>
-            <i />
-            {health ? (allUp ? 'All systems ready' : aiProblem ? 'Needs attention' : 'Partly offline') : 'Checking systems…'}
-          </span>
-          <span className="cc-operator">
-            <span className="cc-avatar">{user.name.slice(0, 1).toUpperCase()}</span>
-            <span>
-              {user.name}
-              <small>{user.role === 'admin' ? 'Administrator' : 'Operator'}</small>
-            </span>
-          </span>
+            {speechSupported && (
+              <button className="cc-start-link" onClick={() => onStartSession({ interview: true })}>
+                <Icon name="user" size="1em" /> Tell Azarvis about you <Icon name="chevron" size="0.9em" />
+              </button>
+            )}
+          </div>
         </div>
       </header>
 

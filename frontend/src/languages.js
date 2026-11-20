@@ -1,7 +1,10 @@
 // Every language Jarvis can hear and speak. Pure helpers (no React) so they are unit-tested.
 //
-//   Hearing: the browser's recognizer listens for ONE language at a time, the one chosen in
-//            Account → Voice (or switched by voice: "speak in Hindi", "Urdu mein baat karo").
+//   Hearing: the browser's recognizer listens for ONE language at a time. In Auto mode (the default)
+//            that is the language the person last spoke or typed: after every sentence Jarvis checks
+//            its language (speakerLanguage) and listens for that one next (followSpeaker). Choosing a
+//            language in Account → Voice, or saying "speak in Hindi", fixes it instead; "speak in my
+//            language" / "detect my language" goes back to Auto.
 //   Speaking: each sentence of a reply is checked for its language (by script, then common words)
 //            and read by a native neural voice of that language, same gender as the chosen voice.
 //            English keeps the user's own chosen voice (e.g. the British "Jarvis").
@@ -56,26 +59,63 @@ export const languageInfo = (code) => BY_CODE.get(code) || BY_CODE.get(DEFAULT_L
 const base = (code) => (code || '').split('-')[0].toLowerCase();
 
 // ---------- The language Jarvis listens for (saved in this browser) ----------
-const KEY = 'azarvis-language';
+const KEY = 'azarvis-language'; // the language in use now (in Auto mode: the one last heard)
+const MODE_KEY = 'azarvis-language-mode'; // 'auto' (follow the speaker) or 'fixed'
+const ENGLISH_KEY = 'azarvis-language-english'; // the English the person speaks, for switching back
+export const AUTO = 'auto';
 export const LANGUAGE_EVENT = 'azarvis-language-change';
 
-export function readLanguage() {
-  try {
-    const saved = localStorage.getItem(KEY);
-    return BY_CODE.has(saved) ? saved : DEFAULT_LANGUAGE;
-  } catch {
-    return DEFAULT_LANGUAGE;
+const store = {
+  get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* storage blocked: applies until reload */ } },
+};
+
+/** The best language from the browser's own list (navigator.languages), else English (India). */
+export function browserLanguage(list = typeof navigator !== 'undefined' ? navigator.languages || [navigator.language] : []) {
+  for (const tag of list || []) {
+    if (BY_CODE.has(tag)) return tag;
+    const match = LANGUAGES.find((l) => base(l.code) === base(tag));
+    if (match) return match.code;
   }
+  return DEFAULT_LANGUAGE;
 }
 
+/** The language in use now: the saved one, or (first visit) the browser's language. */
+export function readLanguage() {
+  const saved = store.get(KEY);
+  return BY_CODE.has(saved) ? saved : browserLanguage();
+}
+
+/** 'auto' (Jarvis follows the language the person speaks) unless a language was chosen. */
+export function readLanguageMode() {
+  return store.get(MODE_KEY) === 'fixed' ? 'fixed' : AUTO;
+}
+
+/** Listen in this language now (the mode stays as it is). */
 export function saveLanguage(code) {
   if (!BY_CODE.has(code)) return;
-  try {
-    localStorage.setItem(KEY, code);
-  } catch {
-    // storage blocked: applies until the page reloads
-  }
+  const current = readLanguage();
+  if (base(current) === 'en') store.set(ENGLISH_KEY, current);
+  store.set(KEY, code);
   window.dispatchEvent(new CustomEvent(LANGUAGE_EVENT, { detail: code }));
+}
+
+/** A choice from Account → Voice or a voice command: AUTO to follow the speaker, or a fixed language. */
+export function chooseLanguage(choice) {
+  if (choice === AUTO) {
+    store.set(MODE_KEY, AUTO);
+    window.dispatchEvent(new CustomEvent(LANGUAGE_EVENT, { detail: readLanguage() }));
+    return;
+  }
+  if (!BY_CODE.has(choice)) return;
+  store.set(MODE_KEY, 'fixed');
+  saveLanguage(choice);
+}
+
+/** How the language setting reads in the app: "Auto · Hindi" or "Hindi". */
+export function languageLabel(code = readLanguage(), mode = readLanguageMode()) {
+  const name = languageInfo(code).name;
+  return mode === AUTO ? `Auto · ${name}` : name;
 }
 
 // ---------- Which language a piece of text is in ----------
@@ -162,6 +202,60 @@ export function detectLanguage(text, hint = DEFAULT_LANGUAGE) {
 }
 const ENGLISH = new Set('the a an is are was were i you he she it we they to of and in on for with that this what how my your me be do have not can will at it\'s i\'m'.split(' '));
 
+// ---------- Following the speaker (Auto mode) ----------
+/** The English the person speaks: the last English used here, else the browser's, else en-IN. */
+function englishVariant() {
+  const saved = store.get(ENGLISH_KEY);
+  if (BY_CODE.has(saved)) return saved;
+  const fromBrowser = browserLanguage();
+  return base(fromBrowser) === 'en' ? fromBrowser : DEFAULT_LANGUAGE;
+}
+
+/**
+ * The language someone just spoke or typed, when it is clear enough to switch the microphone to
+ * it; null when it is too short or unclear (then Jarvis keeps listening in the current one).
+ * Other scripts are decided by their letters; Latin text needs at least two common words of a
+ * language. Hinglish → Hindi (the Hindi recognizer hears Hindi and English mixed); clear English
+ * while on another language → back to English.
+ */
+export function speakerLanguage(text, current = DEFAULT_LANGUAGE) {
+  const t = (text || '').trim();
+  const counts = Object.entries(SCRIPTS).map(([s, re]) => [s, (t.match(re) || []).length]);
+  const [script, n] = counts.reduce((a, b) => (b[1] > a[1] ? b : a));
+  if (n < 2) return null;
+  if (script !== 'latn') {
+    const code = detectLanguage(t, current);
+    return BY_CODE.has(code) ? code : null;
+  }
+  const words = t.toLowerCase().match(/[\p{L}\p{M}']+/gu) || [];
+  if (words.length < 2) return null;
+  if (/[ăâđêôơư]/i.test(t) && /[ạảãấầẩẫậắằẳẵặẹẻẽếềểễệịỉĩọỏõốồổỗộớờởỡợụủũứừửữựỳỷỹỵ]/i.test(t)) return 'vi-VN';
+  let best = null;
+  let hits = 0;
+  for (const [code, set] of Object.entries(COMMON_SETS)) {
+    const h = words.filter((w) => set.has(w)).length;
+    if (h > hits) [best, hits] = [code, h];
+  }
+  const english = words.filter((w) => ENGLISH.has(w)).length;
+  const enough = (h) => h >= 2 && h / words.length >= 0.2;
+  if (best && enough(hits) && hits > english) return best === 'hi-Latn' ? 'hi-IN' : best;
+  if (enough(english) && english >= hits) return base(current) === 'en' ? current : englishVariant();
+  return null;
+}
+
+/**
+ * Auto mode: after someone speaks or types, listen in their language from now on.
+ * Returns the new language when it changed, else null (also in fixed mode).
+ */
+export function followSpeaker(text) {
+  if (readLanguageMode() !== AUTO) return null;
+  const current = readLanguage();
+  const next = speakerLanguage(text, current);
+  if (!next || next === current) return null;
+  saveLanguage(next);
+  return next;
+}
+
 /** The locale a browser voice should use for a detected language. */
 export const speechLocale = (code) => (code === 'hi-Latn' ? 'en-IN' : code);
 
@@ -200,6 +294,8 @@ export function browserVoiceFor(code, chosen, voices, pickVoice) {
 // ---------- Switching language by voice ----------
 const NAME_TO_CODE = new Map();
 for (const l of LANGUAGES) for (const n of l.names) NAME_TO_CODE.set(n.toLowerCase(), l.code);
+// "speak in my language", "talk in any language": follow the speaker again (Auto).
+for (const n of ['auto', 'automatic', 'my', 'my own', 'any', 'any language', 'the same', 'same', 'whatever', 'my language', 'my own language', 'the same language', 'same language', 'whatever language i speak', 'apni bhasha', 'meri bhasha', 'अपनी भाषा', 'मेरी भाषा']) NAME_TO_CODE.set(n, AUTO);
 
 /**
  * "speak in Hindi", "switch to Urdu", "talk to me in Tamil", "Hindi mein baat karo",
@@ -209,6 +305,7 @@ for (const l of LANGUAGES) for (const n of l.names) NAME_TO_CODE.set(n.toLowerCa
 export function languageCommand(text, current = DEFAULT_LANGUAGE) {
   const t = (text || '').trim().replace(/[.!?।۔]+$/, '').toLowerCase();
   if (t.split(/\s+/).length > 8) return null;
+  if (/^(?:(?:please|jarvis|azarvis)[\s,]+)?(?:auto[- ]?detect|detect|follow|use)(?: my| the)? language(?: automatically| i speak)?$/.test(t)) return AUTO;
   const patterns = [
     /^(?:(?:please|can you|could you|ok|okay|jarvis|azarvis)[\s,]+)*(?:speak|talk|switch|change(?: the)? language)(?: to me| with me)?(?: in| to)\s+([\p{L}\p{M} ]+?)(?:\s+(?:language|please|now|from now on))*$/u,
     /^(?:let's|lets) (?:speak|talk) (?:in )?([\p{L}\p{M} ]+?)(?: now)?$/u,

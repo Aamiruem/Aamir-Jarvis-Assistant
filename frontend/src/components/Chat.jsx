@@ -10,7 +10,7 @@ import { openUrl, quickCommand } from '../quickCommands.js';
 import { cleanAnswer, markOnboarded } from '../session.js';
 import { toast } from '../ui.jsx';
 import { useSpeech } from '../useSpeech.js';
-import { languageCommand, languageInfo, readLanguage, saveLanguage } from '../languages.js';
+import { AUTO, chooseLanguage, followSpeaker, languageCommand, languageInfo, readLanguage } from '../languages.js';
 import { afterWakeWord } from '../wakeWord.js';
 import { startVoice } from '../artActions.js';
 
@@ -114,8 +114,8 @@ export default function Chat({ userId, history, conversationId, onConversation, 
       // "Speak in Hindi" / "Urdu mein baat karo": listen in that language from now on.
       const switchTo = languageCommand(text, readLanguage());
       if (switchTo) {
-        saveLanguage(switchTo);
-        jarvisSays(languageInfo(switchTo).hello);
+        chooseLanguage(switchTo);
+        jarvisSays(switchTo === AUTO ? "Okay. I'll listen for whatever language you speak, and answer in it." : languageInfo(switchTo).hello);
         return;
       }
       if (handsFreeRef.current && STOP_WORDS.test(text)) {
@@ -302,6 +302,7 @@ export default function Chat({ userId, history, conversationId, onConversation, 
     const message = (text ?? input).trim();
     if (!message || busyRef.current) return;
     setInput('');
+    if (!voice) followSpeaker(message); // typed: the microphone follows this language too (Auto mode)
     // Spoken to, so answer out loud (the Speak button too, not only Voice mode or "Read aloud").
     const speakReply = handsFreeRef.current || voiceReplies || voice;
 

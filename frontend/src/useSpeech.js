@@ -3,7 +3,7 @@ import { cleanForSpeech, isBargeIn, isEcho, pauseFor, pickVoice, prosodyFor, tak
 import { createNeuralQueue, neuralAvailable, neuralKnownAvailable, pauseNeural, resumeNeural } from './neuralVoice.js';
 import { createVoiceActivity } from './voiceActivity.js';
 import { applyVoice, currentVoice, readVoiceExtras, VOICE_EVENT } from './voiceSettings.js';
-import { browserVoiceFor, detectLanguage, neuralVoiceFor, speechLocale } from './languages.js';
+import { browserVoiceFor, detectLanguage, followSpeaker, neuralVoiceFor, speechLocale } from './languages.js';
 import { useLanguage } from './useLanguage.js';
 
 // Voice in with the browser's Web Speech API; voice out with the neural Jarvis voice when Azarvis
@@ -52,6 +52,10 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang: 
   });
   const callbacks = useRef({});
   callbacks.current = { onFinal, onSilence, shouldBargeIn, onBargeIn };
+  // Auto language: what was just said decides the language to listen for next (not when a
+  // caller fixed the language, like the Voice Agent demo).
+  const followRef = useRef(!fixedLang);
+  followRef.current = !fixedLang;
 
   const speakingRef = useRef(false);
   const spokenRef = useRef(''); // everything Azarvis is saying right now, for the echo check
@@ -170,7 +174,10 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang: 
       s.final = '';
       s.interim = '';
       setInterim('');
-      if (text) callbacks.current.onFinal?.(text);
+      if (text) {
+        if (followRef.current) followSpeaker(text);
+        callbacks.current.onFinal?.(text);
+      }
     };
     const armSilence = () => {
       clearTimeout(s.quietTimer);
@@ -251,7 +258,10 @@ export function useSpeech({ onFinal, onSilence, shouldBargeIn, onBargeIn, lang: 
       const text = `${s.final} ${s.interim}`.replace(/\s+/g, ' ').trim();
       s.final = '';
       s.interim = '';
-      if (text) callbacks.current.onFinal?.(text);
+      if (text) {
+        if (followRef.current) followSpeaker(text);
+        callbacks.current.onFinal?.(text);
+      }
       else callbacks.current.onSilence?.();
     };
     rec.onerror = (e) => {
