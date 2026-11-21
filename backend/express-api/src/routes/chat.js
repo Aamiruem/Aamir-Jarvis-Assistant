@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { aiDownMessage, aiHeaders, markAiDown, waitForAi } from '../ai.js';
+import { aiUrlNow, resolveAiUrl } from '../aiEndpoint.js';
 import { config } from '../config.js';
 
 const HISTORY_TURNS = 20;
@@ -67,8 +68,9 @@ async function streamChat(req, res, conversations) {
   const tools = [];
 
   try {
+    await resolveAiUrl(); // the owner's PC (tunnel) or AI_SERVICE_URL
     const open = () =>
-      fetch(`${config.aiServiceUrl}/chat/stream`, {
+      fetch(`${aiUrlNow()}/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...aiHeaders(req.user), 'X-Request-Id': req.id },
         body: JSON.stringify({ message, history, voice: voice === true }),

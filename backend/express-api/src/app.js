@@ -9,6 +9,7 @@ import crypto from 'node:crypto';
 import os from 'node:os';
 import morgan from 'morgan';
 import { aiGate, aiHeaders, checkAi, markAiDown } from './ai.js';
+import { aiEndpointRoutes, aiUrlNow } from './aiEndpoint.js';
 import { AppError } from './auth/errors.js';
 import { config } from './config.js';
 import { logServerError } from './errorLog.js';
@@ -75,6 +76,7 @@ export function createApp(container) {
     aiGate(), // while the AI service restarts, wait for it instead of answering 502
     createProxyMiddleware({
       target: config.aiServiceUrl,
+      router: () => aiUrlNow(), // the owner's PC through a tunnel, when one is registered (aiEndpoint.js)
       changeOrigin: true,
       proxyTimeout: 120_000, // a hung AI service can't hold a request forever (uploads/indexing included)
       on: {
@@ -95,6 +97,7 @@ export function createApp(container) {
   // WhatsApp Jarvis: before express.json(), because the webhook's signature is over the raw body.
   if (container.whatsapp) app.use('/api/whatsapp', createWhatsAppRouter({ repo: container.whatsapp, settings: container.whatsappSettings || config.whatsapp, cloud: container.whatsappCloud }));
   app.use(express.json({ limit: '1mb' }));
+  aiEndpointRoutes(app); // `npm run live` on the owner's PC registers its tunnel here
   app.use('/api/auth', createAuthRouter({ authService: container.authService, passkeyService: container.passkeyService, requireAuth, settings: container.settings, limit }));
   const { users, conversations, sessions, audit, notes, feedback } = container;
   app.use('/api/conversations', createConversationRouter({ requireAuth, conversations }));

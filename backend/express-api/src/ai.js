@@ -1,3 +1,4 @@
+import { aiUrlNow, resolveAiUrl, usingTunnel } from './aiEndpoint.js';
 import { config } from './config.js';
 
 /** Headers that tell the AI service who the request is for. Always built from the verified JWT. */
@@ -11,7 +12,7 @@ export function aiHeaders(user) {
 
 /** JSON call to the Python AI service on behalf of a user. */
 export async function aiFetch(path, user, { method = 'GET', body, signal } = {}) {
-  const res = await fetch(`${config.aiServiceUrl}${path}`, {
+  const res = await fetch(`${await resolveAiUrl()}${path}`, {
     method,
     signal,
     headers: { ...aiHeaders(user), ...(body ? { 'Content-Type': 'application/json' } : {}) },
@@ -26,16 +27,21 @@ export async function aiFetch(path, user, { method = 'GET', body, signal } = {})
 // Instead of failing every request during that gap, requests wait for it to come back.
 
 const FRESH_MS = 3000; // a health check younger than this is trusted without asking again
-let last = { up: false, at: 0, info: null };
+let last = { up: false, at: 0, info: null, url: null };
 let inFlight = null;
 
 /** GET /health on the AI service (timeout 2 s). Returns its JSON, or null when it's down. */
 export function checkAi() {
-  inFlight ??= fetch(`${config.aiServiceUrl}/health`, { signal: AbortSignal.timeout(2000) })
-    .then(async (res) => (res.ok ? res.json().catch(() => ({})) : null))
-    .catch(() => null)
-    .then((info) => {
-      last = { up: Boolean(info), at: Date.now(), info };
+  inFlight ??= resolveAiUrl()
+    .then((url) =>
+      // A tunnel to the owner's PC answers slower than localhost: give it longer.
+      fetch(`${url}/health`, { signal: AbortSignal.timeout(usingTunnel() ? 6000 : 2000) })
+        .then(async (res) => (res.ok ? res.json().catch(() => ({})) : null))
+        .catch(() => null)
+        .then((info) => ({ info, url })),
+    )
+    .then(({ info, url }) => {
+      last = { up: Boolean(info), at: Date.now(), info, url };
       inFlight = null;
       return info;
     });
@@ -51,7 +57,7 @@ export const aiStatus = () => ({ ...last });
 
 /** Resolves true once the AI service answers, or false after maxMs (or when signal aborts). */
 export async function waitForAi(maxMs = config.aiWaitMs, { signal, recheck = false } = {}) {
-  if (!recheck && last.up && Date.now() - last.at < FRESH_MS) return true;
+  if (!recheck && last.up && last.url === aiUrlNow() && Date.now() - last.at < FRESH_MS) return true;
   const until = Date.now() + maxMs;
   for (;;) {
     if (await checkAi()) return true;
@@ -75,7 +81,9 @@ export function aiGate(maxMs = config.aiWaitMs) {
 export function aiDownMessage() {
   // On the hosted website (Vercel) there is no "npm run dev" for a visitor to run: say what is true there.
   if (process.env.VERCEL && /localhost|127\.0\.0\.1/.test(config.aiServiceUrl)) {
-    return "Azarvis's AI service isn't connected to the live website yet, so chat, tasks, notes and the Command Center can't load here. Your account works; the demo works fully in your browser meanwhile.";
+    return usingTunnel()
+      ? "Azarvis's AI runs on its owner's PC, and that PC isn't answering right now. Please try again in a minute. Your account works; the demo works fully in your browser meanwhile."
+      : "Azarvis's AI runs on its owner's PC, which isn't connected right now, so chat, tasks, notes and the Command Center can't load. Your account works; please try again later, or use the demo meanwhile.";
   }
   return `The AI service isn't running (nothing answered at ${config.aiServiceUrl}). Start everything with "npm run dev" in the project folder, or "python main.py" in backend/fastapi-ai/app.`;
 }
