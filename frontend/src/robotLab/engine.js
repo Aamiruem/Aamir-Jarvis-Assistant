@@ -36,13 +36,13 @@ const LED = { coding: 0x22d3ee, reading: 0xfbbf24, teaching: 0x34d399, speaking:
 // ------------------------------------------------------------------ materials
 function makeMaterials() {
   return {
-    shell: new THREE.MeshPhysicalMaterial({ color: 0xdfe5ee, metalness: 0.25, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.08 }),
+    shell: new THREE.MeshPhysicalMaterial({ color: 0xc9d1dc, metalness: 0.3, roughness: 0.32, clearcoat: 0.8, clearcoatRoughness: 0.12 }),
     silver: new THREE.MeshStandardMaterial({ color: 0x9aa6b6, metalness: 1, roughness: 0.25 }),
     dark: new THREE.MeshStandardMaterial({ color: 0x0f141c, metalness: 0.75, roughness: 0.28 }),
     rubber: new THREE.MeshStandardMaterial({ color: 0x1a1f29, metalness: 0.1, roughness: 0.8 }),
     visor: new THREE.MeshPhysicalMaterial({ color: 0x04060b, metalness: 0.5, roughness: 0.05, clearcoat: 1, clearcoatRoughness: 0.02 }),
     led: new THREE.MeshStandardMaterial({ color: 0x0a1a22, emissive: 0x22d3ee, emissiveIntensity: 2.4 }),
-    eye: new THREE.MeshStandardMaterial({ color: 0x0a1a22, emissive: 0x7dd3fc, emissiveIntensity: 4.5 }),
+    eye: new THREE.MeshStandardMaterial({ color: 0x0a1a22, emissive: 0x7dd3fc, emissiveIntensity: 3.4 }),
     holo: new THREE.MeshBasicMaterial({ color: 0x67e8f9, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, depthWrite: false }),
   };
 }
@@ -104,14 +104,14 @@ function buildRobot(M) {
 
   const head = joint('head', neck, 0, 0.08, 0);
   mesh(new THREE.SphereGeometry(0.13, 40, 32), M.shell, head, { y: 0.11, sy: 1.12, sz: 1.04 });
-  mesh(new THREE.SphereGeometry(0.118, 40, 32), M.visor, head, { y: 0.1, z: 0.035, sy: 0.82, sz: 0.86 });
+  mesh(new THREE.SphereGeometry(0.118, 40, 32), M.visor, head, { y: 0.1, z: 0.05, sy: 0.8, sz: 0.92 });
   mesh(rbox(0.03, 0.06, 0.16, 0.012), M.silver, head, { y: 0.255, z: -0.01 });
   mesh(new THREE.BoxGeometry(0.006, 0.03, 0.12), M.led, head, { y: 0.28, z: -0.01, shadow: false });
   const eyes = new THREE.Group();
-  eyes.position.set(0, 0.112, 0.128);
+  eyes.position.set(0, 0.112, 0.158);
   head.add(eyes);
   const eyeMeshes = SIDES.map((s) => mesh(new THREE.CapsuleGeometry(0.011, 0.024, 6, 16), M.eye, eyes, { x: s * 0.046, rz: Math.PI / 2, shadow: false }));
-  const mouth = mesh(new THREE.BoxGeometry(0.05, 0.007, 0.004), M.led, head, { y: 0.06, z: 0.133, shadow: false });
+  const mouth = mesh(new THREE.BoxGeometry(0.05, 0.007, 0.004), M.led, head, { y: 0.062, z: 0.156, shadow: false });
   for (const s of SIDES) {
     mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.035, 28), M.silver, head, { x: s * 0.135, y: 0.11, rz: Math.PI / 2 });
     mesh(new THREE.TorusGeometry(0.028, 0.005, 8, 24), M.led, head, { x: s * 0.153, y: 0.11, ry: Math.PI / 2, shadow: false });
@@ -703,7 +703,7 @@ export function createRobotLab(container, { onState } = {}) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.88;
+  renderer.toneMappingExposure = 0.8;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   container.appendChild(renderer.domElement);
 
@@ -715,7 +715,7 @@ export function createRobotLab(container, { onState } = {}) {
   scene.environmentIntensity = 0.45;
 
   const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 60);
-  camera.position.set(0.2, 1.6, 4.3);
+  camera.position.set(0.2, 1.5, 3.8);
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.target.set(0, 1.0, 0);
   controls.enableDamping = true;
@@ -725,8 +725,8 @@ export function createRobotLab(container, { onState } = {}) {
   controls.minPolarAngle = 0.5;
   controls.maxPolarAngle = 1.52;
 
-  scene.add(new THREE.HemisphereLight(0xbfdcff, 0x0b1020, 0.35));
-  const key = new THREE.DirectionalLight(0xffffff, 1.5);
+  scene.add(new THREE.HemisphereLight(0xbfdcff, 0x0b1020, 0.3));
+  const key = new THREE.DirectionalLight(0xffffff, 1.15);
   key.position.set(2.5, 5, 4);
   key.castShadow = true;
   key.shadow.mapSize.set(lowPower ? 1024 : 2048, lowPower ? 1024 : 2048);
@@ -736,7 +736,7 @@ export function createRobotLab(container, { onState } = {}) {
   scene.add(key);
   const rimA = new THREE.PointLight(0x22d3ee, 18, 9); rimA.position.set(-3, 2.6, -1.5); scene.add(rimA);
   const rimB = new THREE.PointLight(0xa78bfa, 16, 9); rimB.position.set(3, 2.4, -1.2); scene.add(rimB);
-  const spot = new THREE.SpotLight(0xffffff, 14, 9, 0.45, 0.7); spot.position.set(0, 4.2, 2.2); scene.add(spot); scene.add(spot.target);
+  const spot = new THREE.SpotLight(0xffffff, 8, 9, 0.45, 0.7); spot.position.set(0, 4.2, 2.2); scene.add(spot); scene.add(spot.target);
 
   const M = makeMaterials();
   const lab = buildLab(scene, M);
@@ -748,7 +748,7 @@ export function createRobotLab(container, { onState } = {}) {
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
   // Only true light sources (LEDs, screens, strips) glow: the threshold sits above a lit white shell.
-  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), lowPower ? 0.45 : 0.6, 0.45, 1.05);
+  const bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), lowPower ? 0.5 : 0.7, 0.45, 1.35);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
 
@@ -951,6 +951,7 @@ export function createRobotLab(container, { onState } = {}) {
     const eyeOpen = S.blink > 0 ? 0.12 : act === 'coding' || act === 'research' ? 0.72 : act === 'dance' || act === 'speaking' ? 0.85 : 1;
     robot.eyes.scale.y = lerp(robot.eyes.scale.y, eyeOpen, 1 - Math.exp(-dt * 30));
     robot.eyes.position.y = 0.112 + (act === 'dance' ? 0.006 : 0);
+    robot.eyes.position.z = 0.158;
     const talking = S.talking || act === 'speaking' || act === 'teaching';
     const mouthOpen = talking ? 1 + Math.abs(Math.sin(g * 13)) * 3 * (0.6 + 0.4 * Math.sin(g * 3.1)) : 1;
     robot.mouth.scale.set(talking ? 1 + Math.sin(g * 7) * 0.2 : 1, lerp(robot.mouth.scale.y, mouthOpen, 0.5), 1);
@@ -964,8 +965,8 @@ export function createRobotLab(container, { onState } = {}) {
     const target = new THREE.Color(act === 'dance' ? new THREE.Color().setHSL((g * 0.15) % 1, 0.9, 0.6) : LED[act] || LED.idle);
     S.led.lerp(target, 1 - Math.exp(-dt * 3));
     M.led.emissive.copy(S.led);
-    M.eye.emissive.copy(S.led).lerp(new THREE.Color(0xffffff), 0.35);
-    M.led.emissiveIntensity = 2.2 + Math.sin(g * 2.4) * 0.4 + tf * 2;
+    M.eye.emissive.copy(S.led).lerp(new THREE.Color(0xffffff), 0.12);
+    M.led.emissiveIntensity = 3 + Math.sin(g * 2.4) * 0.5 + tf * 2;
 
     // ---- props
     const think = act === 'thinking' ? 1 : 0;

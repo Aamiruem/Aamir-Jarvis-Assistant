@@ -113,9 +113,9 @@ export default function JarvisVoiceSettings() {
 
       <div className="voice-sliders">
         <label className="voice-slider">
-          <span className="voice-slider-head"><strong>Loudness</strong><span className="voice-slider-value">{Math.round(x.boost * 100)}%</span></span>
-          <input type="range" min="1" max="2.5" step="0.1" value={x.boost} onChange={(e) => set({ boost: Number(e.target.value) })} aria-label="Loudness" />
-          <span className="voice-slider-ends muted small"><span>Normal</span><span>Extra loud</span></span>
+          <span className="voice-slider-head"><strong>Loudness</strong><span className="voice-slider-value">{Math.round(x.boost * 100)}%{x.boost > 2.5 ? ' · DJ max' : ''}</span></span>
+          <input type="range" min="1" max="4" step="0.1" value={x.boost} onChange={(e) => set({ boost: Number(e.target.value) })} aria-label="Loudness" />
+          <span className="voice-slider-ends muted small"><span>Normal</span><span>DJ max</span></span>
         </label>
         <label className="voice-slider">
           <span className="voice-slider-head"><strong>Speed</strong><span className="voice-slider-value">{x.neuralRate > 0 ? '+' : ''}{x.neuralRate}%</span></span>

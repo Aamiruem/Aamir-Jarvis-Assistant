@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { streamChat } from '../api.js';
 import { respond, speak } from '../brain.js';
 import { Icon } from '../icons.jsx';
 import { useListen } from '../useListen.js';
@@ -23,7 +24,8 @@ const MOVES = [
 ];
 const MODES = ['coding', 'reading', 'teaching', 'speaking', 'research', 'thinking', 'dance'];
 
-export default function RobotLab() {
+/** signedIn: questions go to the real AI (Claude, or OpenAI standing in); else the website's built-in assistant. */
+export default function RobotLab({ signedIn = false }) {
   const stage = useRef(null);
   const engine = useRef(null);
   const [state, setState] = useState({ activity: 'idle', running: true, auto: false });
@@ -69,10 +71,27 @@ export default function RobotLab() {
     setLog((l) => [...l.slice(-5), { who: 'you', text: t }]);
     const action = parseCommand(t);
     if (action) return run(action);
-    // A question: the robot answers (the website's built-in assistant) and speaks while it talks.
+    // A question: the robot turns to speak and answers out loud.
     engine.current?.command({ type: 'activity', activity: 'speaking' });
-    const reply = respond(t);
-    say(reply.text);
+    if (!signedIn) return say(respond(t).text);
+    ask(t);
+  };
+
+  // Signed in: the real assistant answers (the same AI as Chat), with the built-in one as a fallback.
+  const ask = async (t) => {
+    setLog((l) => [...l.slice(-5), { who: 'robot', text: 'Thinking…', pending: true }]);
+    let text = '';
+    let failed = '';
+    try {
+      await streamChat(t, null, (ev) => {
+        if (ev.type === 'text') text += ev.text;
+        else if (ev.type === 'error') failed = ev.message || 'error';
+      }, undefined, { voice: true });
+    } catch (e) {
+      failed = e.message || 'error';
+    }
+    setLog((l) => l.filter((m) => !m.pending));
+    say(text.trim() || (failed ? `${respond(t).text}` : 'I could not find an answer to that.'));
   };
 
   const listen = useListen((heard) => handle(heard));
@@ -162,7 +181,7 @@ export default function RobotLab() {
               <button type="submit" className="lab-send" aria-label="Send"><Icon name="send" size="1.05em" /></button>
             </form>
             {listen.error && <p className="lab-note">{listen.error}</p>}
-            <p className="lab-note">Voice uses your browser's speech recognition and voice. Answers here come from the website's built-in assistant; sign in for full AI answers.</p>
+            <p className="lab-note">{signedIn ? 'Questions are answered by your Azarvis AI (the same as Chat); commands move the robot.' : "Voice uses your browser's speech recognition and voice. Answers here come from the website's built-in assistant; sign in for full AI answers."}</p>
           </section>
         </aside>
       </div>

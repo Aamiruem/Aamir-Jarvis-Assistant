@@ -141,7 +141,7 @@
 .va-mic.on { background: var(--danger); color: #fff; border: none; animation: va-pulse 1.4s infinite; }
 
 /* lead scoring */
-.va-qual { border-left: 1px solid var(--border); padding-left: 16px; display: flex; flex-direction: column; gap: 12px; }
+.va-qual { border-left: 1px solid var(--border); padding-left: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .va-qual h4 { margin: 0; display: flex; align-items: center; gap: 7px; font-size: 14px; }
 .va-gauge { position: relative; border-radius: 16px; padding: 16px; text-align: center; border: 1px solid hsl(var(--hue) 85% 55% / 0.4); background: linear-gradient(160deg, hsl(var(--hue) 85% 55% / 0.2), hsl(var(--hue) 85% 45% / 0.04)); }
 .va-gauge strong { font-family: 'Space Grotesk', Inter, sans-serif; font-size: 44px; font-weight: 700; line-height: 1; color: hsl(var(--hue) 90% 68%); }
@@ -203,3 +203,111 @@
   .va-art svg * { animation: none !important; }
   .va-cap:hover { transform: none; }
 }
+
+/* ===================== Flags, volume, live display, destinations (2026-11-21) ===================== */
+.va-flagimg { display: inline-block; flex: none; border-radius: 3px; object-fit: cover; box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.18); vertical-align: middle; }
+.va-flags { gap: 7px; }
+.va .va-flag { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px 5px 6px; cursor: pointer; color: var(--text); font: 600 13px/1.2 Inter, system-ui, sans-serif; transition: border-color 0.15s, background 0.15s, transform 0.1s; }
+.va .va-flag:hover { border-color: var(--accent); }
+.va .va-flag.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--panel-2)); }
+.va .va-flag:active { transform: scale(0.97); }
+
+/* volume: Normal / Loud / DJ max */
+.va-call-head { flex-wrap: wrap; gap: 8px 12px; }
+.va-volume { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--border); color: var(--muted); }
+.va-volume > .icon { margin: 0 4px 0 6px; }
+.va-volume button { height: 28px; padding: 0 11px; border: 0; border-radius: 999px; background: none; cursor: pointer; font: 700 12.5px/1 Inter, system-ui, sans-serif; color: var(--muted); }
+.va-volume button.on { color: #fff; background: linear-gradient(120deg, #0891b2, #4f46e5); }
+.va-volume button:last-child.on { background: linear-gradient(120deg, #db2777, #7c3aed); box-shadow: 0 0 14px rgba(219, 39, 119, 0.45); }
+.va-volume-note { display: flex; gap: 6px; align-items: flex-start; margin: 0 0 10px; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+.va-volume-note .icon { flex: none; margin-top: 2px; color: var(--warn); }
+
+/* the agent display: what it is doing right now */
+.va-screen {
+  position: relative; display: flex; align-items: center; gap: 14px; margin-bottom: 12px; padding: 14px 16px; border-radius: 16px; overflow: hidden;
+  color: #e2e8f0; background: radial-gradient(80% 140% at 0% 0%, rgba(34, 211, 238, 0.18), transparent 60%), linear-gradient(135deg, #0b1530, #1e1b4b);
+  border: 1px solid rgba(103, 232, 249, 0.3); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.va-screen::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px); pointer-events: none; }
+.va-screen-text { flex: 1; min-width: 0; }
+.va-screen-text small { display: block; font: 700 11px/1 Inter, system-ui, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; color: #67e8f9; }
+.va-screen-text strong { display: block; margin-top: 5px; font: 600 15.5px/1.35 Inter, system-ui, sans-serif; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.va-screen-flag { flex: none; }
+.va-screen-wave { display: inline-flex; align-items: center; gap: 3px; height: 30px; flex: none; }
+.va-screen-wave i { width: 4px; height: 8px; border-radius: 2px; background: #67e8f9; opacity: 0.5; }
+.va-screen.is-speaking .va-screen-wave i { animation: va-bar 0.5s ease-in-out infinite alternate; opacity: 1; background: #a78bfa; }
+.va-screen.is-listening .va-screen-wave i { animation: va-bar 0.9s ease-in-out infinite alternate; opacity: 1; background: #34d399; }
+.va-screen-wave i:nth-child(2) { animation-delay: 0.12s !important; } .va-screen-wave i:nth-child(3) { animation-delay: 0.24s !important; }
+.va-screen-wave i:nth-child(4) { animation-delay: 0.08s !important; } .va-screen-wave i:nth-child(5) { animation-delay: 0.3s !important; }
+@keyframes va-bar { from { height: 6px; } to { height: 28px; } }
+
+/* live activity feed */
+.va-act-title { margin-top: 16px !important; }
+.va-activity { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; max-height: 300px; overflow-y: auto; }
+.va-activity li { display: flex; align-items: flex-start; gap: 8px; padding: 7px 9px; border-radius: 10px; font-size: 13px; line-height: 1.4; color: var(--muted); background: var(--panel-2); }
+.va-activity li .icon { flex: none; margin-top: 2px; color: var(--accent); }
+.va-activity li.now { color: var(--text); background: color-mix(in srgb, var(--accent) 12%, var(--panel-2)); box-shadow: inset 3px 0 0 var(--accent); animation: va-in 0.35s ease; }
+.va-activity-empty { font-style: italic; }
+@keyframes va-in { from { opacity: 0; transform: translateY(-6px); } }
+
+/* study destinations explorer */
+.va-dest { padding: 18px; border-radius: 20px; background: var(--panel-solid); border: 1px solid var(--border); }
+.va-dest-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-bottom: 14px; }
+.va-dest-head h3 { margin: 0; font: 700 20px/1.2 'Space Grotesk', Inter, sans-serif; }
+.va-dest-head h3 small { margin-left: 8px; font: 500 13px Inter, sans-serif; color: var(--muted); }
+.va-regions { display: flex; flex-wrap: wrap; gap: 6px; }
+.va-regions button { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 999px; cursor: pointer; font: 600 13px/1 Inter, system-ui, sans-serif; color: var(--text); background: var(--panel-2); border: 1px solid var(--border); }
+.va-regions button span { padding: 2px 6px; border-radius: 999px; font-size: 11px; background: var(--border); }
+.va-regions button.on { color: #fff; border-color: transparent; background: linear-gradient(120deg, #0891b2, #4f46e5); }
+.va-regions button.on span { background: rgba(255, 255, 255, 0.25); }
+.va-dest-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 16px; align-items: start; }
+.va-dest-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
+.va-dest-card { display: grid; justify-items: start; gap: 6px; padding: 12px; border-radius: 14px; cursor: pointer; text-align: left; color: var(--text); background: var(--panel-2); border: 1px solid var(--border); transition: border-color 0.15s, transform 0.12s, box-shadow 0.15s; }
+.va-dest-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.va-dest-card.on { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
+.va-dest-card strong { font-size: 14px; }
+.va-dest-card small { font-size: 12px; color: var(--muted); line-height: 1.3; }
+.va-dest-detail { position: sticky; top: 12px; display: grid; gap: 12px; padding: 16px; border-radius: 18px; background: var(--panel-2); border: 1px solid var(--border); }
+.va-dest-detail header { display: flex; align-items: center; gap: 14px; }
+.va-dest-detail header .va-flagimg { border-radius: 6px; }
+.va-dest-detail h4 { margin: 0; font: 800 22px/1.15 'Space Grotesk', Inter, sans-serif; }
+.va-dest-detail header span { font-size: 13px; color: var(--muted); }
+.va-dest-detail dl { margin: 0; display: grid; gap: 8px; }
+.va-dest-detail dl > div { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.va-dest-detail dl > div:last-child { border-bottom: 0; padding-bottom: 0; }
+.va-dest-detail dt { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.va-dest-detail dt .icon { color: var(--accent); flex: none; }
+.va-dest-detail dd { margin: 0; font-size: 14px; line-height: 1.45; color: var(--text); }
+.va-dest-ask { justify-content: center; }
+.va-dest-note { margin: 0; font-size: 12px; line-height: 1.45; color: var(--muted); }
+@media (max-width: 960px) {
+  .va-dest-body { grid-template-columns: minmax(0, 1fr); }
+  .va-dest-detail { position: static; }
+}
+@media (max-width: 480px) {
+  .va-dest-detail dl > div { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .va-dest-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .va-screen-wave i, .va-activity li.now { animation: none !important; }
+}
+
+/* Country dropdowns: "Student from" (every country, India first) and "Choose a destination" */
+.va .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.va-select {
+  height: 38px; max-width: 100%; padding: 0 34px 0 12px; border-radius: 10px; cursor: pointer;
+  font: 600 13.5px/1 Inter, system-ui, sans-serif; color: var(--text); background-color: var(--panel-2); border: 1px solid var(--border);
+  appearance: none; -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 17px) 16px, calc(100% - 12px) 16px; background-size: 5px 5px; background-repeat: no-repeat;
+}
+.va-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
+.va-home { display: grid; gap: 6px; margin: 4px 0 10px; font-size: 13px; color: var(--muted); }
+.va-home > span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+.va-home-pick { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.va-home { min-width: 0; }
+.va-home-pick .va-select { width: 100%; }
+.va-home-pick .va-select { flex: 1; min-width: 0; }
+.va-dest-pick .va-select { min-width: 200px; }
+.va-dest-tip { display: flex; gap: 7px; align-items: flex-start; margin: 0; padding: 10px 12px; border-radius: 12px; font-size: 13.5px; line-height: 1.45; color: var(--text); background: color-mix(in srgb, var(--accent) 10%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); }
+.va-dest-tip .icon { flex: none; margin-top: 2px; color: var(--accent); }

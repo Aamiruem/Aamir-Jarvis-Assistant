@@ -1,8 +1,10 @@
 // The Jarvis voice: Microsoft neural voices made by the Azarvis AI service (POST /api/ai/tts),
 // played through Web Audio so it can be LOUDER than the browser's 100% and clearer:
 //
-//   mp3 → gain (loudness boost, up to 2.5×) → presence EQ (+ clarity) → low shelf (depth)
+//   mp3 → gain (loudness boost, up to 4×) → presence EQ (+ clarity) → low shelf (depth)
 //       → compressor/limiter (no distortion when boosted) → speakers
+// Above 2.5× ("DJ max") the limiter becomes a brick wall just under 0 dB with extra bass and
+// presence: the voice comes out as loud as the speakers allow, like a mastered DJ track.
 //
 // Used when the AI service is reachable (signed in, Azarvis running on this PC). Otherwise every
 // caller falls back to the browser's own voice (speechSynthesis), so speech always works.
@@ -35,7 +37,7 @@ function audio() {
   limiter.attack.value = 0.003;
   limiter.release.value = 0.2;
   gain.connect(presence).connect(depth).connect(limiter).connect(ctx.destination);
-  chain = { gain, presence, depth };
+  chain = { gain, presence, depth, limiter };
   return ctx;
 }
 
@@ -43,9 +45,15 @@ function audio() {
 function tune() {
   if (!chain) return;
   const { boost, clarity, depth } = readVoiceExtras();
+  const dj = boost > 2.5;
   chain.gain.gain.value = boost;
-  chain.presence.gain.value = clarity ? 4 : 0;
-  chain.depth.gain.value = depth ? 3 : 0;
+  chain.presence.gain.value = dj ? 6 : clarity ? 4 : 0;
+  chain.depth.gain.value = dj ? 7 : depth ? 3 : 0;
+  // Normal: gentle limiting. DJ max: brick wall at -1.5 dB, so the boosted voice is loud and dense, never clipped.
+  chain.limiter.threshold.value = dj ? -1.5 : -14;
+  chain.limiter.knee.value = dj ? 1 : 10;
+  chain.limiter.ratio.value = dj ? 20 : 8;
+  chain.limiter.attack.value = dj ? 0.001 : 0.003;
 }
 
 /** Is the neural voice reachable? Checked once per page (and again after a failure). */

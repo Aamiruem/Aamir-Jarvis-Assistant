@@ -104,10 +104,11 @@ export function voiceOptions(voices, lang = 'en-IN') {
 
 // ---------- The neural "Jarvis" voice (neuralVoice.js) ----------
 // engine: "auto" = neural when Azarvis runs on this PC, else the browser voice; "browser" = always the browser.
-// boost: loudness, 1 = normal … 2.5 = much louder (a limiter keeps it clean). clarity / depth: EQ.
+// boost: loudness, 1 = normal … 2.5 = much louder … 4 = "DJ max" (a brick-wall limiter keeps it clean).
+// clarity / depth: EQ.
 const EXTRAS_KEY = 'azarvis-voice-neural';
 export const DEFAULT_EXTRAS = { engine: 'auto', neuralVoice: 'en-GB-RyanNeural', neuralRate: -4, neuralPitch: -6, boost: 1.8, clarity: true, depth: true };
-export const EXTRA_LIMITS = { neuralRate: { min: -40, max: 50 }, neuralPitch: { min: -25, max: 25 }, boost: { min: 1, max: 2.5 } };
+export const EXTRA_LIMITS = { neuralRate: { min: -40, max: 50 }, neuralPitch: { min: -25, max: 25 }, boost: { min: 1, max: 4 } };
 
 /** Ready-made voice styles: one tap sets the voice, speed, pitch, loudness and EQ. */
 export const VOICE_STYLES = [

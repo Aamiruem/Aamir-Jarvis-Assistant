@@ -65,6 +65,7 @@ const GamesPanel = lazy(() => import('./components/GamesPanel.jsx'));
 const CommandCenter = lazy(() => import('./components/CommandCenter.jsx'));
 const SecurityCenter = lazy(() => import('./components/SecurityCenter.jsx'));
 const CameraLab = lazy(() => import('./components/CameraLab.jsx'));
+const RobotLab = lazy(() => import('./robotLab/RobotLab.jsx'));
 const AgentsPanel = lazy(() => import('./components/AgentsPanel.jsx'));
 
 // Each tab has its own color (--hue), used for its icon in the top bar and the sidebar.
@@ -82,6 +83,7 @@ const TABS = [
   { id: 'device', label: 'Device', icon: 'cpu', hue: 205, isNew: true },
   { id: 'security', label: 'Security Center', icon: 'key', hue: 150, isNew: true },
   { id: 'camera', label: 'Camera Lab', icon: 'camera', hue: 190, isNew: true },
+  { id: 'robot', label: 'Robot Lab', icon: 'cpu', hue: 200, isNew: true },
   { id: 'agents', label: 'Agents', icon: 'target', hue: 190, isNew: true },
   { id: 'files', label: 'Files', icon: 'folder', hue: 40 },
   { id: 'games', label: 'Brain Gym', icon: 'sparkles', hue: 300, isNew: true },
@@ -96,17 +98,17 @@ const NAV_GROUPS = [
   ['Overview', ['home', 'command', 'chat']],
   ['Work', ['tasks', 'notes', 'memory', 'files', 'contacts']],
   ['Create & automate', ['agents', 'automate', 'studio', 'mllab']],
-  ['AI tools', ['vision', 'camera', 'knowledge', 'games']],
+  ['AI tools', ['robot', 'vision', 'camera', 'knowledge', 'games']],
   ['System', ['device', 'security', 'account', 'admin']],
 ];
 // One distinct colour per sidebar icon (hue, 0-360), so each screen is easy to spot.
 const NAV_HUES = {
   home: 212, command: 190, chat: 172, tasks: 36, notes: 48, memory: 330, contacts: 282, automate: 300,
   studio: 88, mllab: 150, vision: 262, camera: 196, knowledge: 18, games: 318, device: 222, security: 142, admin: 0,
-  agents: 186, files: 40, account: 228,
+  agents: 186, files: 40, account: 228, robot: 205,
 };
 // Only the newest screens carry a "New" tag, so it still means something.
-const NEWEST = new Set(['agents', 'security', 'camera']);
+const NEWEST = new Set(['agents', 'robot', 'camera']);
 // The sidebar's name for a screen when it differs from the tab's own label.
 const NAV_LABELS = { account: 'Settings' };
 // The sidebar is the one place to switch screens (Account is the avatar at its bottom).
@@ -627,6 +629,7 @@ export default function App() {
             {tab === 'device' && <DevicePanel />}
             {tab === 'security' && <SecurityCenter user={user} onOpenTab={setTab} />}
             {tab === 'camera' && <CameraLab />}
+            {tab === 'robot' && <RobotLab signedIn />}
             {tab === 'agents' && <AgentsPanel />}
             {tab === 'files' && <KnowledgePanel />}
             {tab === 'studio' && <StudioPanel onAsk={(text) => ask(text, true)} />}

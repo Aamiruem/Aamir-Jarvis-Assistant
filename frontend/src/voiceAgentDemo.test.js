@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { advance, answerFaq, CAPABILITIES, COUNTRIES, detectBudget, detectCountry, detectIntake, isNo, isYes, qualify, startConversation } from './voiceAgentDemo.js';
+import { advance, answerFaq, CAPABILITIES, COUNTRIES, detectBudget, detectCountry, detectHome, detectIntake, homeCountries, INDIA_NEIGHBOURS, isNo, isYes, qualify, REGIONS, startConversation } from './voiceAgentDemo.js';
 
 describe('entity detection', () => {
   it('detects countries by name and alias', () => {
@@ -99,5 +99,67 @@ describe('conversation flow', () => {
       expect(c.title).toBeTruthy();
       expect(c.desc.length).toBeGreaterThan(10);
     }
+  });
+});
+
+describe('25 countries, details and the live activity', () => {
+  it('knows Asian, European, Oceania and Middle East destinations', () => {
+    expect(COUNTRIES.length).toBe(29);
+    expect(detectCountry('I want Japan')?.id).toBe('japan');
+    expect(detectCountry('thinking of Dubai')?.id).toBe('uae');
+    expect(detectCountry('masters in Amsterdam')?.id).toBe('netherlands');
+    expect(detectCountry('South Korea maybe')?.id).toBe('korea');
+    expect(detectCountry('new zealand')?.id).toBe('newzealand');
+    expect(detectCountry('somewhere in Austria')?.id).toBe('austria');
+    for (const c of COUNTRIES) for (const f of ['iso', 'region', 'tuition', 'living', 'intake', 'visa', 'work', 'postStudy', 'english', 'top']) expect(c[f], `${c.name}.${f}`).toBeTruthy();
+  });
+  it('answers work rights and living costs for the chosen country', () => {
+    const japan = COUNTRIES.find((c) => c.id === 'japan');
+    expect(answerFaq('can I work part time?', { country: japan })).toMatch(/28 h\/week/);
+    expect(answerFaq('what about cost of living', { country: japan })).toMatch(/¥1.2M/);
+  });
+  it('records what the agent did on every turn', () => {
+    let s = startConversation();
+    expect(s.activity.length).toBeGreaterThan(0);
+    s = advance(s, 'Yes');
+    s = advance(s, 'I want to study in Singapore');
+    const texts = s.activity.map((a) => a.text).join(' | ');
+    expect(texts).toMatch(/Heard: “I want to study in Singapore”/);
+    expect(texts).toMatch(/Country: Singapore · Student’s Pass|Country: Singapore · Student's Pass/);
+    expect(texts).toMatch(/Lead score 0 → 30/);
+    expect(texts).toMatch(/Asking about the budget/);
+  });
+});
+
+describe('India first: South Asia destinations and where the student is from', () => {
+  it('has India and its neighbours as destinations, South Asia shown first', () => {
+    expect(REGIONS[0]).toBe('South Asia');
+    expect(COUNTRIES.filter((c) => c.region === 'South Asia').map((c) => c.id)).toEqual(['india', 'nepal', 'bangladesh', 'srilanka']);
+    expect(detectCountry('MBBS in Nepal')?.id).toBe('nepal');
+    expect(detectCountry('I want to study in India')?.id).toBe('india');
+  });
+  it('does not take "from India" as the destination', () => {
+    expect(detectCountry("I'm from India and I want to go to Canada")?.id).toBe('canada');
+    expect(detectCountry('from India')).toBeNull();
+  });
+  it('lists every country with India first and its neighbours next', () => {
+    const { india, neighbours, others } = homeCountries();
+    expect(india[0]).toEqual({ iso: 'in', name: 'India' });
+    expect(neighbours.map((c) => c.iso)).toEqual(INDIA_NEIGHBOURS);
+    expect(neighbours.map((c) => c.name)).toContain('Nepal');
+    expect(others.length).toBeGreaterThan(200);
+    expect(others.some((c) => c.iso === 'in' || c.iso === 'np')).toBe(false);
+    expect(others[0].name.localeCompare(others[others.length - 1].name)).toBeLessThan(0);
+  });
+  it('hears where the student is calling from', () => {
+    expect(detectHome("Hi, I'm from Nepal")?.iso).toBe('np');
+    expect(detectHome('calling from the United Arab Emirates')?.iso).toBe('ae');
+    expect(detectHome('I want Canada')).toBeNull();
+    let s = startConversation({ iso: 'in', name: 'India' });
+    expect(s.lead.home.name).toBe('India');
+    expect(s.activity.map((a) => a.text)).toContain('Student calling from India');
+    s = advance(advance(s, 'Yes'), "I'm from Bangladesh, I want to study in the UK");
+    expect(s.lead.home.iso).toBe('bd');
+    expect(s.lead.country.id).toBe('uk');
   });
 });

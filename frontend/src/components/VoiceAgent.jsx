@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Icon } from '../icons.jsx';
 import { useSpeech } from '../useSpeech.js';
-import { advance, CAPABILITIES, COUNTRIES, qualify, startConversation } from '../voiceAgentDemo.js';
+import { advance, CAPABILITIES, COUNTRIES, homeCountries, qualify, REGIONS, startConversation } from '../voiceAgentDemo.js';
+import { flagUrl } from '../flags.js';
+import { neuralAvailable } from '../neuralVoice.js';
+import { readVoiceExtras, saveVoiceExtras } from '../voiceSettings.js';
 import { ArtPicture } from '../ui.jsx';
 import { reach } from '../artActions.js';
 import './VoiceAgent.css';
@@ -20,6 +23,37 @@ const CAP_DEMO = {
 };
 
 const TIER_LABEL = { hot: 'Hot lead', warm: 'Warm lead', cold: 'Cold lead' };
+// Loudness presets (the neural voice's boost; see neuralVoice.js). DJ max = brick-wall limited, as loud as it gets.
+const VOLUMES = [['Normal', 1.4], ['Loud', 2.5], ['DJ max', 4]];
+const volumeName = (boost) => (boost > 2.5 ? 'DJ max' : boost >= 2 ? 'Loud' : 'Normal');
+
+/** A country's flag as a real image (emoji flags show as letters on Windows). */
+function Flag({ c, w = 22 }) {
+  const url = flagUrl(c.iso);
+  return url ? <img className="va-flagimg" src={url} alt="" width={w} height={Math.round(w * 0.75)} loading="lazy" /> : null;
+}
+
+// Destinations in display order: South Asia (India first) → North America → Europe → …
+const ORDERED = REGIONS.flatMap((r) => COUNTRIES.filter((c) => c.region === r));
+const INDIA = { iso: 'in', name: 'India' };
+
+/** Every country for "Student from": India, then India's neighbours, then the rest A–Z. */
+function HomeSelect({ value, onChange, id }) {
+  const { india, neighbours, others } = homeCountries();
+  const all = [...india, ...neighbours, ...others];
+  return (
+    <select id={id} className="va-select" value={value?.iso || 'in'} onChange={(e) => onChange(all.find((c) => c.iso === e.target.value))}>
+      <optgroup label="India">{india.map((c) => <option key={c.iso} value={c.iso}>{c.name}</option>)}</optgroup>
+      <optgroup label="India's neighbours">{neighbours.map((c) => <option key={c.iso} value={c.iso}>{c.name}</option>)}</optgroup>
+      <optgroup label="All countries">{others.map((c) => <option key={c.iso} value={c.iso}>{c.name}</option>)}</optgroup>
+    </select>
+  );
+}
+
+const DETAIL_ROWS = [
+  ['chart', 'Tuition', 'tuition'], ['house', 'Living costs', 'living'], ['calendar', 'Intakes', 'intake'], ['key', 'Visa', 'visa'],
+  ['briefcase', 'Work while studying', 'work'], ['rocket', 'After graduating', 'postStudy'], ['book', 'English requirement', 'english'], ['star', 'Top universities', 'top'],
+];
 const TIER_HUE = { hot: 8, warm: 38, cold: 205 };
 
 export default function VoiceAgent({ onClose, onAsk, embedded = false }) {
@@ -34,7 +68,26 @@ export default function VoiceAgent({ onClose, onAsk, embedded = false }) {
     if (text && text.trim()) handleUser(text.trim());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const { supported: micSupported, listening, interim, start, stop, speak, stopSpeaking } = useSpeech({ onFinal, lang: 'en-IN' });
+  const { supported: micSupported, listening, speaking, interim, start, stop, speak, stopSpeaking } = useSpeech({ onFinal, lang: 'en-IN' });
+  const [boost, setBoost] = useState(() => readVoiceExtras().boost);
+  const [neural, setNeural] = useState(null); // can the voice go above 100%? (the neural voice on this PC)
+  useEffect(() => { neuralAvailable().then(setNeural).catch(() => setNeural(false)); }, []);
+  const setVolume = (b) => { saveVoiceExtras({ boost: b }); setBoost(b); };
+  const [region, setRegion] = useState('All');
+  const [picked, setPicked] = useState('india');
+  const [home, setHomeState] = useState(INDIA);
+  const homeRef = useRef(INDIA);
+  homeRef.current = home;
+  // A new "Student from": remembered for the next call, and noted in the call that is running.
+  const setHome = (c) => {
+    if (!c) return;
+    setHomeState(c);
+    setConvo((cur) => (cur && cur.lead.home?.iso !== c.iso
+      ? { ...cur, lead: { ...cur.lead, home: c }, activity: [...(cur.activity || []), { icon: 'house', text: `Student calling from ${c.name}` }].slice(-30) }
+      : cur));
+  };
+  const pickedCountry = COUNTRIES.find((c) => c.id === picked) || COUNTRIES[0];
+  const pick = (id) => { setPicked(id); reach('.va-dest'); };
 
   const say = useCallback((text) => { if (voiceOut) speak(text); }, [voiceOut, speak]);
 
@@ -45,7 +98,7 @@ export default function VoiceAgent({ onClose, onAsk, embedded = false }) {
   useEffect(() => () => stopSpeaking(), [stopSpeaking]);
 
   const startCall = () => {
-    const s = startConversation();
+    const s = startConversation(homeRef.current);
     setConvo(s);
     say(s.say);
   };
@@ -60,7 +113,7 @@ export default function VoiceAgent({ onClose, onAsk, embedded = false }) {
     const cur = convoRef.current;
     if (!cur) {
       // Tapped a capability before starting: start the call, then feed the line.
-      const s = startConversation();
+      const s = startConversation(homeRef.current);
       const next = advance(s, text);
       setConvo(next);
       say(next.say);
@@ -85,12 +138,23 @@ export default function VoiceAgent({ onClose, onAsk, embedded = false }) {
   const runCapability = (id) => {
     stopSpeaking();
     let cur = convoRef.current;
-    if (!cur || cur.expect === 'end') cur = startConversation();
+    if (!cur || cur.expect === 'end') cur = startConversation(homeRef.current);
     if (cur.step === 'greet') cur = advance(cur, 'Yes'); // connect the call first
     const next = advance(cur, CAP_DEMO[id] || 'Tell me more.');
     setConvo(next);
     say(next.say);
     if (next.expect === 'end') stop();
+  };
+
+  // Put one student line into the call (starting and connecting it first if needed).
+  const runLine = (line) => {
+    stopSpeaking();
+    let cur = convoRef.current;
+    if (!cur || cur.expect === 'end') cur = startConversation(homeRef.current);
+    if (cur.step === 'greet') cur = advance(cur, 'Yes');
+    const next = advance(cur, line);
+    setConvo(next);
+    say(next.say);
   };
 
   const q = convo?.qualified || qualify({});
@@ -101,7 +165,7 @@ export default function VoiceAgent({ onClose, onAsk, embedded = false }) {
     if (!convo) return [];
     if (convo.expect === 'end') return [];
     if (convo.expect === 'yesno') return ['Yes, please', 'Not right now'];
-    if (convo.step === 'country') return COUNTRIES.map((c) => `${c.flag} ${c.name}`);
+    if (convo.step === 'country') return ['USA', 'Canada', 'UK', 'Australia', 'Germany', 'Ireland', 'Japan', 'Singapore', 'UAE (Dubai)', 'New Zealand'];
     if (convo.step === 'budget') return ['15 lakh', '25 lakh', '30k dollars'];
     if (convo.step === 'intake') return ['Fall', 'Spring', 'Summer'];
     return ['What visa do I need?', 'How much are the fees?'];
@@ -117,8 +181,12 @@ export default function VoiceAgent({ onClose, onAsk, embedded = false }) {
             <span className="va-kicker"><Icon name="phone" size="1em" /> AI Voice Agent</span>
             <h1>An AI agent that <span className="va-grad">talks like a human</span> and calls every lead in seconds</h1>
             <p>Built for study-abroad, immigration and visa consultancies. It qualifies leads, answers questions 24/7, books counselling and follows up — in every language.</p>
-            <div className="va-flags">
-              {COUNTRIES.map((c) => <span key={c.id} className="va-flag" title={c.name}>{c.flag} {c.name}</span>)}
+            <div className="va-flags" role="list" aria-label={`${COUNTRIES.length} study destinations`}>
+              {ORDERED.map((c) => (
+                <button key={c.id} type="button" role="listitem" className={`va-flag ${picked === c.id ? 'on' : ''}`} title={`${c.name}: see the details`} onClick={() => pick(c.id)}>
+                  <Flag c={c} /> {c.name}
+                </button>
+              ))}
             </div>
             <div className="va-hero-actions">
               <button className="va-start" onClick={convo ? endCall : startCall}>
@@ -139,7 +207,24 @@ export default function VoiceAgent({ onClose, onAsk, embedded = false }) {
           <div className="va-call-main">
             <div className="va-call-head">
               <span className={`va-live ${convo && convo.expect !== 'end' ? 'on' : ''}`}><i /> {convo ? (convo.expect === 'end' ? 'Call ended' : listening ? 'Listening…' : 'On call') : 'Ready to call'}</span>
+              <div className="va-volume" role="group" aria-label="Agent voice volume">
+                <Icon name="volume" size="1em" />
+                {VOLUMES.map(([label, b]) => (
+                  <button key={label} type="button" className={volumeName(boost) === label ? 'on' : ''} onClick={() => setVolume(b)} aria-pressed={volumeName(boost) === label}>{label}</button>
+                ))}
+              </div>
               <label className="va-toggle"><input type="checkbox" checked={voiceOut} onChange={() => setVoiceOut((v) => !v)} /> Speak aloud</label>
+            </div>
+            {neural === false && boost > 1.4 && (
+              <p className="va-volume-note"><Icon name="alert" size="0.95em" /> Your browser's own voice is already at its 100% maximum here, so turn up your device volume too. Loud and DJ max boost the neural voice, which plays when Azarvis runs on your PC.</p>
+            )}
+            <div className={`va-screen ${speaking ? 'is-speaking' : listening ? 'is-listening' : ''}`} aria-live="polite">
+              <span className="va-screen-wave" aria-hidden="true"><i /><i /><i /><i /><i /></span>
+              <div className="va-screen-text">
+                <small>{!convo ? 'Agent display' : speaking ? 'Speaking' : listening ? 'Listening' : convo.expect === 'end' ? 'Call finished' : 'Working'}</small>
+                <strong>{!convo ? 'Waiting for a lead · press Start a live call' : convo.activity?.length ? convo.activity[convo.activity.length - 1].text : 'Connecting…'}</strong>
+              </div>
+              {lead.country && <span className="va-screen-flag"><Flag c={lead.country} w={34} /></span>}
             </div>
             <div className="va-log" ref={logRef}>
               {!convo && (
@@ -187,14 +272,85 @@ export default function VoiceAgent({ onClose, onAsk, embedded = false }) {
               <strong>{q.score}</strong><small>/ 100</small>
               <span className="va-tier">{TIER_LABEL[q.tier]}</span>
             </div>
+            <label className="va-home" htmlFor="va-home">
+              <span><Icon name="house" size="1em" /> Student from</span>
+              <span className="va-home-pick">
+                {home && <Flag c={home} w={20} />}
+                <HomeSelect id="va-home" value={lead.home || home} onChange={setHome} />
+              </span>
+            </label>
             <ul className="va-fields">
-              <li className={lead.country ? 'ok' : ''}><Icon name="globe" size="1em" /> Country <b>{lead.country ? `${lead.country.flag} ${lead.country.name}` : '—'}</b></li>
+              <li className={lead.country ? 'ok' : ''}><Icon name="globe" size="1em" /> Country <b>{lead.country ? <><Flag c={lead.country} w={18} /> {lead.country.name}</> : '—'}</b></li>
               <li className={lead.budget ? 'ok' : ''}><Icon name="chart" size="1em" /> Budget <b>{lead.budget ? lead.budget.label : '—'}</b></li>
               <li className={lead.intake ? 'ok' : ''}><Icon name="calendar" size="1em" /> Intake <b>{lead.intake ? lead.intake[0].toUpperCase() + lead.intake.slice(1) : '—'}</b></li>
               <li className={lead.booked ? 'ok' : ''}><Icon name="check" size="1em" /> Counselling <b>{lead.booked ? 'Booked' : '—'}</b></li>
             </ul>
             <p className="va-crm"><Icon name="briefcase" size="0.95em" /> Auto-synced to your CRM</p>
+            <h4 className="va-act-title"><Icon name="pulse" size="1.1em" /> Live activity</h4>
+            <ol className="va-activity" aria-label="What the agent is doing">
+              {(convo?.activity || []).slice(-8).reverse().map((a, i) => (
+                <li key={`${convo.activity.length}-${i}`} className={i === 0 ? 'now' : ''}><Icon name={a.icon} size="0.95em" /> <span>{a.text}</span></li>
+              ))}
+              {!convo && <li className="va-activity-empty">Every step the agent takes shows here during the call.</li>}
+            </ol>
           </aside>
+        </section>
+
+        {/* ---- study destinations: every country with its details ---- */}
+        <section className="va-dest" aria-labelledby="va-dest-title">
+          <div className="va-dest-head">
+            <h3 id="va-dest-title">Study destinations <small>{COUNTRIES.length} countries · tap one for the details</small></h3>
+            <label className="va-dest-pick">
+              <span className="sr-only">Choose a destination</span>
+              <select className="va-select" value={picked} onChange={(e) => { setPicked(e.target.value); setRegion('All'); }} aria-label="Choose a destination">
+                {REGIONS.map((r) => (
+                  <optgroup key={r} label={r}>
+                    {COUNTRIES.filter((c) => c.region === r).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </optgroup>
+                ))}
+              </select>
+            </label>
+            <div className="va-regions" role="tablist" aria-label="Regions">
+              {['All', ...REGIONS].map((r) => (
+                <button key={r} type="button" role="tab" aria-selected={region === r} className={region === r ? 'on' : ''} onClick={() => setRegion(r)}>
+                  {r} <span>{r === 'All' ? COUNTRIES.length : COUNTRIES.filter((c) => c.region === r).length}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="va-dest-body">
+            <div className="va-dest-grid">
+              {ORDERED.filter((c) => region === 'All' || c.region === region).map((c) => (
+                <button key={c.id} type="button" className={`va-dest-card ${picked === c.id ? 'on' : ''}`} onClick={() => setPicked(c.id)} aria-pressed={picked === c.id}>
+                  <Flag c={c} w={40} />
+                  <strong>{c.name}</strong>
+                  <small>{c.tuition}</small>
+                </button>
+              ))}
+            </div>
+            <article className="va-dest-detail" aria-live="polite">
+              <header>
+                <Flag c={pickedCountry} w={64} />
+                <div>
+                  <h4>{pickedCountry.name}</h4>
+                  <span>{pickedCountry.region}</span>
+                </div>
+              </header>
+              <dl>
+                {DETAIL_ROWS.map(([icon, label, key]) => (
+                  <div key={key}>
+                    <dt><Icon name={icon} size="1em" /> {label}</dt>
+                    <dd>{pickedCountry[key]}</dd>
+                  </div>
+                ))}
+              </dl>
+              {pickedCountry.note && <p className="va-dest-tip"><Icon name="sparkles" size="0.95em" /> {pickedCountry.note}</p>}
+              <button type="button" className="va-start va-dest-ask" onClick={() => { reach('.va-call'); runLine(`I want to study in ${pickedCountry.name}`); }}>
+                <Icon name="phone" size="1em" /> Ask the agent about {pickedCountry.name}
+              </button>
+              <p className="va-dest-note">Approximate figures for international students; fees and visa rules change. A counsellor confirms the current details before you apply.</p>
+            </article>
+          </div>
         </section>
 
         {/* ---- capabilities (every button runs live in the call) ---- */}
