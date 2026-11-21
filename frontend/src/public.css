@@ -1235,3 +1235,102 @@ body:has(.pub) { background: #080b14; }
 @media (max-width: 860px) {
   .pub .auth-page .login { padding: 24px 18px 18px; }
 }
+
+/* ===================== Website navbar, full width (2026-11-21) =====================
+   Logo + name at the far left, "Get started" at the far right at every width (a small edge margin
+   only), the links centred in a soft pill with the current one raised, a gradient main button. */
+.snav { --snav-h: 72px; }
+.snav-inner { width: 100%; max-width: none; margin: 0; padding-inline: clamp(14px, 2.2vw, 36px); gap: 14px; }
+.snav-brand { margin-right: 0; padding: 4px 6px 4px 2px; }
+.snav-brand:hover .az-brand-logo { transform: rotate(-6deg) scale(1.04); }
+.snav-brand .az-brand-logo { transition: transform 0.25s ease; }
+
+.snav-links {
+  flex: 0 0 auto; justify-content: center; align-self: center; height: 46px; padding: 4px; gap: 2px;
+  margin-inline: auto; border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-2, var(--panel-2)) 75%, transparent); border: 1px solid var(--border);
+}
+.snav-links button { height: 100%; padding: 0 16px; border-radius: 999px; font-weight: 600; font-size: 14.5px; transition: color 0.15s, background 0.15s, box-shadow 0.15s; }
+.snav-links button::after { display: none; }
+.snav-links button:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
+.snav-links button.is-active { color: var(--text); background: var(--surface, var(--panel)); box-shadow: 0 1px 3px rgba(15, 23, 42, 0.14), 0 0 0 1px var(--border); }
+
+.snav-actions { gap: 8px; }
+.snav-btn { height: 44px; }
+.snav .snav-btn--filled {
+  padding: 0 20px 0 22px; color: #fff; border: 0;
+  background: linear-gradient(120deg, #0891b2 0%, #4f46e5 55%, #7c3aed 100%);
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.32);
+}
+.snav .snav-btn--filled .icon { transition: transform 0.15s; }
+.snav .snav-btn--filled:hover { filter: brightness(1.08); background: linear-gradient(120deg, #0891b2 0%, #4f46e5 55%, #7c3aed 100%); box-shadow: 0 8px 22px rgba(79, 70, 229, 0.42); }
+.snav .snav-btn--filled:hover .icon { transform: translateX(3px); }
+.snav-drawer-cta .snav-btn--filled { justify-content: center; }
+
+@media (max-width: 1439px) {
+  .snav-links button { padding: 0 12px; font-size: 14px; }
+}
+/* Too narrow for the links beside the logo and buttons: they move into the menu. */
+@media (max-width: 1279px) {
+  .snav-links { display: none; }
+  .snav-burger { display: inline-grid; }
+  .snav-actions { margin-left: auto; }
+}
+@media (max-width: 640px) {
+  .snav { --snav-h: 62px; }
+  .snav-inner { gap: 8px; }
+  .snav-brand .az-brand { --bs: 32px; }
+  .snav-brand .az-brand-tag { display: none; }
+  .snav-btn { height: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .snav-brand .az-brand-logo, .snav .snav-btn--filled .icon { transition: none; }
+  .snav-brand:hover .az-brand-logo { transform: none; }
+}
+
+/* ===================== Hero: lighter night sky + colourful stars (2026-11-21) =====================
+   A softer midnight indigo instead of near-black, and stars that spin, pulse and shift colour.
+   Stars sit behind the content (z-index 0); still for people who prefer reduced motion. */
+.band--hero {
+  background:
+    radial-gradient(42% 60% at 78% 35%, rgba(129, 140, 248, 0.38), transparent 70%),
+    radial-gradient(38% 50% at 8% 12%, rgba(34, 211, 238, 0.2), transparent 70%),
+    radial-gradient(40% 45% at 30% 100%, rgba(192, 132, 252, 0.18), transparent 70%),
+    radial-gradient(rgba(186, 196, 255, 0.11) 1px, transparent 1.3px) 0 0 / 26px 26px,
+    linear-gradient(170deg, #1c2452 0%, #232c63 48%, #1d2457 100%);
+}
+.band--hero .hero { z-index: 1; }
+.hero-stars { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.hero-star {
+  position: absolute; left: var(--x); top: var(--y); translate: -50% -50%;
+  filter: drop-shadow(0 0 6px currentColor) drop-shadow(0 0 14px currentColor);
+  animation:
+    hero-star-spin var(--spin) linear infinite,
+    hero-star-pulse var(--pulse) ease-in-out infinite,
+    hero-star-hue calc(var(--spin) * 1.6) linear infinite;
+  animation-delay: var(--delay), var(--delay), var(--delay);
+}
+@keyframes hero-star-spin { to { rotate: 360deg; } }
+@keyframes hero-star-pulse {
+  0%, 100% { scale: 0.55; opacity: 0.55; }
+  45% { scale: 1.2; opacity: 1; }
+  60% { scale: 0.95; opacity: 0.9; }
+}
+@keyframes hero-star-hue {
+  from { filter: drop-shadow(0 0 6px currentColor) drop-shadow(0 0 14px currentColor) hue-rotate(0deg); }
+  to { filter: drop-shadow(0 0 6px currentColor) drop-shadow(0 0 14px currentColor) hue-rotate(360deg); }
+}
+.hero-dot {
+  position: absolute; left: var(--x); top: var(--y); width: var(--s); height: var(--s); border-radius: 50%;
+  background: #fff; box-shadow: 0 0 6px rgba(255, 255, 255, 0.9);
+  animation: hero-dot-twinkle 3.4s ease-in-out infinite; animation-delay: calc(var(--d) * -1);
+}
+@keyframes hero-dot-twinkle { 0%, 100% { opacity: 0.2; scale: 0.7; } 50% { opacity: 1; scale: 1.25; } }
+
+@media (max-width: 960px) {
+  .hero-star:nth-child(n + 40) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-star, .hero-dot { animation: none; }
+  .hero-star { scale: 0.9; }
+}

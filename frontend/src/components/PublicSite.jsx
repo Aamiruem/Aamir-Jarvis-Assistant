@@ -14,11 +14,13 @@ import ThemeMenu from './ThemeMenu.jsx';
 
 const Demo = lazy(() => import('./Demo.jsx'));
 const AgentStudio = lazy(() => import('./AgentStudio.jsx'));
-const PAGES = ['home', 'login', 'signup', 'demo', 'studio'];
+const RobotLab = lazy(() => import('../robotLab/RobotLab.jsx'));
+const PAGES = ['home', 'login', 'signup', 'demo', 'studio', 'lab'];
 const FRONT = 'home'; // the page at "/" (no ?page=)
 const META = {
   home: ['Azarvis – AI Voice Assistant by Aamir Hussain Azad', 'Azarvis is a personal AI voice assistant by Aamir Hussain Azad, powered by Claude: talk naturally and it handles reminders, tasks, study notes, documents and your computer, hands-free. See every feature and how it works.'],
   demo: ['Live demo · Azarvis AI Voice Assistant by Aamir Hussain Azad', 'Azarvis by Aamir Hussain Azad is a personal AI voice assistant powered by Claude. Try every feature free, no login: chat by voice, reminders, study notes, ML Lab, documents, vision and memory.'],
+  lab: ['3D Robot Lab · Azarvis AI by Aamir Hussain Azad', 'A humanoid AI robot in a 3D lab that codes, reads, teaches, speaks, researches and thinks. Move it, switch its mode, or talk to it. Runs in your browser.'],
   studio: ['Agent Studio · Azarvis AI by Aamir Hussain Azad', 'Talk to Azarvis for three minutes or type your idea: a manager and eight AI specialists write a week of content and design 9 images, or diagnose a problem and plan the fix. Free, no login.'],
   signup: ['Create your free account · Azarvis', 'Create a free Azarvis account in a minute and talk to your personal AI voice assistant on your laptop or phone.'],
   login: ['Sign in · Azarvis', 'Sign in to Azarvis with your password or a passkey (Face ID, Touch ID, Windows Hello or fingerprint).'],
@@ -111,7 +113,7 @@ function PublicNav({ page, theme, onNavigate, onSection }) {
           }}
           aria-label="Azarvis home"
         >
-          <Brand size={34} />
+          <Brand size={38} tag />
         </a>
 
         <nav className="snav-links" aria-label="Website">
@@ -132,7 +134,7 @@ function PublicNav({ page, theme, onNavigate, onSection }) {
             <Icon name="play" size="0.95em" /> Try demo
           </button>
           <button type="button" className="snav-btn snav-btn--filled snav-hide-sm" onClick={act(() => onNavigate('signup'))}>
-            Get started
+            Get started <Icon name="chevron" size="0.95em" />
           </button>
           <button
             type="button"
@@ -244,6 +246,11 @@ export default function PublicSite({ theme, onAuth }) {
               </header>
               <AgentStudio />
             </div>
+          </Suspense>
+        )}
+        {page === 'lab' && (
+          <Suspense fallback={<div className="tab-loading"><div className="orb pulse" /></div>}>
+            <RobotLab />
           </Suspense>
         )}
         {page === 'demo' && (

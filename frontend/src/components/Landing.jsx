@@ -6,6 +6,7 @@ import { CONTACT_EMAIL, LIVE_APPS, PORTFOLIO_URL, REPO_URL, SOCIAL } from '../si
 import { useListen } from '../useListen.js';
 import FeedbackForm from './FeedbackForm.jsx';
 import Projects from './Projects.jsx';
+import RobotShow from './RobotShow.jsx';
 import Workflows from './Workflows.jsx';
 
 // The public website shown before sign-in. Full-width bands, each with its own background:
@@ -110,6 +111,32 @@ const STATS = [
 const COMMANDS = ['Remind me to call mom at 6 pm', 'Open the notes', 'Open Arvixa Store', 'What time is it?', 'Show me the projects', 'Tell me a joke'];
 
 /** Counts from 0 to `to` once the element is on screen. */
+// Colourful stars across the hero: each spins, grows and shrinks, and slowly changes colour.
+// [x %, y %, size px, colour, spin s, pulse s, delay s]. Kept away from the headline and buttons.
+const STARS = [
+  [3, 8, 31, '#22d3ee', 14, 3.2, 0], [17, 4, 17, '#f472b6', 11, 2.6, 0.8], [31, 10, 22, '#fbbf24', 16, 3.8, 1.6],
+  [46, 6, 36, '#a78bfa', 18, 4.2, 0.4], [55, 26, 20, '#34d399', 12, 3, 2.2], [49, 52, 28, '#60a5fa', 15, 3.6, 1.2],
+  [53, 84, 22, '#f472b6', 13, 2.8, 0.2], [44, 94, 17, '#22d3ee', 10, 2.4, 1.8], [2, 92, 25, '#a78bfa', 17, 3.4, 0.6],
+  [24, 96, 14, '#fbbf24', 9, 2.2, 2.6], [61, 6, 17, '#fb7185', 12, 2.6, 1.4], [97, 6, 25, '#34d399', 14, 3.2, 0.9],
+  [98, 46, 20, '#fbbf24', 13, 3, 2.4], [96, 88, 31, '#22d3ee', 16, 3.8, 0.3], [79, 97, 17, '#a78bfa', 11, 2.6, 1.7],
+  [1, 48, 17, '#60a5fa', 10, 2.4, 2],
+];
+const DOTS = Array.from({ length: 28 }, (_, i) => [((i * 37) % 100) + 0.5, ((i * 53) % 100) + 0.5, 1.6 + ((i * 7) % 5) / 2, ((i * 13) % 40) / 10]);
+
+function HeroStars() {
+  return (
+    <div className="hero-stars" aria-hidden="true">
+      {DOTS.map(([x, y, s, d], i) => <i key={`d${i}`} className="hero-dot" style={{ '--x': `${x}%`, '--y': `${y}%`, '--s': `${s}px`, '--d': `${d}s` }} />)}
+      {STARS.map(([x, y, size, color, spin, pulse, delay], i) => (
+        <svg key={i} className="hero-star" viewBox="0 0 24 24" width={size} height={size}
+          style={{ '--x': `${x}%`, '--y': `${y}%`, color, '--spin': `${spin}s`, '--pulse': `${pulse}s`, '--delay': `-${delay}s` }}>
+          <path d="M12 0C13.1 7 17 10.9 24 12C17 13.1 13.1 17 12 24C10.9 17 7 13.1 0 12C7 10.9 10.9 7 12 0Z" fill="currentColor" />
+        </svg>
+      ))}
+    </div>
+  );
+}
+
 function CountUp({ to, suffix = '' }) {
   const ref = useRef(null);
   const [n, setN] = useState(0);
@@ -318,6 +345,7 @@ export default function Landing({ onNavigate, onSection, theme }) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
 
       <section className="band band--hero" aria-labelledby="hero-title">
+        <HeroStars />
         <div className="pub-wrap hero">
           <div className="hero-copy">
             <span className="hero-kicker"><span className="hero-kicker-dot" /> AI voice assistant · by Aamir Hussain Azad</span>
@@ -376,6 +404,8 @@ export default function Landing({ onNavigate, onSection, theme }) {
           </div>
         </div>
       </section>
+
+      <RobotShow onTry={() => { track('robot_try_demo'); onNavigate('demo'); }} onLab={() => { track('robot_lab_open'); onNavigate('lab'); }} />
 
       <section className="band band--launch" aria-labelledby="launch-title">
         <div className="pub-wrap">

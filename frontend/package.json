@@ -17,7 +17,8 @@
     "react-markdown": "^9.0.1",
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
-    "remark-math": "^6.0.0"
+    "remark-math": "^6.0.0",
+    "three": "^0.170.0"
   },
   "overrides": {
     "rollup": "npm:@rollup/wasm-node@^4.30.1"

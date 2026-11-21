@@ -182,6 +182,8 @@ export default defineConfig(({ mode }) => {
             if (/[\/](react|react-dom|scheduler)[\/]/.test(id)) return 'react';
             // Passkey sign-in is the only library the first screen needs: alone, so it stays tiny.
             if (/[\/]@simplewebauthn[\/]/.test(id)) return 'passkeys';
+            // three.js is only for the 3D Robot Lab (?page=lab): its own chunk, loaded with that page alone.
+            if (/[\/]three[\/]/.test(id)) return 'three';
             // Formulas and tables are only needed by Notes: keep them out of what Chat downloads.
             if (/[\/](katex|rehype-katex|remark-math|remark-gfm|micromark-extension-(math|gfm[^\/]*)|mdast-util-(math|gfm[^\/]*)|hast-util-from-dom|hast-util-to-text|unist-util-find-after|ccount|escape-string-regexp|markdown-table)[\/]/.test(id)) return 'notes-vendor';
             // Everything else is the Markdown renderer (Chat, Notes): loaded with those screens, never
