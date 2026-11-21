@@ -1,0 +1,10 @@
+# For the root Dockerfile (the AI service): send only backend/fastapi-ai to the builder.
+*
+!backend/fastapi-ai/
+backend/fastapi-ai/.venv/
+backend/fastapi-ai/data/
+backend/fastapi-ai/tests/
+**/__pycache__/
+**/*.pyc
+**/.env
+**/.env.*

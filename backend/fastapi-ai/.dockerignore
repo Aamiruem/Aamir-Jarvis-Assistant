@@ -1,0 +1,10 @@
+# Kept out of the Docker image: local environments, personal data, caches.
+.venv/
+venv/
+data/
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+tests/
+.env
+.env.*
