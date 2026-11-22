@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { toast } from '../ui.jsx';
+import { useListen } from '../useListen.js';
 import './OpsCenter.css';
 
 // Cyber Ops: the ethical-hacker / device-intelligence command center. Every button starts a real,
@@ -26,6 +27,24 @@ const CRITICAL_EXAMPLES = [
   'Check my Wi-Fi and open ports, then explain the risks in simple words',
 ];
 const STAGES = ['Understand', 'Assess risk', 'Plan', 'Approve', 'Execute', 'Monitor', 'Verify', 'Report'];
+// The quick actions, grouped by what they look at (anything unlisted lands in "More").
+const GROUPS = [
+  ['Device intelligence', ['laptop', 'hardware', 'cpu_ram', 'disk', 'bluetooth', 'devices']],
+  ['Network intelligence', ['network', 'netfix', 'connections', 'traceroute', 'ports', 'wifi', 'ip', 'speed']],
+  ['Security & threats', ['security', 'files', 'emergency', 'report']],
+  ['Vulnerabilities & code', ['deps', 'cve', 'code_audit', 'website', 'toolbox']],
+  ['Global intelligence', ['investigate']],
+];
+const PROFILES = { home: 'My own home network', org: 'An organisation network I am authorized to test', lab: 'My own training lab' };
+const COMMAND_EXAMPLES = ['JARVIS, analyze my entire laptop', 'my internet keeps dropping', 'traceroute to github.com', 'audit my code for leaked secrets', 'tell me about CVE-2021-44228'];
+
+/** The request params for an action's single input value. */
+function inputParams(kind, v) {
+  if (kind === 'url') return { url: v };
+  if (kind === 'target') return { target: v };
+  if (kind === 'query') return { query: v };
+  return v ? { path: v } : {};
+}
 
 const ago = (t) => {
   const s = Math.max(0, Date.now() / 1000 - t);
@@ -248,6 +267,54 @@ function DevicesSection({ s }) {
   );
 }
 
+// Network map: Internet → router → this PC and every device, grouped by type; red = risk found.
+function TopologySection({ s }) {
+  const gw = s.devices.find((d) => d.is_gateway);
+  const groups = useMemo(() => {
+    const m = new Map();
+    s.devices.filter((d) => !d.is_gateway).forEach((d) => {
+      if (!m.has(d.category)) m.set(d.category, []);
+      m.get(d.category).push(d);
+    });
+    return [...m.entries()].sort((a, b) => (a[0] === 'This PC' ? -1 : b[0] === 'This PC' ? 1 : b[1].length - a[1].length));
+  }, [s.devices]);
+  const W = Math.max(720, groups.length * 132);
+  const colW = W / Math.max(1, groups.length);
+  const boxH = (n) => 34 + Math.min(n, 5) * 15 + (n > 5 ? 15 : 0);
+  const H = 196 + Math.max(0, ...groups.map(([, ds]) => boxH(ds.length))) + 12;
+  const risky = (ds) => ds.some((d) => ['medium', 'high'].includes(d.security?.level));
+  return (
+    <div className="ops-topo-wrap">
+      <svg className="ops-topo" viewBox={`0 0 ${W} ${H}`} style={{ minWidth: Math.min(W, 900) }} role="img" aria-label={`Network map: ${groups.map(([c, ds]) => `${ds.length} ${c}`).join(', ')}`}>
+        <g className="node inet"><circle cx={W / 2} cy={26} r={16} /><text x={W / 2} y={30} textAnchor="middle">🌐</text><text x={W / 2 + 24} y={30}>Internet</text></g>
+        <line className="link" x1={W / 2} y1={42} x2={W / 2} y2={94} />
+        <g className={`node router ${gw && risky([gw]) ? 'risk' : ''}`}>
+          <rect x={W / 2 - 90} y={94} width={180} height={40} rx={10} />
+          <text x={W / 2} y={112} textAnchor="middle" className="b">{gw ? gw.name : 'Router'}</text>
+          <text x={W / 2} y={127} textAnchor="middle" className="s">{gw ? `${gw.ip} · ${(gw.open_ports || []).length} open ports` : 'gateway'}</text>
+        </g>
+        {groups.map(([cat, ds], i) => {
+          const cx = colW * i + colW / 2;
+          const bw = Math.min(colW - 12, 190);
+          return (
+            <g key={cat} className={`node grp ${risky(ds) ? 'risk' : ''}`}>
+              <path className="link" d={`M${W / 2} 134 C ${W / 2} 160, ${cx} 160, ${cx} 186`} />
+              <rect x={cx - bw / 2} y={186} width={bw} height={boxH(ds.length)} rx={10} />
+              <text x={cx} y={204} textAnchor="middle" className="b">{cat} · {ds.length}</text>
+              {ds.slice(0, 5).map((d, j) => (
+                <text key={d.id} x={cx - bw / 2 + 10} y={222 + j * 15} className={`s ${['medium', 'high'].includes(d.security?.level) ? 'bad' : ''}`}>
+                  {(d.name || '').slice(0, Math.floor(bw / 7.2) - 9)}{d.ip ? ` ${d.ip.split('.').slice(-1)[0] ? '.' + d.ip.split('.').slice(-1)[0] : ''}` : ''}
+                </text>
+              ))}
+              {ds.length > 5 && <text x={cx - bw / 2 + 10} y={222 + 5 * 15} className="s">+{ds.length - 5} more</text>}
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
 function Section({ s }) {
   return (
     <section className="ops-section">
@@ -256,6 +323,7 @@ function Section({ s }) {
       {s.type === 'table' && <TableSection s={s} />}
       {s.type === 'bars' && <BarsSection s={s} />}
       {s.type === 'devices' && <DevicesSection s={s} />}
+      {s.type === 'topology' && <TopologySection s={s} />}
       {s.type === 'text' && <p className="muted small">{s.text}</p>}
     </section>
   );
@@ -263,7 +331,54 @@ function Section({ s }) {
 
 // ---------- result ----------
 
-function Result({ job, onRerun, onAsk, onCancel }) {
+// A fix changes a network setting, so it runs only after an explicit second click (the approval).
+function Fixes({ fixes, onFix }) {
+  const [confirm, setConfirm] = useState(null);
+  return (
+    <div className="ops-fixes">
+      <strong><Icon name="zap" size="1em" /> Suggested fixes</strong>
+      {fixes.map((fx) => (
+        <div key={fx.id} className="ops-fix">
+          <div><b>{fx.label}</b><span>{fx.why}</span></div>
+          {confirm === fx.id ? (
+            <span className="row">
+              <button type="button" className="ops-btn primary sm" onClick={() => { setConfirm(null); onFix(fx); }}>Approve &amp; run</button>
+              <button type="button" className="ops-btn sm" onClick={() => setConfirm(null)}>Cancel</button>
+            </span>
+          ) : (
+            <button type="button" className="ops-btn sm" onClick={() => setConfirm(fx.id)}>Apply…</button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const esc = (v) => String(v ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+/** A self-contained printable page of one result (the browser's print dialog saves it as PDF). */
+export function printableHtml(job) {
+  const r = job.result || {};
+  const sec = (s) => {
+    if (s.type === 'kv') return `<table>${s.items.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join('')}</table>`;
+    if (s.type === 'table') return `<table><tr>${s.columns.map((c) => `<th>${esc(c)}</th>`).join('')}</tr>${s.rows.slice(0, 300).map((row) => `<tr>${row.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table>`;
+    if (s.type === 'devices' || s.type === 'topology') return s.type === 'topology' ? '' : `<table><tr><th>Name</th><th>Type</th><th>IP</th><th>MAC</th><th>Maker</th><th>OS</th><th>Ports</th><th>Risk</th></tr>${s.devices.map((d) => `<tr><td>${esc(d.name)}</td><td>${esc(d.category)}</td><td>${esc(d.ip)}</td><td>${esc(d.mac)}</td><td>${esc(d.manufacturer || d.vendor)}</td><td>${esc(d.os)}</td><td>${esc((d.open_ports || []).join(', '))}</td><td>${esc(d.security?.level)}</td></tr>`).join('')}</table>`;
+    if (s.type === 'bars') return `<ul>${s.items.map((b) => `<li>${esc(b.label)}: ${esc(b.value)}${esc(b.unit)}</li>`).join('')}</ul>`;
+    return `<p>${esc(s.text)}</p>`;
+  };
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(job.title)} · Azarvis</title><style>
+body{font:13px/1.45 system-ui,sans-serif;color:#111;margin:28px}h1{font-size:20px;margin:0}h2{font-size:14px;margin:18px 0 6px;border-bottom:1px solid #ccc}
+.meta{color:#555}.f{border-left:4px solid #999;padding:4px 10px;margin:6px 0}.critical,.high{border-color:#c62828}.medium{border-color:#ef8f00}.low{border-color:#1e88e5}.ok{border-color:#2e7d32}
+table{border-collapse:collapse;width:100%;margin:4px 0}th,td{border:1px solid #ddd;padding:3px 6px;text-align:left;vertical-align:top;font-size:11.5px;word-break:break-word}th{background:#f3f3f3}</style></head><body>
+<h1>${esc(job.title)}</h1><p class="meta">Azarvis Cyber Ops · ${esc(new Date((job.finished_at || job.created_at) * 1000).toLocaleString())} · status ${esc(job.status)}${r.score != null ? ` · score ${esc(r.score)}/100` : ''}</p>
+<p><b>${esc(r.summary)}</b></p>${r.tools ? `<p class="meta">Tools: ${esc(r.tools)}</p>` : ''}
+<h2>Findings</h2>${(r.findings || []).map((f) => `<div class="f ${esc(f.severity)}"><b>[${esc(f.severity).toUpperCase()}] ${esc(f.title)}</b>${f.detail ? `<br>${esc(f.detail)}` : ''}${f.fix ? `<br><i>Fix: ${esc(f.fix)}</i>` : ''}</div>`).join('')}
+<h2>Steps</h2><ol>${(job.steps || []).map((s) => `<li>${esc(s.label)}: ${esc(s.status)}${s.detail ? ` (${esc(s.detail)})` : ''}</li>`).join('')}</ol>
+${(r.sections || []).map((s) => (s.type === 'topology' ? '' : `<h2>${esc(s.title)}</h2>${sec(s)}`)).join('')}
+<p class="meta">Read-only assessment unless a fix was explicitly approved.</p></body></html>`;
+}
+
+function Result({ job, onRerun, onAsk, onCancel, onFix }) {
   const [showOk, setShowOk] = useState(false);
   const r = job.result;
   const download = async () => {
@@ -276,6 +391,20 @@ function Result({ job, onRerun, onAsk, onCancel }) {
     } catch (e) {
       toast(e.message, 'error');
     }
+  };
+  const exportJson = () => {
+    const url = URL.createObjectURL(new Blob([JSON.stringify({ ...job, exported_at: new Date().toISOString(), source: 'Azarvis Cyber Ops' }, null, 2)], { type: 'application/json' }));
+    const a = Object.assign(document.createElement('a'), { href: url, download: `azarvis-${job.action}-${job.id}.json` });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+  const printPdf = () => {
+    const w = window.open('', '_blank');
+    if (!w) return toast('Allow pop-ups to print the report.', 'error');
+    w.document.write(printableHtml(job));
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 300);
   };
   const explain = () => {
     const top = (r?.findings || []).filter((f) => f.severity !== 'ok').slice(0, 8).map((f) => `- [${f.severity}] ${f.title}${f.detail ? `: ${f.detail}` : ''}`).join('\n');
@@ -306,8 +435,12 @@ function Result({ job, onRerun, onAsk, onCancel }) {
       {r && (
         <>
           <p className="ops-summary">{r.summary}</p>
+          {r.tools && <p className="ops-tools"><Icon name="briefcase" size="0.95em" /> Tools: {r.tools}</p>}
+          {(r.fixes || []).length > 0 && <Fixes fixes={r.fixes} onFix={onFix} />}
           <div className="row wrap ops-result-actions">
-            <button type="button" className="ops-btn sm" onClick={download}><Icon name="download" size="1em" /> Download report</button>
+            <button type="button" className="ops-btn sm" onClick={download}><Icon name="download" size="1em" /> Report (.md)</button>
+            <button type="button" className="ops-btn sm" onClick={printPdf}><Icon name="file" size="1em" /> PDF</button>
+            <button type="button" className="ops-btn sm" onClick={exportJson}><Icon name="code" size="1em" /> JSON</button>
             <button type="button" className="ops-btn sm" onClick={explain}><Icon name="sparkles" size="1em" /> Ask Jarvis to explain</button>
             <button type="button" className="ops-btn sm" onClick={onRerun}><Icon name="refresh" size="1em" /> Run again</button>
           </div>
@@ -331,6 +464,9 @@ function Result({ job, onRerun, onAsk, onCancel }) {
 
 function ConsentDialog({ action, onOk, onCancel }) {
   const [checked, setChecked] = useState(false);
+  const [profile, setProfile] = useState('home');
+  const [by, setBy] = useState('');
+  const ready = checked && (profile !== 'org' || by.trim().length >= 3);
   return (
     <div className="ops-modal" role="dialog" aria-modal="true" aria-labelledby="ops-consent-title" onKeyDown={(e) => e.key === 'Escape' && onCancel()}>
       <div className="ops-modal-card">
@@ -343,20 +479,29 @@ function ConsentDialog({ action, onOk, onCancel }) {
           <li>never logs in, guesses passwords, or changes any device.</li>
         </ul>
         <p className="muted small">Scanning a network you don&apos;t own (office, café, neighbour) can break its rules or the law. Ask the owner first.</p>
+        <fieldset className="ops-profiles">
+          <legend>Whose network is this?</legend>
+          {Object.entries(PROFILES).map(([id, label]) => (
+            <label key={id} className="check-row"><input type="radio" name="ops-profile" value={id} checked={profile === id} onChange={() => setProfile(id)} /> {label}</label>
+          ))}
+        </fieldset>
+        {profile === 'org' && (
+          <input className="ops-input" value={by} onChange={(e) => setBy(e.target.value)} maxLength={160} placeholder="Who authorized it? (name, ticket or contract)" aria-label="Who authorized the test" />
+        )}
         <label className="check-row"><input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} autoFocus /> I own this network or have the owner&apos;s permission to scan it.</label>
         <div className="row end">
           <button type="button" className="ops-btn" onClick={onCancel}>Cancel</button>
-          <button type="button" className="ops-btn primary" disabled={!checked} onClick={onOk}><Icon name="radar" size="1em" /> Start scan</button>
+          <button type="button" className="ops-btn primary" disabled={!ready} onClick={() => onOk({ authorized: true, profile, ...(by.trim() ? { authorized_by: by.trim() } : {}) })}><Icon name="radar" size="1em" /> Start scan</button>
         </div>
       </div>
     </div>
   );
 }
 
-function InputDialog({ action, onOk, onCancel }) {
-  const [value, setValue] = useState('');
-  const kind = action.input; // 'url' | 'target' | 'path'
-  const required = kind === 'url' || kind === 'target';
+function InputDialog({ action, onOk, onCancel, initial = '' }) {
+  const [value, setValue] = useState(initial);
+  const kind = action.input; // 'url' | 'target' | 'path' | 'folder' | 'query'
+  const required = kind === 'url' || kind === 'target' || kind === 'query';
   const submit = (e) => {
     e.preventDefault();
     if (required && !value.trim()) return;
@@ -366,7 +511,10 @@ function InputDialog({ action, onOk, onCancel }) {
     url: { blurb: 'A passive check: one normal visit, the HTTPS certificate and the security headers, mapped to the OWASP Top 10. Safe for any public site.', ph: 'example.com', label: 'Website address', cta: 'Check site' },
     target: { blurb: 'Public records only: DNS, WHOIS/RDAP, the owner and ASN, TLS certificate, subdomains from Certificate Transparency, and email security (SPF/DMARC). Nothing on the target is scanned or accessed beyond one normal visit — safe for any domain or public IP.', ph: 'example.com  or  1.1.1.1', label: 'Domain or public IP', cta: 'Investigate' },
     path: { blurb: "Leave empty to scan Downloads, Desktop, Documents, Startup and Temp. Or paste one file's full path for a deep analysis: real type, SHA-256, signature, script red flags and a Microsoft Defender scan (nothing is quarantined or deleted).", ph: 'C:\\Users\\you\\Downloads\\file.exe (optional)', label: 'File path', cta: value.trim() ? 'Analyze file' : 'Scan folders' },
+    folder: { blurb: action.id === 'deps' ? 'Exact package versions from lock files and .venv folders, checked against OSV.dev. Leave empty to check the Jarvis project itself.' : 'Committed secrets (shown masked), Bandit Python findings and risky JavaScript patterns. Nothing is uploaded or changed. Leave empty to audit the Jarvis project itself.', ph: 'C:\\path\\to\\your\\project (optional)', label: 'Project folder', cta: value.trim() ? 'Scan folder' : 'Scan the Jarvis project' },
+    query: { blurb: 'Official NIST National Vulnerability Database: CVSS score, weakness type, dates and whether CISA lists it as actively exploited.', ph: 'CVE-2021-44228  or  openssh 9.6', label: 'CVE id or product', cta: 'Look up' },
   }[kind];
+  if (action.id === 'traceroute') Object.assign(copy, { blurb: 'Shows each router between this PC and the host, the delay at each hop and which network runs it. Uses Windows tracert, like any network admin.', ph: 'google.com  or  8.8.8.8', label: 'Host or IP', cta: 'Trace route' });
   return (
     <div className="ops-modal" role="dialog" aria-modal="true" aria-labelledby="ops-input-title" onKeyDown={(e) => e.key === 'Escape' && onCancel()}>
       <form className="ops-modal-card" onSubmit={submit}>
@@ -395,10 +543,17 @@ function stageOf(run) {
   return -1;
 }
 
-function CriticalTask({ inputRef }) {
+function CriticalTask({ inputRef, handoff }) {
   const [text, setText] = useState('');
   const [run, setRun] = useState(null);
   const [busy, setBusy] = useState(false);
+  // A request the universal command passed to the agent team: start it right away.
+  useEffect(() => {
+    if (!handoff?.text) return;
+    setText(handoff.text);
+    setBusy(true);
+    api.startRun(handoff.text).then(setRun).catch((err) => toast(err.message, 'error')).finally(() => setBusy(false));
+  }, [handoff]);
   const refresh = useCallback(async (id) => {
     try {
       setRun(await api.orchestratorRun(id));
@@ -426,9 +581,9 @@ function CriticalTask({ inputRef }) {
       toast(err.message, 'error');
     }
   };
-  const cancel = async () => {
+  const control = async (action) => {
     try {
-      setRun(await api.runAction(run.id, 'cancel'));
+      setRun(await api.runAction(run.id, action));
     } catch (err) {
       toast(err.message, 'error');
     }
@@ -436,7 +591,7 @@ function CriticalTask({ inputRef }) {
   const stage = stageOf(run);
   return (
     <section className="ops-panel ops-critical" id="ops-critical">
-      <header><h2><Icon name="siren" /> Critical task</h2><p>Plan → approve → execute → verify → report, by the team of agents (Cybersecurity, Device Discovery, Troubleshooting, System…).</p></header>
+      <header><h2><Icon name="siren" /> Critical task</h2><p>Plan → approve → execute → verify → report, by the team of specialist agents (Ethical Hacker, Cyber Defense, Network, Hardware, Software, Science, Math, QA…). Anything that acts waits for your approval.</p></header>
       <form onSubmit={start} className="ops-critical-form">
         <textarea ref={inputRef} value={text} onChange={(e) => setText(e.target.value)} rows={2} maxLength={2000} placeholder="Describe the task, e.g. Find why my laptop is slow and make a fix plan" aria-label="Critical task" />
         <button type="submit" className="ops-btn primary" disabled={busy || text.trim().length < 3}><Icon name="rocket" size="1em" /> {busy ? 'Starting…' : 'Plan & execute'}</button>
@@ -466,9 +621,73 @@ function CriticalTask({ inputRef }) {
           ))}
           {run.report && <div className="ops-report"><h4>Verified report</h4><p>{run.report}</p></div>}
           <div className="row wrap">
-            {RUN_ACTIVE.has(run.status) && <button type="button" className="ops-btn danger sm" onClick={cancel}><Icon name="stop" size="1em" /> Cancel task</button>}
+            {RUN_ACTIVE.has(run.status) && (run.paused || run.status === 'paused'
+              ? <button type="button" className="ops-btn sm" onClick={() => control('resume')}><Icon name="play" size="1em" /> Resume</button>
+              : <button type="button" className="ops-btn sm" onClick={() => control('pause')}><Icon name="clock" size="1em" /> Pause execution</button>)}
+            {RUN_ACTIVE.has(run.status) && <button type="button" className="ops-btn danger sm" onClick={() => control('cancel')}><Icon name="stop" size="1em" /> Cancel task</button>}
             {!RUN_ACTIVE.has(run.status) && <button type="button" className="ops-btn sm" onClick={() => { setRun(null); setText(''); }}>New task</button>}
           </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ---------- universal command + live terminal ----------
+
+const clock = (t) => new Date(t * 1000).toLocaleTimeString([], { hour12: false });
+
+/** The newest log lines: what the user asked, where it was routed, and every job step as it happens. */
+function terminalLines(notes, jobs) {
+  const lines = notes.map((n) => ({ t: n.t, kind: n.kind, text: n.text }));
+  for (const j of jobs.slice(0, 12)) {
+    lines.push({ t: j.created_at, kind: 'job', text: `▶ ${j.title}` });
+    for (const s of j.steps || []) lines.push({ t: s.started_at || j.created_at, kind: s.status, text: `  ${s.label}${s.detail ? ` — ${s.detail}` : ''}` });
+    if (!ACTIVE.has(j.status)) lines.push({ t: j.finished_at || j.created_at, kind: j.status, text: `■ ${j.title}: ${j.status}${j.summary ? ` · ${j.summary}` : ''}` });
+  }
+  return lines.sort((a, b) => a.t - b.t).slice(-16);
+}
+
+function CommandBar({ disabled, onCommand, notes, jobs }) {
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const logRef = useRef(null);
+  const submit = async (value) => {
+    const v = (value ?? text).trim();
+    if (!v || busy) return;
+    setBusy(true);
+    try {
+      await onCommand(v);
+      setText('');
+    } finally {
+      setBusy(false);
+    }
+  };
+  const mic = useListen((heard) => {
+    setText(heard);
+    submit(heard);
+  });
+  const lines = terminalLines(notes, jobs);
+  useEffect(() => {
+    if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
+  }, [lines.length]);
+  return (
+    <section className="ops-panel ops-command">
+      <form className="ops-command-row" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+        <span className="prompt" aria-hidden="true">JARVIS&gt;</span>
+        <input value={mic.listening ? mic.transcript || 'Listening…' : text} onChange={(e) => setText(e.target.value)} disabled={disabled || busy}
+          placeholder="Solve this problem… e.g. my internet keeps dropping, audit my code, traceroute to github.com" aria-label="Universal command" spellCheck={false} />
+        {mic.supported !== false && (
+          <button type="button" className={`ops-btn sm ${mic.listening ? 'danger' : ''}`} onClick={() => (mic.listening ? mic.stop() : mic.start())} disabled={disabled} aria-label={mic.listening ? 'Stop listening' : 'Speak a command'} title="Speak a command">
+            <Icon name="mic" size="1em" />
+          </button>
+        )}
+        <button type="submit" className="ops-btn primary sm" disabled={disabled || busy || !text.trim()}><Icon name="send" size="1em" /> {busy ? 'Routing…' : 'Run'}</button>
+      </form>
+      {!text && !lines.length && <div className="ops-examples">{COMMAND_EXAMPLES.map((ex) => <button type="button" key={ex} onClick={() => submit(ex)} disabled={disabled}>{ex}</button>)}</div>}
+      {lines.length > 0 && (
+        <div className="ops-terminal" ref={logRef} role="log" aria-label="Live log" aria-live="polite">
+          {lines.map((l, i) => <div key={i} className={`ln k-${l.kind}`}><span className="ts">{clock(l.t)}</span>{l.text}</div>)}
         </div>
       )}
     </section>
@@ -484,10 +703,14 @@ export default function OpsCenter({ onAsk }) {
   const [jobs, setJobs] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [detail, setDetail] = useState(null);
-  const [dialog, setDialog] = useState(null); // {kind: 'consent'|'input', action}
-  const [consented, setConsented] = useState(false);
+  const [dialog, setDialog] = useState(null); // {kind: 'consent'|'input', action, preset, initial}
+  const [auth, setAuth] = useState(null); // the authorization given this session: {authorized, profile, authorized_by?}
   const [vitals, setVitals] = useState(null);
+  const [safe, setSafe] = useState({ on: false });
+  const [notes, setNotes] = useState([]); // terminal lines from the universal command
+  const [handoff, setHandoff] = useState(null); // a request for the agent team
   const criticalRef = useRef(null);
+  const note = (kind, text) => setNotes((ns) => [...ns.slice(-30), { t: Date.now() / 1000, kind, text }]);
 
   const loadJobs = useCallback(async () => {
     try {
@@ -501,6 +724,7 @@ export default function OpsCenter({ onAsk }) {
     api.opsActions().then((d) => {
       setCatalog(d.actions);
       setUnsupported(d.supported ? '' : d.reason);
+      if (d.safe_mode) setSafe(d.safe_mode);
     }).catch((e) => setUnreachable(e.message || 'The AI service on this PC is not reachable.'));
     loadJobs();
   }, [loadJobs]);
@@ -541,16 +765,60 @@ export default function OpsCenter({ onAsk }) {
       toast(e.message, 'error');
     }
   };
-  const trigger = (action) => {
+  // One path for buttons and the universal command: consent (once per session) → input → start.
+  const trigger = (action, preset = {}, fromCommand = false, given = auth) => {
     if (!action) return;
     const last = byAction[action.id];
-    if (last && ACTIVE.has(last.status)) {
+    if (last && ACTIVE.has(last.status) && !fromCommand) {
       setSelectedId(last.id);
       return;
     }
-    if (action.consent && !consented) return setDialog({ kind: 'consent', action });
-    if (action.input) return setDialog({ kind: 'input', action });
-    start(action, action.consent ? { authorized: true } : {});
+    if (action.consent && !given) return setDialog({ kind: 'consent', action, preset, fromCommand });
+    const key = { url: 'url', target: 'target', query: 'query', path: 'path', folder: 'path' }[action.input];
+    const required = ['url', 'target', 'query'].includes(action.input);
+    if (key && ((required && !preset[key]) || (!required && !fromCommand))) {
+      return setDialog({ kind: 'input', action, preset, initial: preset[key] || '' });
+    }
+    start(action, { ...preset, ...(action.consent ? given : {}) });
+  };
+  const runCommand = async (text) => {
+    note('you', `> ${text}`);
+    try {
+      const r = await api.opsCommand(text);
+      if (r.mode === 'action') {
+        const a = act(r.action);
+        note('route', `→ ${r.title}${r.missing ? ` (needs a ${r.missing})` : ''}`);
+        trigger(a, r.params || {}, true);
+      } else {
+        note('route', '→ multi-step problem: handing it to the agent team (plan → approve → execute → verify)');
+        setHandoff({ text, id: Date.now() });
+        requestAnimationFrame(() => document.getElementById('ops-critical')?.scrollIntoView({ behavior: 'smooth' }));
+      }
+    } catch (e) {
+      note('failed', `✖ ${e.message}`);
+    }
+  };
+  const fix = async (fx) => {
+    try {
+      const job = await api.opsFix(fx.id);
+      note('route', `→ approved fix: ${fx.label}`);
+      setJobs((js) => [job, ...js]);
+      setSelectedId(job.id);
+      setDetail(job);
+    } catch (e) {
+      toast(e.message, 'error');
+    }
+  };
+  const toggleSafe = async () => {
+    try {
+      const s = await api.opsSetSafeMode(!safe.on);
+      setSafe(s);
+      note(s.on ? 'failed' : 'route', s.on ? `■ EMERGENCY SAFE MODE ON · stopped ${s.stopped} task(s)` : '■ Safe mode off');
+      toast(s.on ? `Safe mode on. Stopped ${s.stopped} task${s.stopped === 1 ? '' : 's'}.` : 'Safe mode off.');
+      loadJobs();
+    } catch (e) {
+      toast(e.message, 'error');
+    }
   };
   const cancel = async (job) => {
     try {
@@ -577,6 +845,14 @@ export default function OpsCenter({ onAsk }) {
   };
   const act = (id) => catalog?.find((a) => a.id === id);
   const current = running[0];
+  const grouped = useMemo(() => {
+    if (!catalog) return [];
+    const placed = new Set(GROUPS.flatMap(([, ids]) => ids));
+    let n = 0;
+    return [...GROUPS, ['More', catalog.map((a) => a.id).filter((id) => !placed.has(id))]]
+      .map(([g, ids]) => [g, ids.map((id) => catalog.find((a) => a.id === id)).filter(Boolean).map((a) => ({ a, n: ++n }))])
+      .filter(([, list]) => list.length);
+  }, [catalog]);
 
   return (
     <div className="ops">
@@ -597,11 +873,19 @@ export default function OpsCenter({ onAsk }) {
           )}
           <span className={`ops-link-state ${offline ? 'off' : 'on'}`}>{offline ? 'Agent offline' : 'Agent online'}</span>
           {current && <button type="button" className="ops-btn danger" onClick={() => cancel(current)}><Icon name="x" size="1em" /> Cancel current task</button>}
+          <button type="button" className={`ops-btn ${safe.on ? 'safe-on' : ''}`} onClick={toggleSafe} disabled={Boolean(unreachable)} aria-pressed={safe.on}
+            title="Stops everything and blocks all actions; read-only checks keep working"><Icon name="shield" size="1em" /> {safe.on ? 'Safe mode ON' : 'Emergency safe mode'}</button>
           <button type="button" className="ops-btn danger solid" onClick={stopAll}><Icon name="stop" size="1em" /> Stop all tasks</button>
         </div>
       </header>
 
       {offline && <p className="ops-error"><Icon name="alert" size="1em" /> {offline}</p>}
+      {safe.on && (
+        <p className="ops-safe-banner"><Icon name="shield" size="1em" /> Emergency safe mode is on: Jarvis takes no actions (no PC control, fixes or network scans). Read-only checks still work.
+          <button type="button" className="ops-btn sm" onClick={toggleSafe}>Turn off</button></p>
+      )}
+
+      <CommandBar disabled={Boolean(offline)} onCommand={runCommand} notes={notes} jobs={jobs} />
 
       <div className="ops-hero">
         {[
@@ -627,31 +911,36 @@ export default function OpsCenter({ onAsk }) {
       </div>
 
       <section className="ops-panel">
-        <header><h2><Icon name="zap" /> Quick actions</h2><p>One click, real results. Nothing on your PC or network is changed.</p></header>
+        <header><h2><Icon name="zap" /> Quick actions</h2><p>One click, real results. Nothing on your PC or network is changed unless you approve a fix.</p></header>
         {!catalog && !offline && <div className="ops-skeleton" aria-label="Loading"><i /><i /><i /><i /></div>}
-        <div className="ops-grid">
-          {(catalog || []).map((a, i) => {
-            const job = byAction[a.id];
-            const busy = job && ACTIVE.has(job.status);
-            const sev = job?.status === 'done' ? (job.score == null ? 'info' : job.score >= 85 ? 'ok' : job.score >= 60 ? 'warn' : 'bad') : job?.status === 'failed' ? 'bad' : '';
-            return (
-              <button type="button" key={a.id} className={`ops-action ${busy ? 'busy' : ''} ${selected?.action === a.id ? 'sel' : ''}`} onClick={() => trigger(a)} disabled={Boolean(offline)} title={a.does}>
-                <span className="num">{String(i + 1).padStart(2, '0')}</span>
-                <Icon name={a.icon} size="1.35em" />
-                <span className="t">{a.title}</span>
-                <span className="sub">
-                  {busy ? <><span className="ops-spinner" aria-hidden="true" /> {job.steps.at(-1)?.label || 'Starting'}</> : job ? <><i className={`led ${sev}`} /> {job.status === 'done' ? (job.score != null ? `Score ${job.score}` : 'Done') : job.status} · {ago(job.created_at)}</> : a.does}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        {grouped.map(([group, list]) => (
+          <div key={group} className="ops-group">
+            <h3>{group}</h3>
+            <div className="ops-grid">
+              {list.map(({ a, n }) => {
+                const job = byAction[a.id];
+                const busy = job && ACTIVE.has(job.status);
+                const sev = job?.status === 'done' ? (job.score == null ? 'info' : job.score >= 85 ? 'ok' : job.score >= 60 ? 'warn' : 'bad') : job?.status === 'failed' ? 'bad' : '';
+                return (
+                  <button type="button" key={a.id} className={`ops-action ${busy ? 'busy' : ''} ${selected?.action === a.id ? 'sel' : ''}`} onClick={() => trigger(a)} disabled={Boolean(offline)} title={`${a.does}${a.tools ? `\nTools: ${a.tools}` : ''}`}>
+                    <span className="num">{String(n).padStart(2, '0')}</span>
+                    <Icon name={a.icon} size="1.35em" />
+                    <span className="t">{a.title}</span>
+                    <span className="sub">
+                      {busy ? <><span className="ops-spinner" aria-hidden="true" /> {job.steps.at(-1)?.label || 'Starting'}</> : job ? <><i className={`led ${sev}`} /> {job.status === 'done' ? (job.score != null ? `Score ${job.score}` : 'Done') : job.status} · {ago(job.created_at)}</> : a.does}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </section>
 
       <div className="ops-main">
         <section className="ops-panel" id="ops-result">
           {detail && detail.id === selectedId ? (
-            <Result job={{ ...detail, ...(selected ? { status: selected.status, steps: selected.steps } : {}) }} onCancel={cancel} onAsk={onAsk}
+            <Result job={{ ...detail, ...(selected ? { status: selected.status, steps: selected.steps } : {}) }} onCancel={cancel} onAsk={onAsk} onFix={fix}
               onRerun={() => { const a = act(detail.action); if (a) start(a, detail.params || {}); }} />
           ) : (
             <div className="ops-empty"><Icon name="radar" size="2.2em" /><p>Pick a quick action. Its live steps and results appear here.</p></div>
@@ -675,14 +964,15 @@ export default function OpsCenter({ onAsk }) {
         </aside>
       </div>
 
-      <CriticalTask inputRef={criticalRef} />
+      <CriticalTask inputRef={criticalRef} handoff={handoff} />
 
       {dialog?.kind === 'consent' && (
-        <ConsentDialog action={dialog.action} onCancel={() => setDialog(null)} onOk={() => { setConsented(true); setDialog(null); start(dialog.action, { authorized: true }); }} />
+        <ConsentDialog action={dialog.action} onCancel={() => setDialog(null)}
+          onOk={(given) => { setAuth(given); setDialog(null); trigger(dialog.action, dialog.preset || {}, dialog.fromCommand, given); }} />
       )}
       {dialog?.kind === 'input' && (
-        <InputDialog action={dialog.action} onCancel={() => setDialog(null)}
-          onOk={(v) => { setDialog(null); const k = dialog.action.input; start(dialog.action, k === 'url' ? { url: v } : k === 'target' ? { target: v } : v ? { path: v } : {}); }} />
+        <InputDialog action={dialog.action} initial={dialog.initial} onCancel={() => setDialog(null)}
+          onOk={(v) => { setDialog(null); start(dialog.action, { ...(dialog.preset || {}), ...inputParams(dialog.action.input, v), ...(dialog.action.consent ? auth : {}) }); }} />
       )}
     </div>
   );

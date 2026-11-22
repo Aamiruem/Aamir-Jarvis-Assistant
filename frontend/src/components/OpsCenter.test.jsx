@@ -7,11 +7,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 Element.prototype.scrollIntoView = () => {};
 
-const IDS = ['laptop', 'devices', 'network', 'ip', 'security', 'hardware', 'cpu_ram', 'disk', 'files', 'speed', 'bluetooth', 'wifi', 'website', 'ports', 'report', 'emergency', 'investigate'];
-const CATALOG = IDS.map((id) => ({ id, title: `Title ${id}`, icon: 'zap', does: `Does ${id}`, consent: id === 'devices' || id === 'network', input: id === 'website' ? 'url' : id === 'files' ? 'path' : id === 'investigate' ? 'target' : null }));
+const IDS = ['laptop', 'devices', 'network', 'ip', 'security', 'hardware', 'cpu_ram', 'disk', 'files', 'speed', 'bluetooth', 'wifi', 'website', 'ports', 'report', 'emergency', 'investigate', 'netfix', 'traceroute', 'connections', 'deps', 'cve', 'code_audit', 'toolbox'];
+const INPUT = { website: 'url', files: 'path', investigate: 'target', traceroute: 'target', cve: 'query', deps: 'folder', code_audit: 'folder' };
+const CATALOG = IDS.map((id) => ({ id, title: `Title ${id}`, icon: 'zap', does: `Does ${id}`, consent: id === 'devices' || id === 'network', input: INPUT[id] || null }));
 const fake = {
   opsActions: vi.fn(), opsJobs: vi.fn(), opsJob: vi.fn(), opsRun: vi.fn(), opsCancel: vi.fn(), opsStopAll: vi.fn(),
   systemStatus: vi.fn(), orchestratorRuns: vi.fn(), runAction: vi.fn(), opsReport: vi.fn(),
+  opsCommand: vi.fn(), opsFix: vi.fn(), opsSetSafeMode: vi.fn(), startRun: vi.fn(), orchestratorRun: vi.fn(), decideApproval: vi.fn(),
 };
 vi.mock('../api.js', () => ({ api: new Proxy({}, { get: (_, k) => (...a) => fake[k](...a) }) }));
 vi.mock('../ui.jsx', () => ({ toast: vi.fn() }));
@@ -40,6 +42,10 @@ async function mount() {
   await act(async () => {});
 }
 const button = (text) => [...host.querySelectorAll('button')].find((b) => b.textContent.includes(text));
+const type = async (el, value) => act(async () => {
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, value);
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+});
 const click = async (el) => act(async () => el.dispatchEvent(new MouseEvent('click', { bubbles: true })));
 
 beforeEach(() => {
@@ -59,12 +65,13 @@ afterEach(() => {
 });
 
 describe('OpsCenter', () => {
-  it('shows all 17 quick actions, numbered, plus live load', async () => {
+  it('shows all 24 quick actions in groups, numbered, plus live load', async () => {
     await mount();
     const actions = host.querySelectorAll('.ops-action');
-    expect(actions).toHaveLength(17);
+    expect(actions).toHaveLength(24);
     expect(actions[0].textContent).toContain('01');
-    expect(actions[16].textContent).toContain('17');
+    expect(actions[23].textContent).toContain('24');
+    expect([...host.querySelectorAll('.ops-group h3')].map((h) => h.textContent)).toEqual(['Device intelligence', 'Network intelligence', 'Security & threats', 'Vulnerabilities & code', 'Global intelligence']);
     expect(host.textContent).toContain('Disk 99%');
     expect(host.textContent).toContain('Agent online');
   });
@@ -90,7 +97,18 @@ describe('OpsCenter', () => {
     await click(box);
     expect(start.disabled).toBe(false);
     await click(start);
-    expect(fake.opsRun).toHaveBeenCalledWith('devices', { authorized: true });
+    expect(fake.opsRun).toHaveBeenCalledWith('devices', { authorized: true, profile: 'home' });
+  });
+
+  it('an organisation network needs who authorized it', async () => {
+    await mount();
+    await click(button('Title network'));
+    await click(host.querySelector('.ops-modal input[value=org]'));
+    await click(host.querySelector('.ops-modal input[type=checkbox]'));
+    expect(button('Start scan').disabled).toBe(true);
+    await type(host.querySelector('.ops-modal input[aria-label="Who authorized the test"]'), 'IT ticket 42');
+    await click(button('Start scan'));
+    expect(fake.opsRun).toHaveBeenCalledWith('network', { authorized: true, profile: 'org', authorized_by: 'IT ticket 42' });
   });
 
   it('asks for the website address', async () => {
@@ -126,6 +144,60 @@ describe('OpsCenter', () => {
     expect(fake.opsStopAll).toHaveBeenCalled();
     expect(fake.runAction).toHaveBeenCalledWith('r1', 'cancel');
     expect(fake.runAction).not.toHaveBeenCalledWith('r2', 'cancel');
+  });
+
+  it('universal command runs the matching action with its target', async () => {
+    fake.opsCommand.mockResolvedValue({ mode: 'action', action: 'traceroute', title: 'Title traceroute', params: { target: 'github.com' }, missing: null });
+    await mount();
+    await type(host.querySelector('input[aria-label="Universal command"]'), 'traceroute to github.com');
+    await act(async () => host.querySelector('.ops-command-row').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+    expect(fake.opsCommand).toHaveBeenCalledWith('traceroute to github.com');
+    expect(fake.opsRun).toHaveBeenCalledWith('traceroute', { target: 'github.com' });
+    expect(host.querySelector('.ops-terminal').textContent).toContain('Title traceroute');
+  });
+
+  it('universal command asks for a missing input, and hands open problems to the agent team', async () => {
+    fake.opsCommand.mockResolvedValueOnce({ mode: 'action', action: 'cve', title: 'Title cve', params: { query: '' }, missing: 'query' });
+    fake.startRun.mockResolvedValue({ id: 'r9', status: 'planning', instruction: 'build an app', subtasks: [], approvals: [] });
+    await mount();
+    await type(host.querySelector('input[aria-label="Universal command"]'), 'look up a cve');
+    await act(async () => host.querySelector('.ops-command-row').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+    expect(fake.opsRun).not.toHaveBeenCalled();
+    expect(host.querySelector('.ops-modal')).not.toBeNull();
+    await click(button('Cancel'));
+    fake.opsCommand.mockResolvedValueOnce({ mode: 'agents' });
+    await type(host.querySelector('input[aria-label="Universal command"]'), 'build an app');
+    await act(async () => host.querySelector('.ops-command-row').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+    await act(async () => {});
+    expect(fake.startRun).toHaveBeenCalledWith('build an app');
+  });
+
+  it('a suggested fix runs only after approval', async () => {
+    fake.opsJob.mockImplementation(async (id) => ({ ...DONE, id, result: { ...DONE.result, fixes: [{ id: 'flush_dns', label: 'Flush the DNS cache', why: 'Clears stale lookups.' }] } }));
+    fake.opsFix.mockResolvedValue({ ...DONE, id: 'fx1', action: 'fix_flush_dns', status: 'running', steps: [], result: null });
+    await mount();
+    await click(button('Title netfix'));
+    await act(async () => {});
+    await click(button('Apply…'));
+    expect(fake.opsFix).not.toHaveBeenCalled();
+    await click(button('Approve & run'));
+    expect(fake.opsFix).toHaveBeenCalledWith('flush_dns');
+  });
+
+  it('emergency safe mode switches on and shows a banner', async () => {
+    fake.opsSetSafeMode.mockResolvedValue({ on: true, stopped: 1 });
+    await mount();
+    await click(button('Emergency safe mode'));
+    expect(fake.opsSetSafeMode).toHaveBeenCalledWith(true);
+    expect(host.querySelector('.ops-safe-banner')).not.toBeNull();
+  });
+
+  it('project scans default to the Jarvis project when no folder is given', async () => {
+    await mount();
+    await click(button('Title deps'));
+    expect(button('Scan the Jarvis project')).toBeTruthy();
+    await act(async () => host.querySelector('.ops-modal form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+    expect(fake.opsRun).toHaveBeenCalledWith('deps', {});
   });
 
   it('explains itself when the AI service is not on this PC', async () => {

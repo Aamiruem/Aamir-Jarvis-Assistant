@@ -31,12 +31,12 @@ AGENTS: dict[str, dict] = {
         "tools": {"remember", "forget", "search_knowledge"},
     },
     "data": {
-        "name": "Data & ML Agent",
+        "name": "Data Science Agent",
         "does": "Exact maths and predictions with your trained ML models.",
         "tools": {"calculate", "predict_house_price", "predict_crop_yield", "list_ml_models", "predict_with_model"},
     },
     "coding": {
-        "name": "Coding Agent",
+        "name": "Software Engineering Agent",
         "does": "Writes, explains and debugs code; can read the clipboard or the screen for errors.",
         "tools": {"web_search", "web_fetch", "calculate", "read_clipboard", "copy_to_clipboard", "look_at_screen"},
     },
@@ -46,12 +46,12 @@ AGENTS: dict[str, dict] = {
         "tools": {"system_status", "find_files", "open_file", "system_control", "open_website", "read_clipboard", "look_at_screen"},
     },
     "security": {
-        "name": "Cybersecurity Agent",
+        "name": "Cybersecurity Defense Agent",
         "does": "Read-only security checks of this PC, its Wi-Fi, open ports, files and websites; explains risks and fixes.",
         "tools": {"run_diagnostic", "web_search", "web_fetch", "get_time"},
     },
     "devices": {
-        "name": "Device Discovery Agent",
+        "name": "Hardware & Device Intelligence Agent",
         "does": "Finds devices on the user's own network and Bluetooth, checks the PC's hardware and IP (network scans need the owner's OK).",
         "tools": {"run_diagnostic", "get_time"},
     },
@@ -59,6 +59,51 @@ AGENTS: dict[str, dict] = {
         "name": "Troubleshooting Agent",
         "does": "Diagnoses a slow or misbehaving PC: load, disks, crashes, network; can look at the screen for an error.",
         "tools": {"run_diagnostic", "system_status", "look_at_screen", "web_search", "web_fetch"},
+    },
+    "ethical_hacker": {
+        "name": "Ethical Hacker Agent",
+        "does": "Authorized audits only: the user's own network (with their OK), passive website and public-records checks, dependency CVEs, code secrets. Never attacks or exploits.",
+        "tools": {"run_diagnostic", "web_search", "web_fetch", "get_time"},
+    },
+    "network": {
+        "name": "Network Engineering Agent",
+        "does": "Internet, Wi-Fi and DNS faults, latency and packet loss, traceroutes, live connections, IP configuration.",
+        "tools": {"run_diagnostic", "web_search", "calculate"},
+    },
+    "ml_research": {
+        "name": "AI/ML Research Agent",
+        "does": "Model and algorithm research, comparing papers and methods, using the user's ML Lab models.",
+        "tools": {"web_search", "web_fetch", "search_knowledge", "list_ml_models", "predict_with_model", "calculate"},
+    },
+    "electronics": {
+        "name": "Electronics Research Agent",
+        "does": "Circuits, components, datasheets and hardware calculations (Ohm's law, power, battery life).",
+        "tools": {"web_search", "web_fetch", "wikipedia", "calculate"},
+    },
+    "math": {
+        "name": "Mathematics Agent",
+        "does": "Exact calculations, step-by-step derivations, statistics and unit conversions.",
+        "tools": {"calculate", "wikipedia"},
+    },
+    "science": {
+        "name": "Scientific Research Agent",
+        "does": "Scientific questions from sources: finds studies, compares findings, states uncertainty and conflicting evidence.",
+        "tools": {"web_search", "web_fetch", "wikipedia", "search_knowledge", "calculate"},
+    },
+    "database": {
+        "name": "Database Agent",
+        "does": "SQL and NoSQL design, queries, indexing and migrations (PostgreSQL, MongoDB, Redis, SQLite).",
+        "tools": {"web_search", "web_fetch", "calculate"},
+    },
+    "automation": {
+        "name": "Automation Agent",
+        "does": "Turns routines into reminders and tasks, opens apps and sites (actions need the user's approval).",
+        "tools": {"create_task", "list_tasks", "system_control", "open_website", "get_time"},
+    },
+    "qa": {
+        "name": "Quality Assurance Agent",
+        "does": "Double-checks other agents' important conclusions against real evidence: re-runs checks, verifies sources and numbers.",
+        "tools": {"run_diagnostic", "web_fetch", "web_search", "calculate"},
     },
     "assistant": {
         "name": "Personal Assistant Agent",

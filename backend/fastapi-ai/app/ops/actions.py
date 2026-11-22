@@ -666,14 +666,31 @@ def act_devices(ctx, params):
 
 
 def act_network(ctx, params):
+    from app.ops import toolbox
     require_consent(params)
     res = discover(ctx, audit=True)
     devs = res["devices"]
+    nm_used = None
+    if toolbox.nmap_path():
+        targets = [d["ip"] for d in devs if not d.get("is_self") and d.get("open_ports")]
+        if targets:
+            with ctx.step(f"Nmap service/version detection on {len(targets)} devices (same scope)") as st:
+                nm = toolbox.nmap_service_scan(ctx, targets, sorted({p for d in devs for p in d.get("open_ports") or []}))
+                for d in devs:
+                    info = nm.get(d.get("ip"))
+                    if info:
+                        d["service_versions"] = [f"{x['port']}/{x['service'] or '?'} {x['product'] or ''} {x['version'] or ''}".strip() for x in info["ports"]]
+                        d["hostname"] = d.get("hostname") or info.get("hostname")
+                nm_used = f"Nmap: {sum(len(v['ports']) for v in nm.values())} services identified"
+                st["detail"] = nm_used
     f = device_findings(devs, audit=True)
+    rows = [[d["name"], d["ip"], ", ".join(f"{p} {net.AUDIT_PORTS.get(p, '')}" for p in d.get("open_ports") or []) or "none of the checked ports", "; ".join(d.get("service_versions") or [])] for d in devs if not d.get("is_self")]
     return {"summary": f"Audited {len(devs) - 1} devices on {', '.join(n['scan'] for n in res['networks'])} · {count_line(f)}",
             "score": score_of(f), "findings": sort_findings(f),
             "sections": [{"title": "Devices and open ports", "type": "devices", "devices": devs},
-                         table("Open ports by device", ["Device", "IP", "Open ports"], [[d["name"], d["ip"], ", ".join(f"{p} {net.AUDIT_PORTS.get(p, '')}" for p in d.get("open_ports") or []) or "none of the checked ports"] for d in devs if not d.get("is_self")])]}
+                         {"title": "Network map", "type": "topology", "devices": devs},
+                         table("Open ports by device", ["Device", "IP", "Open ports", "Service versions (Nmap)"], rows,
+                               note=None if nm_used else "Install Nmap to also see software versions on each port (see 'Security toolbox').")]}
 
 
 # ---------- suspicious files ----------
@@ -1013,6 +1030,26 @@ def act_investigate(ctx, params):
     return osint.investigate(ctx, params.get("target", ""))
 
 
+def _nd():
+    from app.ops import netdiag
+    return netdiag
+
+
+def _vuln():
+    from app.ops import vuln
+    return vuln
+
+
+def _code():
+    from app.ops import codeaudit
+    return codeaudit
+
+
+def _tb():
+    from app.ops import toolbox
+    return toolbox
+
+
 # ---------- registry ----------
 
 ACTIONS: dict[str, dict] = {
@@ -1032,6 +1069,13 @@ ACTIONS: dict[str, dict] = {
     "ports": {"title": "Check open ports", "fn": act_ports, "icon": "plug", "does": "Every port this PC listens on, the program behind it and who can reach it."},
     "report": {"title": "Generate security report", "fn": act_report, "icon": "report", "does": "Runs the security, ports, Wi-Fi, CPU, disk and IP checks and writes a report you can download."},
     "investigate": {"title": "Investigate domain / IP", "fn": act_investigate, "icon": "globe", "input": "target", "does": "Passive public-records intelligence on any domain or public IP: DNS, WHOIS/RDAP, owner & ASN, TLS certificate, subdomains, SPF/DMARC."},
+    "netfix": {"title": "Fix my internet", "fn": lambda ctx, p: _nd().troubleshoot(ctx), "icon": "wifi", "does": "Layer-by-layer diagnosis (adapter, DHCP, router, loss, DNS, HTTPS, captive portal, proxy, VPN, Wi-Fi drops, IP conflicts) with approved one-click fixes."},
+    "traceroute": {"title": "Traceroute", "fn": lambda ctx, p: _nd().traceroute(ctx, p.get("target", "")), "icon": "timeline", "input": "target", "does": "The network path to any host, hop by hop, with latency and who runs each hop."},
+    "connections": {"title": "Live connections", "fn": lambda ctx, p: _nd().connections(ctx), "icon": "chart", "does": "Who this PC is talking to right now: programs, remote hosts and owners, traffic, TCP health. No packet contents read."},
+    "deps": {"title": "Dependency vulnerabilities", "fn": lambda ctx, p: _vuln().dependency_scan(ctx, p.get("path")), "icon": "database", "input": "folder", "does": "Exact package versions from lock files and .venv checked against OSV.dev (GitHub advisories, PyPA, npm)."},
+    "cve": {"title": "CVE lookup", "fn": lambda ctx, p: _vuln().cve_lookup(ctx, p.get("query", "")), "icon": "search", "input": "query", "does": "Any CVE id or product name from NIST NVD: CVSS, weakness, date, and CISA known-exploited status."},
+    "code_audit": {"title": "Audit my code", "fn": lambda ctx, p: _code().code_audit(ctx, p.get("path")), "icon": "code", "input": "folder", "does": "Committed secrets (masked), Bandit Python findings and risky JS/TS patterns in a project folder."},
+    "toolbox": {"title": "Security toolbox", "fn": lambda ctx, p: _tb().act_toolbox(ctx, p), "icon": "briefcase", "does": "Which professional tools (Nmap, Bandit, Wireshark, ZAP, Trivy…) are installed and how Jarvis uses them."},
     "emergency": {"title": "Emergency system diagnostics", "fn": act_emergency, "icon": "siren", "does": "Fast triage: overload, full disks, network down, crashes, blue screens, antivirus off."},
 }
 

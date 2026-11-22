@@ -135,14 +135,16 @@ class CopyToClipboard(BaseModel):
 
 
 DIAGNOSTICS = ("laptop", "devices", "network", "ip", "security", "hardware", "cpu_ram", "disk", "files", "speed",
-               "bluetooth", "wifi", "website", "ports", "report", "emergency", "investigate")
+               "bluetooth", "wifi", "website", "ports", "report", "emergency", "investigate", "netfix", "traceroute",
+               "connections", "deps", "cve", "code_audit", "toolbox")
 
 
 class RunDiagnostic(BaseModel):
     action: str = Field(description="One of: " + ", ".join(DIAGNOSTICS) + ".", json_schema_extra={"enum": list(DIAGNOSTICS)})
     url: str = Field("", description="For 'website': the site to check, e.g. example.com.")
-    path: str = Field("", description="For 'files': one file to analyze in depth (leave empty to scan the usual folders).")
-    target: str = Field("", description="For 'investigate': a domain or public IP to look up in public records (e.g. example.com).")
+    path: str = Field("", description="For 'files': one file to analyze in depth (empty = scan the usual folders). For 'deps' / 'code_audit': a project folder (empty = the Jarvis project).")
+    target: str = Field("", description="For 'investigate': a domain or public IP (public records only). For 'traceroute': a host name or IP.")
+    query: str = Field("", description="For 'cve': a CVE id (CVE-2021-44228) or product name ('openssh 9.6').")
     network_owner_confirmed: bool = Field(False, description=(
         "For 'devices', 'network' and 'report': true ONLY if the user said in this conversation that they own this "
         "network or have the owner's permission to scan it. Never assume it."))
@@ -390,8 +392,8 @@ def run_diagnostic(args: RunDiagnostic, ctx: ToolContext) -> dict:
         return {"needs_confirmation": "Ask the user: do you own this network, or have the owner's permission to scan it? Run it only after they say yes."}
     if args.action == "website" and not args.url:
         return {"error": "Ask which website to check."}
-    params = {"authorized": bool(args.network_owner_confirmed), "url": args.url, "path": args.path, "target": args.target}
-    job = ops_runner.run_sync(ctx.user_id, args.action, meta["title"], {k: v for k, v in params.items() if v not in ("", None)}, meta["fn"], timeout=150)
+    params = {"authorized": bool(args.network_owner_confirmed), "url": args.url, "path": args.path, "target": args.target, "query": args.query}
+    job = ops_runner.run_sync(ctx.user_id, args.action, meta["title"], {k: v for k, v in params.items() if v not in ("", None)}, meta["fn"], timeout=240)
     r = job.result or {}
     return {
         "status": job.status, "error": job.error, "summary": r.get("summary"), "score": r.get("score"),
@@ -500,7 +502,10 @@ TOOLS: dict[str, tuple[str, type[BaseModel], callable]] = {
         "encryption), 'ports' (listening ports), 'ip', 'wifi' (Wi-Fi security), 'bluetooth', 'speed' (internet speed test), "
         "'files' (suspicious files, or one file via path), 'website' (passive header/TLS check of a URL), 'emergency' "
         "(fast triage when the PC misbehaves), 'devices' (find devices on their Wi-Fi/LAN + Bluetooth), 'network' (devices "
-        "+ open-port audit), 'report' (full security report). Use it for 'analyze my laptop', 'why is my PC slow', 'check my "
+        "+ open-port audit), 'report' (full security report), 'investigate' (public records of a domain/IP), 'netfix' "
+        "(why the internet/Wi-Fi/DNS is broken or slow, layer by layer), 'traceroute' (path to a host), 'connections' "
+        "(what this PC is talking to), 'deps' (known CVEs in a project's packages via OSV.dev), 'cve' (NVD details of a CVE "
+        "or product), 'code_audit' (committed secrets, Bandit, risky JS), 'toolbox' (installed security tools). Use it for 'analyze my laptop', 'why is my PC slow', 'check my "
         "network security', 'is this file safe'. Device/network scans need the user's confirmation that they own the "
         "network. Never claim a result that the tool did not return; it cannot hack, crack passwords or access other devices.",
         RunDiagnostic, run_diagnostic,
@@ -535,6 +540,9 @@ def run_tool(name: str, raw_input, ctx: ToolContext) -> tuple[str | list[dict], 
         return json.dumps({"error": f"Unknown tool {name}"}), True
     if ctx.allowed_tools is not None and name not in ctx.allowed_tools:
         return json.dumps({"error": f"'{name}' is not one of this agent's tools"}), True
+    from app.ops import safemode  # emergency switch in Cyber Ops: no actions while it is on
+    if safemode.is_on() and name in (safety.HIGH_IMPACT_TOOLS | safety.APPROVAL_TOOLS):
+        return json.dumps({"error": safemode.BLOCK_MESSAGE}), True
     blocked = safety.blocked_reason(name, ctx.tainted)
     if blocked:
         return json.dumps({"error": blocked}), True

@@ -301,7 +301,7 @@ def test_unknown_action_and_bad_inputs():
 def test_server_mode_refuses(monkeypatch):
     monkeypatch.setattr("app.routers.ops.settings.system_control", False)
     listing = asyncio.run(ops_router.list_actions())
-    assert listing["supported"] is False and len(listing["actions"]) == 17
+    assert listing["supported"] is False and len(listing["actions"]) == 24
     with pytest.raises(HTTPException) as e:
         asyncio.run(ops_router.run(ops_router.RunIn(action="cpu_ram", params={}), ME))
     assert e.value.status_code == 409
@@ -310,7 +310,8 @@ def test_server_mode_refuses(monkeypatch):
 def test_catalog_covers_every_quick_action():
     ids = {a["id"] for a in actions.catalog()}
     assert ids == {"laptop", "devices", "network", "ip", "security", "hardware", "cpu_ram", "disk", "files", "speed",
-                   "bluetooth", "wifi", "website", "ports", "report", "emergency", "investigate"}
+                   "bluetooth", "wifi", "website", "ports", "report", "emergency", "investigate", "netfix", "traceroute",
+                   "connections", "deps", "cve", "code_audit", "toolbox"}
     from app.agent.tools import DIAGNOSTICS
     assert set(DIAGNOSTICS) == ids
 
