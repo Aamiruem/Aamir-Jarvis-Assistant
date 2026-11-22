@@ -290,3 +290,28 @@ def test_providers_list_is_honest_about_partner_only_categories(monkeypatch):
     assert p["duffel_flights"]["connected"] is False
     assert p["irctc"]["can"] == [] and "authorised agents" in p["irctc"]["note"]
     assert p["ticketmaster"]["can"] == ["search"]
+
+
+# ---------- chat / voice tools ----------
+
+def test_agent_flight_search_resolves_cities_and_never_books(monkeypatch):
+    from app.agent import tools
+    monkeypatch.setattr(duffel, "places", lambda q: [{"type": "city", "code": {"delhi": "DEL", "dubai": "DXB"}[q.lower()], "name": q, "city": q, "lat": 1, "lng": 2}])
+    seen = {}
+
+    def fake_search(q):
+        seen.update(q)
+        return {"live_mode": False, "total": 1, "offers": duffel.rank([duffel.norm_offer(offer_json())])}
+
+    monkeypatch.setattr(duffel, "search_flights", fake_search)
+    r = tools.search_flights(tools.SearchFlights(origin="Delhi", destination="Dubai", departure_date="2027-03-01", direct_only=True), None)
+    assert seen["origin"] == "DEL" and seen["destination"] == "DXB" and seen["max_connections"] == 0
+    assert r["test_mode"] and r["top"][0]["price"] == "120.50 GBP" and "cannot book from chat" in r["note"]
+
+
+def test_agent_tools_report_missing_keys_instead_of_inventing(monkeypatch):
+    from app.agent import tools
+    monkeypatch.setattr(settings, "duffel_access_token", "")
+    monkeypatch.setattr(settings, "ticketmaster_api_key", "")
+    assert "DUFFEL_ACCESS_TOKEN" in tools.search_hotels(tools.SearchHotels(city="Jaipur", check_in="2027-01-10", check_out="2027-01-12"), None)["error"]
+    assert "TICKETMASTER_API_KEY" in tools.search_events(tools.SearchEvents(keyword="coldplay"), None)["error"]

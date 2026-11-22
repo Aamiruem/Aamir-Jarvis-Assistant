@@ -90,6 +90,13 @@ const PATHS = {
   heart: 'M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20Z',
   workflow: 'M4 5h6v5H4z M14 14h6v5h-6z M7 10v4h10 M17 10V5h-3',
   target: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z M12 12h.01',
+  plane: 'M10.5 21 12 19l1.5 2 M12 3c.8 0 1.5.7 1.5 1.5V9l7 4v2l-7-2v4.5l2 1.5v1.5L12 19.5 8.5 20.5V19l2-1.5V13l-7 2v-2l7-4V4.5C10.5 3.7 11.2 3 12 3Z',
+  bed: 'M3 18V6 M3 14h18v4 M21 14v-2a3 3 0 0 0-3-3h-7v5 M7 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z',
+  ticket: 'M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4V7Z M14 7v2 M14 11.5v1 M14 15v2',
+  train: 'M6 4h12a1 1 0 0 1 1 1v10a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V5a1 1 0 0 1 1-1Z M5 11h14 M9 15h0 M15 15h0 M8 18l-2 3 M16 18l2 3',
+  bus: 'M5 4h14a1 1 0 0 1 1 1v12H4V5a1 1 0 0 1 1-1Z M4 12h16 M7 17v2 M17 17v2 M8 14.5h0 M16 14.5h0 M4 8h16',
+  film: 'M4 4h16v16H4z M8 4v16 M16 4v16 M4 8h4 M4 12h4 M4 16h4 M16 8h4 M16 12h4 M16 16h4',
+  card: 'M3 6h18v12H3z M3 10h18 M7 15h4',
 };
 
 export function Icon({ name, size = '1.25em', className = '', title, filled = false }) {

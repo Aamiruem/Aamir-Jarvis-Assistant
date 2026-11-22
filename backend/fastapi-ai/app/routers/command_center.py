@@ -47,6 +47,8 @@ AGENTS = [
      "tools": ["system_control", "system_status", "find_files", "open_file", "read_clipboard", "copy_to_clipboard", "look_at_screen", "open_website"]},
     {"id": "comms", "name": "Communication Agent", "icon": "mail", "does": "Email drafts and contacts",
      "tools": ["compose_email", "find_contact", "add_contact"]},
+    {"id": "travel", "name": "Travel Agent", "icon": "globe", "does": "Real flights, hotels and events; bookings you confirm",
+     "tools": ["search_flights", "search_hotels", "search_events", "my_bookings"]},
     {"id": "data", "name": "Data & ML Agent", "icon": "flask", "does": "Exact maths and your trained ML models",
      "tools": ["calculate", "predict_house_price", "predict_crop_yield", "list_ml_models", "predict_with_model"]},
 ]
