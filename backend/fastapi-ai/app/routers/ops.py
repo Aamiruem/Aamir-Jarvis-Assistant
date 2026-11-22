@@ -10,6 +10,9 @@ POST /ops/jobs/{id}/cancel        -> cancel one job (kills its child processes)
 POST /ops/stop-all                -> cancel every running job
 POST /ops/fix {fix, approve}      -> run one whitelisted network fix the user approved, then verify
 GET/POST /ops/safe-mode {on}      -> emergency safe mode (switching on also stops everything)
+GET  /ops/live                    -> hardware monitor: CPU/GPU/RAM/disk/network now + recent history
+GET  /ops/overview                -> security posture, alerts, incidents, asset health (from real scans)
+GET  /ops/mission                 -> mission control: specialist agents, approvals, completions
 
 Only where Azarvis runs on the user's own computer (SYSTEM_CONTROL on). Active network scans need
 the user's authorization (a profile, plus who authorized it for an organisation network).
@@ -215,6 +218,29 @@ async def apply_fix(body: FixIn, caller: Caller = Depends(get_caller)):
     fx = netdiag.FIXES[body.fix]
     log.info("ops fix %s approved by user=%s", body.fix, caller.user_id)
     return runner.start(caller.user_id, f"fix_{body.fix}", f"Fix: {fx['label']}", {"fix": body.fix, "approved": True}, lambda ctx, p: netdiag.apply_fix(ctx, body.fix)).to_dict()
+
+
+@router.get("/live")
+def live_telemetry():
+    """The hardware monitor: CPU/GPU/RAM/disk/network/battery now, plus ~3 min of history."""
+    _require_pc()
+    from app.ops import live
+    return live.snapshot()
+
+
+@router.get("/overview")
+async def security_overview(caller: Caller = Depends(get_caller)):
+    """Security posture, open alerts, incidents, threat categories and asset health from real scans."""
+    from app.ops import insights
+    return insights.overview([j.to_dict() for j in runner.list(caller.user_id)])
+
+
+@router.get("/mission")
+async def mission_control(caller: Caller = Depends(get_caller)):
+    """The ten specialist agents with their real work, human approvals and completions per day."""
+    from app.ops import insights
+    from app.orchestrator.runner import runner as orch
+    return insights.mission([j.to_dict() for j in runner.list(caller.user_id)], [r.to_dict() for r in orch.list(caller.user_id)])
 
 
 @router.get("/safe-mode")

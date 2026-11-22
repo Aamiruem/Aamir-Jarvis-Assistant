@@ -3,7 +3,36 @@ import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { toast } from '../ui.jsx';
 import { useListen } from '../useListen.js';
+import { LiveMonitor, MissionControl, RobotCore, SecurityOverview } from './OpsDashboards.jsx';
 import './OpsCenter.css';
+
+const VIEWS = [
+  ['ops', 'Operations', 'zap'],
+  ['live', 'Live monitor', 'pulse'],
+  ['overview', 'Security overview', 'shield'],
+  ['mission', 'Mission control', 'rocket'],
+];
+const VIEW_KEY = 'ops.view';
+const savedView = () => {
+  try {
+    const v = localStorage.getItem(VIEW_KEY);
+    return VIEWS.some(([id]) => id === v) ? v : 'ops';
+  } catch {
+    return 'ops';
+  }
+};
+
+/** The robot's face: what Jarvis is really doing right now. */
+export function robotMood({ offline, safe, running, latest }) {
+  if (offline) return ['offline', 'Offline'];
+  if (safe) return ['safe', 'Safe mode: hands off'];
+  if (running.length) return ['scanning', `${running[0].steps?.at(-1)?.label || running[0].title}…`];
+  if (!latest) return ['idle', 'Standing by'];
+  if (latest.status === 'failed') return ['alert', `${latest.title} failed`];
+  if (latest.score != null && latest.score < 60) return ['alert', `${latest.title}: ${latest.score}/100`];
+  if (latest.score != null && latest.score >= 85) return ['happy', `${latest.title}: ${latest.score}/100`];
+  return ['idle', `Last: ${latest.title}`];
+}
 
 // Cyber Ops: the ethical-hacker / device-intelligence command center. Every button starts a real,
 // read-only job on the AI service that runs on this PC (backend app/ops): live steps, cancel,
@@ -709,7 +738,16 @@ export default function OpsCenter({ onAsk }) {
   const [safe, setSafe] = useState({ on: false });
   const [notes, setNotes] = useState([]); // terminal lines from the universal command
   const [handoff, setHandoff] = useState(null); // a request for the agent team
+  const [view, setViewState] = useState(savedView);
   const criticalRef = useRef(null);
+  const setView = (v) => {
+    setViewState(v);
+    try {
+      localStorage.setItem(VIEW_KEY, v);
+    } catch {
+      /* private window: the view just isn't remembered */
+    }
+  };
   const note = (kind, text) => setNotes((ns) => [...ns.slice(-30), { t: Date.now() / 1000, kind, text }]);
 
   const loadJobs = useCallback(async () => {
@@ -853,12 +891,30 @@ export default function OpsCenter({ onAsk }) {
       .map(([g, ids]) => [g, ids.map((id) => catalog.find((a) => a.id === id)).filter(Boolean).map((a) => ({ a, n: ++n }))])
       .filter(([, list]) => list.length);
   }, [catalog]);
+  const [mood, moodText] = robotMood({ offline, safe: safe.on, running, latest: jobs.find((j) => !ACTIVE.has(j.status)) });
+  const jobsKey = `${jobs.length}:${jobs[0]?.id || ''}:${jobs[0]?.status || ''}`; // refresh dashboards when a scan finishes
+  const openJob = (id) => {
+    setView('ops');
+    setSelectedId(id);
+    requestAnimationFrame(() => document.getElementById('ops-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
+  const runFromDashboard = (id) => {
+    setView('ops');
+    trigger(act(id));
+  };
+  const goCritical = () => {
+    setView('ops');
+    requestAnimationFrame(() => {
+      document.getElementById('ops-critical')?.scrollIntoView({ behavior: 'smooth' });
+      criticalRef.current?.focus();
+    });
+  };
 
   return (
     <div className="ops">
       <header className="ops-head">
         <div className="ops-title">
-          <span className="ops-core" aria-hidden="true"><i /><i /><i /></span>
+          <RobotCore mood={mood} caption={moodText} />
           <div>
             <h1>Cyber Ops</h1>
             <p>Ethical hacker &amp; device intelligence for this PC and the networks you own. Real scans, read-only, every step shown.</p>
@@ -887,6 +943,17 @@ export default function OpsCenter({ onAsk }) {
 
       <CommandBar disabled={Boolean(offline)} onCommand={runCommand} notes={notes} jobs={jobs} />
 
+      <nav className="od-tabs" role="tablist" aria-label="Cyber Ops views">
+        {VIEWS.map(([id, label, icon]) => (
+          <button key={id} type="button" role="tab" aria-selected={view === id} onClick={() => setView(id)}><Icon name={icon} size="1em" /> {label}</button>
+        ))}
+      </nav>
+      {view === 'live' && !offline && <LiveMonitor />}
+      {view === 'overview' && <SecurityOverview onOpenJob={openJob} onRun={runFromDashboard} jobsKey={jobsKey} />}
+      {view === 'mission' && <MissionControl onCritical={goCritical} jobsKey={jobsKey} />}
+      {view === 'live' && offline && <p className="muted">The live monitor reads the PC the AI service runs on, which isn't reachable here.</p>}
+
+      {view === 'ops' && <>
       <div className="ops-hero">
         {[
           { id: 'devices', label: 'Instant device discovery', text: 'Discover accessible laptops, phones, TVs, printers, cameras and Bluetooth electronics.', btn: 'Scan nearby devices', icon: 'radar' },
@@ -964,7 +1031,9 @@ export default function OpsCenter({ onAsk }) {
         </aside>
       </div>
 
-      <CriticalTask inputRef={criticalRef} handoff={handoff} />
+      </>}
+      {/* Kept mounted in every view so a running critical task keeps its live state. */}
+      <div hidden={view !== 'ops'}><CriticalTask inputRef={criticalRef} handoff={handoff} /></div>
 
       {dialog?.kind === 'consent' && (
         <ConsentDialog action={dialog.action} onCancel={() => setDialog(null)}

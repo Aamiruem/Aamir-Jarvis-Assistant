@@ -217,6 +217,9 @@ export const api = {
   opsCommand: (text) => request('/ai/ops/command', { method: 'POST', body: { text } }),
   opsFix: (fix) => request('/ai/ops/fix', { method: 'POST', body: { fix, approve: true } }),
   opsSetSafeMode: (on) => request('/ai/ops/safe-mode', { method: 'POST', body: { on } }),
+  opsLive: () => request('/ai/ops/live'),
+  opsOverview: () => request('/ai/ops/overview'),
+  opsMission: () => request('/ai/ops/mission'),
   opsReport: async (id) => {
     const res = await requestRaw(`/ai/ops/jobs/${id}/report.md`);
     if (!res || !res.ok) throw new Error('The report could not be downloaded.');
