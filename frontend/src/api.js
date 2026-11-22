@@ -207,6 +207,18 @@ export const api = {
   systemStatus: () => request('/ai/system/status'),
   commandCenter: () => request('/ai/command-center'),
   securityPcCheck: () => request('/ai/security/pc-check'),
+  // Cyber Ops quick actions (backend app/ops): real read-only scans of this PC and its own network.
+  opsActions: () => request('/ai/ops/actions'),
+  opsRun: (action, params = {}) => request('/ai/ops/run', { method: 'POST', body: { action, params } }),
+  opsJobs: () => request('/ai/ops/jobs'),
+  opsJob: (id) => request(`/ai/ops/jobs/${id}`),
+  opsCancel: (id) => request(`/ai/ops/jobs/${id}/cancel`, { method: 'POST' }),
+  opsStopAll: () => request('/ai/ops/stop-all', { method: 'POST' }),
+  opsReport: async (id) => {
+    const res = await requestRaw(`/ai/ops/jobs/${id}/report.md`);
+    if (!res || !res.ok) throw new Error('The report could not be downloaded.');
+    return res.text();
+  },
   // Multi-agent runs (backend app/orchestrator): plan, parallel agents, verification, approvals.
   orchestratorAgents: () => request('/ai/orchestrator/agents'),
   orchestratorRuns: () => request('/ai/orchestrator/runs'),

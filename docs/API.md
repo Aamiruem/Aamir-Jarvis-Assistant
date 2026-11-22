@@ -111,6 +111,11 @@ Interactive docs: **http://localhost:8000/docs**. Every route except `/health` n
 | | POST | `/orchestrator/runs/{id}/subtasks/{sid}/retry` | retry a failed/skipped subtask of a finished run |
 | | POST | `/orchestrator/runs/{id}/approvals/{aid}` | `{approve: bool}`: runs the prepared action, or rejects it |
 | | GET | `/orchestrator/agents` | the specialist agents and their tools |
+| Cyber Ops | GET | `/ops/actions` | the 16 quick actions (`laptop`, `devices`, `network`, `ip`, `security`, `hardware`, `cpu_ram`, `disk`, `files`, `speed`, `bluetooth`, `wifi`, `website`, `ports`, `report`, `emergency`) and whether this service can run them (`SYSTEM_CONTROL` on = Azarvis runs on the user's PC) |
+| | POST | `/ops/run` | `{action, params}` → a background job. `devices` / `network` need `params.authorized: true` (the user confirmed they own the network) or answer 428; `website` takes `url`, `files` an optional `path` |
+| | GET | `/ops/jobs`, `/ops/jobs/{id}` | this user's jobs with live steps; finished ones are kept (60 per user) in `data/ops_history.json` |
+| | GET | `/ops/jobs/{id}/report.md` | the result as a Markdown report |
+| | POST | `/ops/jobs/{id}/cancel`, `/ops/stop-all` | cancel one job / every running job (kills its PowerShell and Defender child processes) |
 | Health | GET | `/health` | no auth |
 
 ### Chat stream events

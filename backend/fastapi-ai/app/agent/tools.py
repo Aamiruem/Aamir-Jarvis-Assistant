@@ -134,6 +134,19 @@ class CopyToClipboard(BaseModel):
     text: str = Field(description="The exact text to put on the clipboard.")
 
 
+DIAGNOSTICS = ("laptop", "devices", "network", "ip", "security", "hardware", "cpu_ram", "disk", "files", "speed",
+               "bluetooth", "wifi", "website", "ports", "report", "emergency")
+
+
+class RunDiagnostic(BaseModel):
+    action: str = Field(description="One of: " + ", ".join(DIAGNOSTICS) + ".", json_schema_extra={"enum": list(DIAGNOSTICS)})
+    url: str = Field("", description="For 'website': the site to check, e.g. example.com.")
+    path: str = Field("", description="For 'files': one file to analyze in depth (leave empty to scan the usual folders).")
+    network_owner_confirmed: bool = Field(False, description=(
+        "For 'devices', 'network' and 'report': true ONLY if the user said in this conversation that they own this "
+        "network or have the owner's permission to scan it. Never assume it."))
+
+
 class LookAtScreen(BaseModel):
     pass
 
@@ -363,6 +376,31 @@ def add_contact(args: AddContact, ctx: ToolContext) -> dict:
     return sql.create_contact(ctx.user_id, **args.model_dump())
 
 
+def run_diagnostic(args: RunDiagnostic, ctx: ToolContext) -> dict:
+    """Runs a Cyber Ops quick action (app/ops) and returns its result for the model to explain."""
+    from app.ops import actions as ops_actions
+    from app.ops.jobs import runner as ops_runner
+    if not settings.system_control:
+        return {"error": "Scans run only where Azarvis is installed on the user's own PC."}
+    if args.action not in ops_actions.ACTIONS:
+        return {"error": f"Unknown diagnostic '{args.action}'"}
+    meta = ops_actions.ACTIONS[args.action]
+    if meta.get("consent") and not args.network_owner_confirmed:
+        return {"needs_confirmation": "Ask the user: do you own this network, or have the owner's permission to scan it? Run it only after they say yes."}
+    if args.action == "website" and not args.url:
+        return {"error": "Ask which website to check."}
+    params = {"authorized": bool(args.network_owner_confirmed), "url": args.url, "path": args.path}
+    job = ops_runner.run_sync(ctx.user_id, args.action, meta["title"], {k: v for k, v in params.items() if v not in ("", None)}, meta["fn"], timeout=150)
+    r = job.result or {}
+    return {
+        "status": job.status, "error": job.error, "summary": r.get("summary"), "score": r.get("score"),
+        "findings": [{k: f.get(k) for k in ("severity", "title", "detail", "fix")} for f in (r.get("findings") or []) if f.get("severity") != "ok"][:12],
+        "passed": [f["title"] for f in (r.get("findings") or []) if f.get("severity") == "ok"][:8],
+        "steps": [f"{s['label']}: {s['status']}" for s in job.steps],
+        "note": "Full results with tables are in the Cyber Ops tab (history). Nothing was changed on the PC or network.",
+    }
+
+
 TOOLS: dict[str, tuple[str, type[BaseModel], callable]] = {
     "get_time": ("Get the current date and time in a timezone.", GetTime, get_time),
     "calculate": ("Evaluate a math expression exactly. Use for any arithmetic.", Calculate, calculate),
@@ -454,6 +492,17 @@ TOOLS: dict[str, tuple[str, type[BaseModel], callable]] = {
         "Make a prediction with one of the user's ML Lab models (see list_ml_models for ids and inputs). Report the "
         "prediction with the model's tested accuracy and any warnings in 'notes' (e.g. inputs unlike the training data).",
         PredictWithModel, predict_with_model,
+    ),
+    "run_diagnostic": (
+        "Run a real, read-only scan of the user's own PC or network and report the results: 'laptop' (performance + "
+        "bottleneck), 'hardware', 'cpu_ram', 'disk' (health + space), 'security' (Defender, firewall, updates, RDP, SMBv1, "
+        "encryption), 'ports' (listening ports), 'ip', 'wifi' (Wi-Fi security), 'bluetooth', 'speed' (internet speed test), "
+        "'files' (suspicious files, or one file via path), 'website' (passive header/TLS check of a URL), 'emergency' "
+        "(fast triage when the PC misbehaves), 'devices' (find devices on their Wi-Fi/LAN + Bluetooth), 'network' (devices "
+        "+ open-port audit), 'report' (full security report). Use it for 'analyze my laptop', 'why is my PC slow', 'check my "
+        "network security', 'is this file safe'. Device/network scans need the user's confirmation that they own the "
+        "network. Never claim a result that the tool did not return; it cannot hack, crack passwords or access other devices.",
+        RunDiagnostic, run_diagnostic,
     ),
     "look_at_screen": (
         "See what is on the user's screen right now (a screenshot shown only to you, not saved). Use when they ask about "

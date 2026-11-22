@@ -1,6 +1,14 @@
 // One small inline-SVG icon set for the whole app: no icon font or package to download,
 // every icon inherits the text color (currentColor) and scales with font size.
 const PATHS = {
+  radar: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z M12 16.5a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Z M12 12l6.4-6.4 M12 12h.01',
+  network: 'M9 3h6v5H9z M12 8v4 M5 16v-4h14v4 M2.5 16h5v5h-5z M9.5 16h5v5h-5z M16.5 16h5v5h-5z',
+  bluetooth: 'M7 7.5l10 9-5 4.5V3l5 4.5-10 9',
+  lock: 'M5.5 11h13v10h-13z M8 11V7.5a4 4 0 0 1 8 0V11 M12 15v2',
+  plug: 'M9 3v5 M15 3v5 M6 8h12v3a6 6 0 0 1-12 0V8Z M12 17v4',
+  report: 'M6 3h9l4 4v14H6z M14 3v5h5 M9 12.5h7 M9 16.5h5',
+  siren: 'M6 18v-6a6 6 0 0 1 12 0v6 M4 21h16v-3H4z M12 2.5V4 M4.6 5.6l1 1 M19.4 5.6l-1 1 M10 12a2 2 0 0 1 2-2',
+  database: 'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3Z M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6 M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3',
   home: 'M3 10.5 12 3l9 7.5M5 9.5V20h5v-6h4v6h5V9.5',
   chat: 'M4 5h16v11H8l-4 4V5Z M8 9.5h8 M8 12.5h5',
   eye: 'M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z',

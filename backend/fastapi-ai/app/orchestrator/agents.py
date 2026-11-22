@@ -45,6 +45,21 @@ AGENTS: dict[str, dict] = {
         "does": "PC health, files, apps and websites on this computer (actions need your approval).",
         "tools": {"system_status", "find_files", "open_file", "system_control", "open_website", "read_clipboard", "look_at_screen"},
     },
+    "security": {
+        "name": "Cybersecurity Agent",
+        "does": "Read-only security checks of this PC, its Wi-Fi, open ports, files and websites; explains risks and fixes.",
+        "tools": {"run_diagnostic", "web_search", "web_fetch", "get_time"},
+    },
+    "devices": {
+        "name": "Device Discovery Agent",
+        "does": "Finds devices on the user's own network and Bluetooth, checks the PC's hardware and IP (network scans need the owner's OK).",
+        "tools": {"run_diagnostic", "get_time"},
+    },
+    "troubleshoot": {
+        "name": "Troubleshooting Agent",
+        "does": "Diagnoses a slow or misbehaving PC: load, disks, crashes, network; can look at the screen for an error.",
+        "tools": {"run_diagnostic", "system_status", "look_at_screen", "web_search", "web_fetch"},
+    },
     "assistant": {
         "name": "Personal Assistant Agent",
         "does": "Anything that doesn't fit a specialist; has every tool.",

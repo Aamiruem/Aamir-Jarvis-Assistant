@@ -64,6 +64,7 @@ const StudioPanel = lazy(() => import('./components/StudioPanel.jsx'));
 const GamesPanel = lazy(() => import('./components/GamesPanel.jsx'));
 const CommandCenter = lazy(() => import('./components/CommandCenter.jsx'));
 const SecurityCenter = lazy(() => import('./components/SecurityCenter.jsx'));
+const OpsCenter = lazy(() => import('./components/OpsCenter.jsx'));
 const CameraLab = lazy(() => import('./components/CameraLab.jsx'));
 const RobotLab = lazy(() => import('./robotLab/RobotLab.jsx'));
 const AgentsPanel = lazy(() => import('./components/AgentsPanel.jsx'));
@@ -93,9 +94,11 @@ const TABS = [
 ].map((t, i) => ({ ...t, key: i + 1 })); // Alt+1 … Alt+9
 // The Command Center sits right after Home on Alt+0, so the older Alt+1…9 shortcuts don't move.
 TABS.splice(1, 0, { id: 'command', label: 'Command Center', icon: 'target', hue: 190, isNew: true, key: 0 });
+// Cyber Ops (scans of this PC and its own network) sits next to it; no Alt shortcut, so none move.
+TABS.splice(2, 0, { id: 'ops', label: 'Cyber Ops', icon: 'radar', hue: 172, isNew: true });
 // The sidebar, in groups by what you do there (Account is in the menu at its bottom).
 const NAV_GROUPS = [
-  ['Overview', ['home', 'command', 'chat']],
+  ['Overview', ['home', 'command', 'ops', 'chat']],
   ['Work', ['tasks', 'notes', 'memory', 'files', 'contacts']],
   ['Create & automate', ['agents', 'automate', 'studio', 'mllab']],
   ['AI tools', ['robot', 'vision', 'camera', 'knowledge', 'games']],
@@ -105,10 +108,10 @@ const NAV_GROUPS = [
 const NAV_HUES = {
   home: 212, command: 190, chat: 172, tasks: 36, notes: 48, memory: 330, contacts: 282, automate: 300,
   studio: 88, mllab: 150, vision: 262, camera: 196, knowledge: 18, games: 318, device: 222, security: 142, admin: 0,
-  agents: 186, files: 40, account: 228, robot: 205,
+  agents: 186, files: 40, account: 228, robot: 205, ops: 168,
 };
 // Only the newest screens carry a "New" tag, so it still means something.
-const NEWEST = new Set(['agents', 'robot', 'camera']);
+const NEWEST = new Set(['ops', 'agents', 'robot']);
 // The sidebar's name for a screen when it differs from the tab's own label.
 const NAV_LABELS = { account: 'Settings' };
 // The sidebar is the one place to switch screens (Account is the avatar at its bottom).
@@ -628,6 +631,7 @@ export default function App() {
             {tab === 'vision' && <VisionPanel />}
             {tab === 'device' && <DevicePanel />}
             {tab === 'security' && <SecurityCenter user={user} onOpenTab={setTab} />}
+            {tab === 'ops' && <OpsCenter onAsk={(text) => ask(text, true)} />}
             {tab === 'camera' && <CameraLab />}
             {tab === 'robot' && <RobotLab signedIn />}
             {tab === 'agents' && <AgentsPanel />}
