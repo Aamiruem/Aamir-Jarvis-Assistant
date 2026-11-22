@@ -27,7 +27,7 @@ from app.llm.claude import key_status, provider
 from app.system_control import current_os
 from app.nlp.intent import get_classifier
 from app.rag.store import get_store
-from app.routers import chat, command_center, local_bridge, mind, misc, mllab, ops, orchestrator, pcwatch, rag, security_center, study_notes, system, tts, whatsapp
+from app.routers import booking, chat, command_center, local_bridge, mind, misc, mllab, ops, orchestrator, pcwatch, rag, security_center, study_notes, system, tts, whatsapp
 from app.pc_watcher import watch_loop
 from app.scheduler import reminder_loop
 from app.whatsapp.loop import whatsapp_loop
@@ -101,6 +101,7 @@ app.include_router(command_center.router, dependencies=protected)
 app.include_router(security_center.router, dependencies=protected)
 app.include_router(orchestrator.router, dependencies=protected)
 app.include_router(ops.router, dependencies=protected)
+app.include_router(booking.router, dependencies=protected)
 
 
 @app.get("/health")

@@ -379,10 +379,13 @@ def chat_stats(user_id: str | None = None) -> dict:
 def delete_user_data(user_id: str) -> dict:
     """Account deletion: remove every SQL row that belongs to a user."""
     with SessionLocal.begin() as s:
-        return {
+        out = {
             model.__tablename__: s.execute(delete(model).where(model.user_id == user_id)).rowcount
             for model in (Task, Memory, Contact, Notification, ChatLog)
         }
+    from app.booking import store as booking_store  # bookings live in their own module (same database)
+    out["bookings"] = booking_store.delete_for_user(user_id)
+    return out
 
 
 def command_center_data(user_id: str, day_start: datetime, day_end: datetime, since: datetime) -> dict:

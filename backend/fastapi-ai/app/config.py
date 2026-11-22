@@ -62,6 +62,12 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     # Optional threat intelligence for Cyber Ops investigations (free tier at virustotal.com). Empty = not used.
     virustotal_api_key: str = ""
+    # Bookings (app/booking). Each provider stays "not connected" until its key is set; nothing is simulated.
+    duffel_access_token: str = ""  # flights + hotels (Stays needs Duffel to enable it); duffel_test_... = sandbox
+    ticketmaster_api_key: str = ""  # event search (Discovery API, search only)
+    razorpay_key_id: str = ""  # rzp_test_... = test mode
+    razorpay_key_secret: str = ""
+    booking_pay_from_balance: bool = False  # live bookings without Razorpay: pay from your own Duffel balance
     openrouter_api_key: str = ""
 
     # Local bridge (app/routers/local_bridge.py): these websites may read this PC's read-only

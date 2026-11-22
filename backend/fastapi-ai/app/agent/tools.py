@@ -151,6 +151,35 @@ class RunDiagnostic(BaseModel):
         "network or have the owner's permission to scan it. Never assume it."))
 
 
+class SearchFlights(BaseModel):
+    origin: str = Field(description="City or 3-letter airport code, e.g. 'Delhi' or 'DEL'.")
+    destination: str = Field(description="City or airport code, e.g. 'Dubai' or 'DXB'.")
+    departure_date: str = Field(description="YYYY-MM-DD.")
+    return_date: str = Field("", description="YYYY-MM-DD for a return trip, empty for one-way.")
+    adults: int = Field(1, ge=1, le=9)
+    cabin_class: str = Field("", description="economy, premium_economy, business or first; empty = any.")
+    direct_only: bool = False
+
+
+class SearchHotels(BaseModel):
+    city: str = Field(description="City or area, e.g. 'Jaipur'.")
+    check_in: str = Field(description="YYYY-MM-DD.")
+    check_out: str = Field(description="YYYY-MM-DD.")
+    adults: int = Field(1, ge=1, le=16)
+    rooms: int = Field(1, ge=1, le=8)
+
+
+class SearchEvents(BaseModel):
+    keyword: str = Field("", description="Artist, team or show, e.g. 'Coldplay'.")
+    city: str = Field("", description="City name.")
+    country: str = Field("", description="2-letter country code, e.g. 'IN'.")
+    start: str = Field("", description="Earliest date YYYY-MM-DD.")
+
+
+class MyBookings(BaseModel):
+    pass
+
+
 class LookAtScreen(BaseModel):
     pass
 
@@ -407,6 +436,83 @@ def run_diagnostic(args: RunDiagnostic, ctx: ToolContext) -> dict:
     }
 
 
+BOOKING_NOTE = ("Live prices from the provider, valid for minutes. Jarvis cannot book from chat: the user picks an option in the "
+                "Bookings tab, checks the summary and confirms there (payment happens there too). Never invent prices, availability or booking references.")
+
+
+def _place(text: str, want: str = "airport") -> dict:
+    from app.booking import duffel
+    t = text.strip()
+    hits = duffel.places(t)
+    if not hits:
+        raise ValueError(f"No airport or city found for '{t}'.")
+    if len(t) == 3 and t.isalpha():
+        exact = [h for h in hits if (h.get("code") or "").upper() == t.upper()]
+        if exact:
+            return exact[0]
+    cities = [h for h in hits if h["type"] == "city"]
+    return (cities or hits)[0] if want == "city" else (cities or hits)[0]
+
+
+def _booking_call(fn):
+    from app.booking.duffel import ProviderError
+    try:
+        return fn()
+    except ProviderError as e:
+        return {"error": e.message}
+    except ValueError as e:
+        return {"error": str(e)}
+
+
+def search_flights(args: SearchFlights, ctx: ToolContext) -> dict:
+    from app.booking import duffel
+
+    def run():
+        o, d = _place(args.origin), _place(args.destination)
+        res = duffel.search_flights({"origin": o["code"], "destination": d["code"], "departure_date": args.departure_date,
+                                     "return_date": args.return_date or None, "adults": args.adults,
+                                     "cabin_class": args.cabin_class or None, "max_connections": 0 if args.direct_only else None})
+        top = [{"airline": x["airline"], "price": f"{x['total_amount']} {x['total_currency']}", "tags": x["tags"],
+                "legs": [f"{s['origin']}→{s['destination']} {s['departing_at']}→{s['arriving_at']} ({s['minutes']} min, {s['stops']} stop(s), bags {s['baggage']})" for s in x["slices"]],
+                "refundable": (x.get("refund") or {}).get("allowed"), "changeable": (x.get("change") or {}).get("allowed")} for x in res["offers"][:6]]
+        return {"route": f"{o['code']} ({o.get('city') or o['name']}) → {d['code']} ({d.get('city') or d['name']})", "offers_found": res["total"],
+                "test_mode": not res["live_mode"], "top": top, "note": BOOKING_NOTE}
+    return _booking_call(run)
+
+
+def search_hotels(args: SearchHotels, ctx: ToolContext) -> dict:
+    from app.booking import duffel
+
+    def run():
+        c = _place(args.city, "city")
+        if c.get("lat") is None:
+            raise ValueError(f"No coordinates for {args.city}.")
+        res = duffel.search_stays({"lat": c["lat"], "lng": c["lng"], "check_in": args.check_in, "check_out": args.check_out,
+                                   "adults": args.adults, "rooms": args.rooms})
+        top = [{"name": h["name"], "stars": h["rating"], "reviews": h["review_score"], "from": f"{h['from_amount']} {h['from_currency']}",
+                "address": h["address"]} for h in res["results"][:6]]
+        return {"area": c.get("city") or c["name"], "hotels_found": res["total"], "top": top, "note": BOOKING_NOTE}
+    return _booking_call(run)
+
+
+def search_events(args: SearchEvents, ctx: ToolContext) -> dict:
+    from app.booking import ticketmaster
+
+    def run():
+        res = ticketmaster.search_events(args.keyword, args.city, args.country, args.start)
+        return {"found": res["total"], "events": [{k: e[k] for k in ("name", "date", "time", "venue", "city", "price_min", "price_max", "currency", "url")} for e in res["events"][:8]],
+                "note": "Search only: tickets are bought on Ticketmaster (link in each event)."}
+    return _booking_call(run)
+
+
+def my_bookings(args: MyBookings, ctx: ToolContext) -> dict:
+    from app.booking import store
+    rows = store.list_for(ctx.user_id, 20)
+    return {"bookings": [{"title": b["title"], "status": b["status"], "reference": b["booking_reference"], "amount": f"{b['amount']} {b['currency']}",
+                          "test_mode": not b["live_mode"], "created": b["created_at"]} for b in rows],
+            "note": "Only 'confirmed' bookings were confirmed by the provider."}
+
+
 TOOLS: dict[str, tuple[str, type[BaseModel], callable]] = {
     "get_time": ("Get the current date and time in a timezone.", GetTime, get_time),
     "calculate": ("Evaluate a math expression exactly. Use for any arithmetic.", Calculate, calculate),
@@ -499,6 +605,20 @@ TOOLS: dict[str, tuple[str, type[BaseModel], callable]] = {
         "prediction with the model's tested accuracy and any warnings in 'notes' (e.g. inputs unlike the training data).",
         PredictWithModel, predict_with_model,
     ),
+    "search_flights": (
+        "Search real flights (Duffel: 300+ airlines) and compare price, duration, stops, baggage and refund rules. "
+        "Use for 'cheapest flight to Dubai', 'flights Delhi to Jaipur on 10 Jan'. Ask for the date if missing. Search only.",
+        SearchFlights, search_flights,
+    ),
+    "search_hotels": (
+        "Search real hotels (Duffel Stays) in a city for given dates: name, stars, review score, price from. Search only.",
+        SearchHotels, search_hotels,
+    ),
+    "search_events": (
+        "Find real concerts, sports and shows (Ticketmaster) by artist/keyword, city, country and date. Search only.",
+        SearchEvents, search_events,
+    ),
+    "my_bookings": ("List the user's bookings and their real status (confirmed only after the provider confirmed).", MyBookings, my_bookings),
     "run_diagnostic": (
         "Run a real, read-only scan of the user's own PC or network and report the results: 'laptop' (performance + "
         "bottleneck), 'hardware', 'cpu_ram', 'disk' (health + space), 'security' (Defender, firewall, updates, RDP, SMBv1, "

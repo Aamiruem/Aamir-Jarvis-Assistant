@@ -576,7 +576,7 @@ export function GlobalMap() {
           </ul>
         </Panel>
         <Panel title="Recent DNS lookups" icon="search" right={<small className="muted">Windows DNS cache</small>} className="od-dns">
-          {(g.dns || []).length === 0 ? <p className="muted small">No cached lookups readable.</p> : (
+          {(g.dns || []).length === 0 ? <p className="muted small">{g.dns_note || 'No cached lookups.'}</p> : (
             <ul>
               {g.dns.slice(0, 18).map((d) => <li key={d.name} title={d.answers.join(', ')}><span>{d.name}</span><small>{d.answers[0] || ''}</small></li>)}
             </ul>

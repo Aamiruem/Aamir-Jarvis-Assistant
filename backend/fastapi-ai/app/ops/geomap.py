@@ -148,10 +148,12 @@ def snapshot() -> dict:
     m = build(hosts, lookup(public), home(), feeds)
     m["feeds"] = threatfeeds.status()
     m["dns"] = dns_cache()
+    m["dns_note"] = None if m["dns"] else _dns_note
     return m
 
 
 _dns: tuple[float, list] | None = None
+_dns_note = "Windows DNS cache is empty."
 
 
 def dns_cache() -> list[dict]:
@@ -178,6 +180,13 @@ def dns_cache() -> list[dict]:
                 if d.get("Data") and len(e["answers"]) < 3:
                     e["answers"].append(d["Data"])
             rows = list(seen.values())[:80]
+            if not rows:
+                probe = subprocess.run(["ipconfig", "/displaydns"], capture_output=True, text=True, timeout=15,
+                                       creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                global _dns_note
+                _dns_note = ("Windows shares its DNS cache only with programs running as administrator; start Jarvis elevated to see recent lookups."
+                             if "elevation" in (probe.stdout + probe.stderr).lower() else
+                             "Windows DNS cache is empty (browsers using secure DNS skip it).")
     except Exception:  # DNS cache unreadable: the map still works
         rows = []
     _dns = (time.time(), rows)

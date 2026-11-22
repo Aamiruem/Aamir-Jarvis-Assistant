@@ -5,6 +5,11 @@ so it stays focused and can only touch what its job needs. "assistant" keeps eve
 """
 
 AGENTS: dict[str, dict] = {
+    "travel": {
+        "name": "Travel Booking Agent",
+        "does": "Finds and compares real flights, hotels and events, and plans trips with costs (you confirm any booking in the Bookings tab).",
+        "tools": {"search_flights", "search_hotels", "search_events", "my_bookings", "get_weather", "web_search", "calculate", "get_time"},
+    },
     "research": {
         "name": "Research Agent",
         "does": "Searches the web and your documents, reads pages, compares sources.",
