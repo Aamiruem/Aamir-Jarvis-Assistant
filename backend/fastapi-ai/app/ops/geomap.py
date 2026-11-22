@@ -10,6 +10,7 @@ Temp/Downloads). Locations are the registry's approximate city, not a precise po
 from __future__ import annotations
 
 import ipaddress
+import json
 import re
 import socket
 import threading
@@ -102,8 +103,9 @@ def lookup(ips: list[str]) -> dict[str, dict]:
     return fresh
 
 
-def build(hosts: list[dict], intel: dict[str, dict], here: dict) -> dict:
-    """The map payload (pure, tested)."""
+def build(hosts: list[dict], intel: dict[str, dict], here: dict, feeds: dict | None = None) -> dict:
+    """The map payload (pure, tested). feeds: threatfeeds state; None skips the blocklist check."""
+    from app.ops import threatfeeds
     out, local, countries, owners = [], 0, {}, {}
     for h in hosts[:MAX_HOSTS]:
         ip = ipaddress.ip_address(h["ip"])
@@ -112,10 +114,11 @@ def build(hosts: list[dict], intel: dict[str, dict], here: dict) -> dict:
             continue
         info = intel.get(h["ip"], {})
         ll = _loc(info)
-        reasons = flags(h)
+        threats = threatfeeds.check(h["ip"], feeds) if feeds is not None else []
+        reasons = [f"{t['feed']}: {t['detail']}" for t in threats] + flags(h)
         row = {"ip": h["ip"], "programs": sorted(h["programs"]), "ports": sorted(h["ports"])[:6], "count": h["count"],
                "established": h["established"], "owner": info.get("owner"), "city": info.get("city"), "country": info.get("country"),
-               "lat": ll[0] if ll else None, "lon": ll[1] if ll else None, "flagged": bool(reasons), "reasons": reasons}
+               "lat": ll[0] if ll else None, "lon": ll[1] if ll else None, "flagged": bool(reasons), "malicious": bool(threats), "reasons": reasons}
         out.append(row)
         cc = row["country"] or ("pending" if h["ip"] not in intel else "unknown")
         c = countries.setdefault(cc, {"country": cc, "hosts": 0, "connections": 0, "flagged": 0})
@@ -128,7 +131,7 @@ def build(hosts: list[dict], intel: dict[str, dict], here: dict) -> dict:
     hl = _loc(here)
     return {
         "home": {**{k: here.get(k) for k in ("ip", "owner", "city", "country")}, "lat": hl[0] if hl else None, "lon": hl[1] if hl else None},
-        "hosts": out, "local_peers": local, "flagged": sum(r["flagged"] for r in out),
+        "hosts": out, "local_peers": local, "flagged": sum(r["flagged"] for r in out), "malicious": sum(r["malicious"] for r in out),
         "located": sum(r["lat"] is not None for r in out),
         "countries": sorted(countries.values(), key=lambda c: (-c["flagged"], -c["connections"])),
         "owners": [{"owner": o, "connections": n} for o, n in sorted(owners.items(), key=lambda x: -x[1])[:8]],
@@ -140,4 +143,42 @@ def build(hosts: list[dict], intel: dict[str, dict], here: dict) -> dict:
 def snapshot() -> dict:
     hosts = remote_hosts()
     public = [h["ip"] for h in hosts[:MAX_HOSTS] if ipaddress.ip_address(h["ip"]).is_global]
-    return build(hosts, lookup(public), home())
+    from app.ops import threatfeeds
+    feeds = threatfeeds.ensure()
+    m = build(hosts, lookup(public), home(), feeds)
+    m["feeds"] = threatfeeds.status()
+    m["dns"] = dns_cache()
+    return m
+
+
+_dns: tuple[float, list] | None = None
+
+
+def dns_cache() -> list[dict]:
+    """Names this PC looked up recently (Windows DNS client cache; no packet capture). Cached 60 s."""
+    global _dns
+    if _dns and time.time() - _dns[0] < 60:
+        return _dns[1]
+    rows: list[dict] = []
+    try:
+        import subprocess
+        import sys
+        if sys.platform == "win32":
+            ps = ("Get-DnsClientCache -ErrorAction SilentlyContinue | Where-Object { $_.Type -in 1,28,5 } | "
+                  "Select-Object -First 400 Entry,Type,Data,TimeToLive | ConvertTo-Json -Compress")
+            out = subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", ps], capture_output=True, text=True, timeout=20,
+                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0)).stdout.strip()
+            data = json.loads(out) if out.startswith(("[", "{")) else []
+            seen: dict[str, dict] = {}
+            for d in data if isinstance(data, list) else [data]:
+                name = (d.get("Entry") or "").lower()
+                if not name or name.endswith((".local", ".arpa")):
+                    continue
+                e = seen.setdefault(name, {"name": name, "answers": []})
+                if d.get("Data") and len(e["answers"]) < 3:
+                    e["answers"].append(d["Data"])
+            rows = list(seen.values())[:80]
+    except Exception:  # DNS cache unreadable: the map still works
+        rows = []
+    _dns = (time.time(), rows)
+    return rows

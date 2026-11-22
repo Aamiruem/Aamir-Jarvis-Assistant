@@ -225,4 +225,21 @@ describe('OpsCenter', () => {
     expect(fake.opsRun).not.toHaveBeenCalledWith('lab_local', expect.anything());
     expect(host.querySelector('.ops-modal')).toBeTruthy();
   });
+
+  it('Investigations view runs passive modules on one target and keeps its own history', async () => {
+    fake.opsJobs.mockResolvedValue([
+      { ...DONE, id: 'inv1', action: 'investigate', title: 'Investigate domain / IP', params: { target: 'github.com' }, summary: 'github.com · 1 IP(s)' },
+      { ...DONE, id: 'cpu1', action: 'cpu_ram', title: 'Check CPU & RAM', params: {} },
+    ]);
+    await mount();
+    await click([...host.querySelectorAll('.od-tabs button')].find((b) => b.textContent.includes('Investigations')));
+    const items = host.querySelectorAll('.od-intel-history li');
+    expect(items).toHaveLength(1); // only investigations, not every scan
+    expect(items[0].textContent).toContain('github.com');
+    await type(host.querySelector('.od-intel input'), 'https://example.com/login');
+    await click(button('Investigate'));
+    expect(fake.opsRun).toHaveBeenCalledWith('investigate', { target: 'example.com' });
+    await click(button('Web security'));
+    expect(fake.opsRun).toHaveBeenCalledWith('website', { url: 'https://example.com/login' });
+  });
 });

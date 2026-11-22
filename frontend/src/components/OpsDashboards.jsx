@@ -506,6 +506,12 @@ const LAND_PATH = WORLD.rows
   })
   .join('');
 
+const feedLine = (feeds) => {
+  if (!feeds) return 'blocklists unavailable';
+  const ts = Object.values(feeds).map((f) => f.updated).filter(Boolean);
+  const n = Object.values(feeds).reduce((t, f) => t + (f.entries || 0), 0);
+  return ts.length ? `${n.toLocaleString()} blocklist entries, updated ${ago(Math.min(...ts))}` : 'blocklists not downloaded yet';
+};
 const place = (cc) => (cc === 'pending' ? 'looking up…' : cc || '—');
 
 export function GlobalMap() {
@@ -521,7 +527,8 @@ export function GlobalMap() {
       <div className="od-mission-stats">
         <div className="od-big"><small>Remote hosts</small><b>{g.hosts.length}</b><span>{g.located} on the map · {g.local_peers} on your local network</span></div>
         <div className="od-big"><small>Countries</small><b>{g.countries.filter((c) => c.country.length === 2).length}</b><span>{g.countries.filter((c) => c.country.length === 2).map((c) => c.country).join(' · ') || '—'}</span></div>
-        <div className={`od-big ${g.flagged ? 'attn' : ''}`}><small>Flagged</small><b className={g.flagged ? 't-bad' : 't-ok'}>{g.flagged}</b><span>{g.flagged ? 'suspicious ports or programs' : 'no suspicious connections'}</span></div>
+        <div className={`od-big ${g.malicious ? 'crit' : g.flagged ? 'attn' : ''}`}><small>Threat matches</small><b className={g.malicious ? 't-bad' : g.flagged ? 't-warn' : 't-ok'}>{g.malicious || 0}</b>
+          <span>{g.malicious ? `on threat blocklists${g.flagged > g.malicious ? ` · ${g.flagged - g.malicious} other flags` : ''}` : g.flagged ? `${g.flagged} suspicious port/program` : 'none on blocklists'} · {feedLine(g.feeds)}</span></div>
         <div className="od-big"><small>You are here</small><b className="od-home-txt">{g.home.city || '—'}</b><span>{g.home.country} · {g.home.owner || 'public IP unknown'}</span></div>
       </div>
 
@@ -533,12 +540,12 @@ export function GlobalMap() {
               const [x, y] = project(h.lat, h.lon);
               const mx = (home[0] + x) / 2;
               const my = Math.min(home[1], y) - Math.max(18, Math.abs(x - home[0]) * 0.22);
-              return <path key={`a${h.ip}`} d={`M${home[0]} ${home[1]} Q${mx} ${my} ${x} ${y}`} className={`arc ${h.flagged ? 'bad' : ''} ${sel === h.ip ? 'sel' : ''}`} />;
+              return <path key={`a${h.ip}`} d={`M${home[0]} ${home[1]} Q${mx} ${my} ${x} ${y}`} className={`arc ${h.malicious ? 'mal' : h.flagged ? 'bad' : ''} ${sel === h.ip ? 'sel' : ''}`} />;
             })}
             {located.map((h) => {
               const [x, y] = project(h.lat, h.lon);
               return (
-                <g key={h.ip} className={`host ${h.flagged ? 'bad' : ''} ${sel === h.ip ? 'sel' : ''}`} onClick={() => setSel(sel === h.ip ? null : h.ip)}>
+                <g key={h.ip} className={`host ${h.malicious ? 'mal' : h.flagged ? 'bad' : ''} ${sel === h.ip ? 'sel' : ''}`} onClick={() => setSel(sel === h.ip ? null : h.ip)}>
                   <title>{`${h.ip} · ${h.owner || 'unknown owner'} · ${[h.city, h.country].filter(Boolean).join(', ')} · ${h.programs.join(', ')}`}</title>
                   <circle cx={x} cy={y} r={3 + (5 * h.count) / maxCount} />
                 </g>
@@ -567,6 +574,13 @@ export function GlobalMap() {
               <li key={o.owner}><span title={o.owner}>{o.owner}</span><i><em style={{ width: `${(100 * o.connections) / Math.max(1, g.owners[0].connections)}%` }} /></i><b>{o.connections}</b></li>
             ))}
           </ul>
+        </Panel>
+        <Panel title="Recent DNS lookups" icon="search" right={<small className="muted">Windows DNS cache</small>} className="od-dns">
+          {(g.dns || []).length === 0 ? <p className="muted small">No cached lookups readable.</p> : (
+            <ul>
+              {g.dns.slice(0, 18).map((d) => <li key={d.name} title={d.answers.join(', ')}><span>{d.name}</span><small>{d.answers[0] || ''}</small></li>)}
+            </ul>
+          )}
         </Panel>
         <Panel title="Connections" icon="network" className="od-geo-hosts">
           <div className="od-table-wrap">

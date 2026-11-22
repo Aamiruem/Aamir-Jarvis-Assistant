@@ -21,6 +21,7 @@ import httpx
 import psutil
 
 from app.ops import net_probe as net
+from app.ops import threatfeeds
 
 # ---------- parsers (pure) ----------
 
@@ -100,6 +101,14 @@ FIXES = {
     "flush_dns": {"label": "Flush the DNS cache", "cmd": ["ipconfig", "/flushdns"], "why": "Clears stale or poisoned name lookups. Harmless: Windows re-learns names as needed."},
     "renew_dhcp": {"label": "Renew the IP address (DHCP)", "cmd": ["ipconfig", "/renew"], "why": "Asks the router for a fresh address. The connection drops for a few seconds."},
 }
+
+
+def _feeds():
+    st = threatfeeds.ensure()
+    n = len(st.get("feodo") or {}) + len(st.get("drop") or [])
+    if not n:
+        raise RuntimeError("blocklists unavailable (offline?)")
+    return st
 
 
 def _ping(ctx, host: str, count: int = 8) -> dict:
@@ -389,6 +398,11 @@ def connections(ctx) -> dict:
         risky = [e for e in r["exes"] if e and RISKY_DIRS.search(e)]
         if risky and ipaddress.ip_address(r["ip"]).is_global:
             f.append({"severity": "medium", "title": f"Program from a Temp/Downloads folder is online", "detail": f"{risky[0]} → {r['ip']}.", "fix": "Malware often runs from these folders. Analyze the file with 'Detect suspicious files'."})
+    feeds = ctx.soft_step("Checking remote hosts against threat blocklists (abuse.ch, Spamhaus; checked locally)", _feeds)
+    for r in remotes.values():
+        for t in threatfeeds.check(r["ip"], feeds) if feeds else []:
+            f.append({"severity": t["severity"], "title": f"{', '.join(sorted(r['programs']))} is connected to a blocklisted address {r['ip']}",
+                      "detail": f"{t['feed']}: {t['detail']}", "fix": "End the program, run 'Detect suspicious files' and a full Microsoft Defender scan. Block the address in the firewall if it keeps coming back."})
     syn = by_state.get(psutil.CONN_SYN_SENT, 0)
     if syn > 20:
         f.append({"severity": "low", "title": f"{syn} connections stuck opening", "detail": "Many unanswered connection attempts: network trouble, a blocked service, or a program scanning.", "fix": "Check which program in the table has many SYN_SENT connections."})

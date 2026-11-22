@@ -10,6 +10,7 @@ const VIEWS = [
   ['ops', 'Operations', 'zap'],
   ['live', 'Live monitor', 'pulse'],
   ['overview', 'Security overview', 'shield'],
+  ['intel', 'Investigations', 'search'],
   ['geo', 'Global map', 'globe'],
   ['mission', 'Mission control', 'rocket'],
 ];
@@ -573,6 +574,59 @@ function stageOf(run) {
   return -1;
 }
 
+const INTEL_ACTIONS = new Set(['investigate', 'website', 'traceroute', 'lab_passive', 'lab_webapp']);
+const INTEL_MODULES = [
+  { id: 'investigate', label: 'Investigate', icon: 'globe', kind: 'target', does: 'Owner & ASN, DNS, registration, TLS certificate, subdomains, Shodan-indexed services and CVEs, BGP route, threat blocklists' },
+  { id: 'website', label: 'Web security', icon: 'lock', kind: 'url', does: 'HTTPS, security headers and cookies mapped to the OWASP Top 10 (for sites you own)' },
+  { id: 'traceroute', label: 'Route', icon: 'timeline', kind: 'target', does: 'The network path hop by hop, with latency and who runs each hop' },
+];
+
+/** Global IP & domain investigation: one target, three passive modules, and its own history. */
+export function IntelPanel({ jobs, disabled, onRun, onOpen, selectedId }) {
+  const [q, setQ] = useState('');
+  const history = jobs.filter((j) => INTEL_ACTIONS.has(j.action));
+  const go = (m) => {
+    const v = q.trim();
+    if (!v) return toast('Enter a domain, public IP address or website URL.', 'error');
+    const host = v.replace(/^[a-z]+:\/\//i, '').split('/')[0];
+    return onRun(m.id, m.kind === 'url' ? { url: v } : { target: host });
+  };
+  return (
+    <section className="ops-panel od-intel" aria-labelledby="od-intel-title">
+      <header>
+        <h2 id="od-intel-title"><Icon name="search" /> Global IP &amp; domain investigation</h2>
+        <p>Public records and existing internet indexes only: Jarvis scans nothing it doesn't own. Every report says what is verified, what is an estimate and what is unavailable.</p>
+      </header>
+      <form className="ops-command-row" onSubmit={(e) => { e.preventDefault(); go(INTEL_MODULES[0]); }}>
+        <span className="prompt">TARGET&gt;</span>
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="example.com · 8.8.8.8 · https://your-site.com" aria-label="Domain, public IP or URL" spellCheck={false} disabled={disabled} />
+      </form>
+      <div className="od-intel-mods">
+        {INTEL_MODULES.map((m) => (
+          <button key={m.id} type="button" className="od-intel-mod" onClick={() => go(m)} disabled={disabled}>
+            <Icon name={m.icon} size="1.3em" /><b>{m.label}</b><small>{m.does}</small>
+          </button>
+        ))}
+      </div>
+      <h3 className="od-intel-h">Investigation history</h3>
+      {history.length === 0 ? <p className="muted small">No investigations yet.</p> : (
+        <ul className="od-intel-history">
+          {history.slice(0, 30).map((j) => (
+            <li key={j.id}>
+              <button type="button" className={j.id === selectedId ? 'on' : ''} onClick={() => onOpen(j.id)}>
+                <span className={`ops-badge b-${j.status}`}>{ACTIVE.has(j.status) ? 'running' : j.status}</span>
+                <b>{j.params?.target || j.params?.url || j.title}</b>
+                <small>{j.title} · {ago(j.created_at)}</small>
+                {j.summary && <span className="sum">{j.summary}</span>}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function CriticalTask({ inputRef, handoff }) {
   const [text, setText] = useState('');
   const [run, setRun] = useState(null);
@@ -893,6 +947,16 @@ export default function OpsCenter({ onAsk }) {
       .filter(([, list]) => list.length);
   }, [catalog]);
   const labProfiles = (catalog || []).filter((a) => a.profile);
+  const resultPanel = (
+    <section className="ops-panel" id="ops-result">
+      {detail && detail.id === selectedId ? (
+        <Result job={{ ...detail, ...(selected ? { status: selected.status, steps: selected.steps } : {}) }} onCancel={cancel} onAsk={onAsk} onFix={fix}
+          onRerun={() => { const a = act(detail.action); if (a) start(a, detail.params || {}); }} />
+      ) : (
+        <div className="ops-empty"><Icon name="radar" size="2.2em" /><p>{view === 'intel' ? 'Enter a target and pick a module, or open an earlier investigation.' : 'Pick a quick action. Its live steps and results appear here.'}</p></div>
+      )}
+    </section>
+  );
   const [mood, moodText] = robotMood({ offline, safe: safe.on, running, latest: jobs.find((j) => !ACTIVE.has(j.status)) });
   const jobsKey = `${jobs.length}:${jobs[0]?.id || ''}:${jobs[0]?.status || ''}`; // refresh dashboards when a scan finishes
   const openJob = (id) => {
@@ -954,6 +1018,13 @@ export default function OpsCenter({ onAsk }) {
       {view === 'overview' && <SecurityOverview onOpenJob={openJob} onRun={runFromDashboard} jobsKey={jobsKey} />}
       {view === 'mission' && <MissionControl onCritical={goCritical} jobsKey={jobsKey} />}
       {view === 'geo' && !offline && <GlobalMap />}
+      {view === 'intel' && (
+        <div className="od-intel-wrap">
+          <IntelPanel jobs={jobs} disabled={Boolean(offline)} selectedId={selectedId} onOpen={setSelectedId}
+            onRun={(id, params) => trigger(act(id), params, true)} />
+          {resultPanel}
+        </div>
+      )}
       {(view === 'live' || view === 'geo') && offline && <p className="muted">This view reads the PC the AI service runs on, which isn't reachable here.</p>}
 
       {view === 'ops' && <>
@@ -1037,14 +1108,7 @@ export default function OpsCenter({ onAsk }) {
       </section>
 
       <div className="ops-main">
-        <section className="ops-panel" id="ops-result">
-          {detail && detail.id === selectedId ? (
-            <Result job={{ ...detail, ...(selected ? { status: selected.status, steps: selected.steps } : {}) }} onCancel={cancel} onAsk={onAsk} onFix={fix}
-              onRerun={() => { const a = act(detail.action); if (a) start(a, detail.params || {}); }} />
-          ) : (
-            <div className="ops-empty"><Icon name="radar" size="2.2em" /><p>Pick a quick action. Its live steps and results appear here.</p></div>
-          )}
-        </section>
+        {resultPanel}
         <aside className="ops-panel ops-history">
           <header><h2><Icon name="timeline" /> History</h2></header>
           {jobs.length === 0 && <p className="muted small">No scans yet.</p>}

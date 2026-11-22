@@ -141,6 +141,122 @@ def cert_transparency(client: httpx.Client, domain: str, limit: int = 100) -> li
         return []
 
 
+def internetdb(client: httpx.Client, ip: str) -> dict:
+    """Shodan InternetDB (free, no key): ports, hostnames, software (CPE), tags and CVEs Shodan's own
+    internet-wide crawl last saw on this IP. Jarvis sends no traffic to the target for this."""
+    r = client.get(f"https://internetdb.shodan.io/{ip}", timeout=10)
+    if r.status_code == 404:
+        return {"ip": ip, "ports": [], "hostnames": [], "cpes": [], "tags": [], "vulns": [], "indexed": False}
+    r.raise_for_status()
+    return {**r.json(), "indexed": True}
+
+
+def bgp(client: httpx.Client, ip: str) -> dict:
+    """Routing from RIPEstat (the RIPE NCC's public BGP collectors): announced prefix and origin AS."""
+    r = client.get("https://stat.ripe.net/data/prefix-overview/data.json", params={"resource": ip}, timeout=12)
+    r.raise_for_status()
+    d = r.json().get("data") or {}
+    return {"prefix": d.get("resource"), "announced": d.get("announced"),
+            "origin": ", ".join(f"AS{a['asn']} {a.get('holder', '')}".strip() for a in d.get("asns") or []),
+            "block": (d.get("block") or {}).get("desc")}
+
+
+def virustotal(client: httpx.Client, kind: str, target: str, key: str) -> dict:
+    """VirusTotal reputation (needs the user's own API key): how many security vendors flag it."""
+    path = "ip_addresses" if kind == "ip" else "domains"
+    r = client.get(f"https://www.virustotal.com/api/v3/{path}/{target}", headers={"x-apikey": key}, timeout=15)
+    r.raise_for_status()
+    a = r.json()["data"]["attributes"]
+    st = a.get("last_analysis_stats") or {}
+    return {"malicious": st.get("malicious", 0), "suspicious": st.get("suspicious", 0), "harmless": st.get("harmless", 0),
+            "undetected": st.get("undetected", 0), "reputation": a.get("reputation"),
+            "link": f"https://www.virustotal.com/gui/{'ip-address' if kind == 'ip' else 'domain'}/{target}"}
+
+
+RISKY_PUBLIC_PORTS = (21, 23, 445, 3389, 5900, 3306, 5432, 6379, 9200, 27017, 11211)
+BAD_TAGS = ("compromised", "malware", "c2", "botnet")
+
+
+def exposure(ctx, client, public_ips, findings, sections, unavailable):
+    """Publicly indexed services, routing, blocklists for each IP: no traffic is sent to the target."""
+    from app.ops import threatfeeds
+    from app.ops.actions import finding, table
+    feeds = ctx.soft_step("Checking blocklists (abuse.ch Feodo, Spamhaus DROP; checked locally)", threatfeeds.ensure)
+    if feeds is None:
+        unavailable.append("Threat blocklists (download failed and no cached copy)")
+    exposed, routes, listed = [], [], False
+    for ip in public_ips[:4]:
+        idb = ctx.soft_step(f"Publicly indexed services on {ip} (Shodan InternetDB)", lambda ip=ip: internetdb(client, ip))
+        if idb is None:
+            unavailable.append(f"Shodan InternetDB for {ip} (lookup failed)")
+        elif idb["indexed"]:
+            vulns = idb.get("vulns") or []
+            exposed.append([ip, ", ".join(map(str, idb.get("ports") or [])) or "none",
+                            ", ".join(c.replace("cpe:/", "") for c in (idb.get("cpes") or [])[:6]), ", ".join(idb.get("tags") or []),
+                            ", ".join(vulns[:8]) + (f" (+{len(vulns) - 8})" if len(vulns) > 8 else "")])
+            if vulns:
+                findings.append(finding("high", f"{ip}: {len(vulns)} known CVE(s) on publicly indexed software", ", ".join(vulns[:10]),
+                                        "Shodan matched these from software versions it saw. Confirm the versions, then patch; use 'CVE lookup' for details."))
+            risky = [p for p in idb.get("ports") or [] if p in RISKY_PUBLIC_PORTS]
+            if risky:
+                findings.append(finding("medium", f"{ip}: sensitive service visible from the internet on port {', '.join(map(str, risky))}",
+                                        "Remote desktop, file sharing and databases should not face the internet.", "Close them in the firewall or put them behind a VPN."))
+            for t in idb.get("tags") or []:
+                if t in BAD_TAGS:
+                    findings.append(finding("high", f"{ip} is tagged '{t}' by Shodan", "Shodan's crawler saw signs of this.", "Investigate before trusting it."))
+        else:
+            exposed.append([ip, "not in Shodan's index", "", "", ""])
+        route = ctx.soft_step(f"BGP routing of {ip} (RIPEstat)", lambda ip=ip: bgp(client, ip))
+        if route:
+            routes.append([ip, route["prefix"], "yes" if route["announced"] else "NOT announced", route["origin"], route["block"]])
+            if not route["announced"]:
+                findings.append(finding("info", f"{ip} is not announced in BGP", "Nothing on the internet routes to this address right now.", ""))
+        else:
+            unavailable.append(f"BGP routing for {ip} (RIPEstat lookup failed)")
+        for t in threatfeeds.check(ip, feeds) if feeds else []:
+            listed = True
+            findings.append(finding(t["severity"], f"{ip} is on a threat blocklist", f"{t['feed']}: {t['detail']}", "Do not connect to it; block it in your firewall."))
+    if exposed:
+        sections.append(table("Publicly indexed services (Shodan InternetDB)", ["IP", "Open ports seen", "Software (CPE)", "Tags", "Known CVEs"], exposed,
+                              note="From Shodan's own internet-wide crawl, not a scan by Jarvis; may be days old."))
+    if routes:
+        sections.append(table("Routing (BGP, RIPEstat)", ["IP", "Announced prefix", "Announced", "Origin AS", "Address block"], routes))
+    if feeds is not None and public_ips and not listed:
+        findings.append(finding("ok", "Not on the threat blocklists", "abuse.ch Feodo Tracker (botnet C2) and Spamhaus DROP.", ""))
+
+
+def reputation(ctx, client, kind, host, public_ips, findings, sections, unavailable):
+    from app.config import settings
+    from app.ops.actions import finding, kv
+    if not settings.virustotal_api_key:
+        unavailable.append("VirusTotal reputation (add VIRUSTOTAL_API_KEY to .env to include it)")
+        return
+    target = host if kind == "domain" else (public_ips[0] if public_ips else host)
+    vt = ctx.soft_step("Reputation from VirusTotal", lambda: virustotal(client, kind, target, settings.virustotal_api_key))
+    if not vt:
+        unavailable.append("VirusTotal (lookup failed)")
+        return
+    sections.append(kv("VirusTotal reputation", [("Flagged malicious", vt["malicious"]), ("Suspicious", vt["suspicious"]), ("Harmless", vt["harmless"]),
+                                                 ("No opinion", vt["undetected"]), ("Community score", vt["reputation"]), ("Report", vt["link"])]))
+    if vt["malicious"]:
+        findings.append(finding("high" if vt["malicious"] >= 3 else "medium", f"{vt['malicious']} security vendor(s) flag {target} as malicious",
+                                "VirusTotal aggregate.", "Treat it as unsafe until you have checked why."))
+
+
+def evidence_table(kind: str, unavailable: list[str]) -> dict:
+    """What is verified, what is an estimate, and what cannot be known from public data."""
+    from app.ops.actions import table
+    verified = ("DNS records, domain/IP registration (RDAP), TLS certificate, Certificate Transparency names, BGP routing, blocklist membership"
+                if kind == "domain" else "IP registration (RDAP), BGP routing, blocklist membership")
+    rows = [
+        ["Verified", verified],
+        ["Indexed (third-party, may be days old)", "Open ports, software and CVEs from Shodan's crawl; VirusTotal vendor verdicts"],
+        ["Estimate", "Location: the registry's city for the network, often the provider's office or data centre, not where a person or device is"],
+        ["Cannot be known from public data", "A person's exact physical location, private devices or files behind the address, passwords, internal hardware"],
+    ] + [["Unavailable this time", u] for u in unavailable]
+    return table("Evidence quality", ["Kind", "What"], rows)
+
+
 def investigate(ctx, target_raw: str) -> dict:
     """The passive workup. ctx.step(label) gives progress lines; returns the standard result dict."""
     from app.ops.actions import finding, kv, table, score_of, sort_findings, count_line
@@ -151,6 +267,7 @@ def investigate(ctx, target_raw: str) -> dict:
 
     findings: list[dict] = []
     sections: list[dict] = []
+    unavailable: list[str] = []
     client = httpx.Client(headers=UA, timeout=10)
     try:
         dns = {"records": {}, "dnssec": False, "spf": None, "dmarc": None}
@@ -186,6 +303,8 @@ def investigate(ctx, target_raw: str) -> dict:
             info = ctx.soft_step(f"Owner, ASN and location of {ip}", lambda ip=ip: ip_intel(client, ip)) or {"ip": ip}
             intel_rows.append([ip, info.get("owner"), info.get("hostname"), ", ".join(filter(None, [info.get("city"), info.get("region"), info.get("country")]))])
         sections.append(table("IP addresses", ["IP", "Owner / ASN", "Reverse DNS", "Location (approx.)"], intel_rows))
+        exposure(ctx, client, public_ips, findings, sections, unavailable)
+        reputation(ctx, client, kind, host, public_ips, findings, sections, unavailable)
         if kind == "ip":
             ipreg = reg or {}
             sections.append(kv("IP registration (RDAP)", [("Network", ipreg.get("network")), ("Range", ipreg.get("range")), ("Owner", ipreg.get("owner")),
@@ -214,7 +333,8 @@ def investigate(ctx, target_raw: str) -> dict:
     finally:
         client.close()
 
-    sections.append({"title": "Scope", "type": "text", "text": "Passive public-records lookup only: DNS, RDAP/WHOIS, Certificate Transparency, the TLS certificate and public HTTP headers. "
+    sections.append(evidence_table(kind, unavailable))
+    sections.append({"title": "Scope", "type": "text", "text": "Passive public-records lookup only: DNS, RDAP/WHOIS, Certificate Transparency, the TLS certificate, public HTTP headers, Shodan's existing index, BGP routing and blocklists. "
                      "No ports were scanned and nothing on the target was accessed beyond one normal HTTPS visit. Active testing (port scans, vulnerability scans) is only for systems you own or are authorized to test."})
     summary = f"{host} · {len(public_ips)} IP(s)" + (f" · {reg.get('registrar')}" if kind == "domain" and reg.get("registrar") else "") + f" · {count_line(findings)}"
     return {"summary": summary, "score": score_of(findings) if any(f["severity"] != "info" for f in findings) else None, "findings": sort_findings(findings), "sections": sections}

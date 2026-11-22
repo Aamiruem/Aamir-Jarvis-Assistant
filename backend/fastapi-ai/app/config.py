@@ -60,6 +60,8 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-5.5"
     openai_max_tokens: int = 16000
     gemini_api_key: str = ""
+    # Optional threat intelligence for Cyber Ops investigations (free tier at virustotal.com). Empty = not used.
+    virustotal_api_key: str = ""
     openrouter_api_key: str = ""
 
     # Local bridge (app/routers/local_bridge.py): these websites may read this PC's read-only

@@ -162,8 +162,11 @@ const GEO = {
   hosts: [
     { ip: '142.250.1.1', programs: ['chrome.exe'], ports: [443], count: 5, owner: 'AS15169 Google LLC', city: 'Mountain View', country: 'US', lat: 37.4, lon: -122.1, flagged: false, reasons: [] },
     { ip: '45.9.9.9', programs: ['x.exe'], ports: [4444], count: 1, owner: 'AS1 Example', city: 'Moscow', country: 'RU', lat: 55.75, lon: 37.6, flagged: true, reasons: ['port 4444: Metasploit default listener'] },
+    { ip: '45.9.9.10', programs: ['evil.exe'], ports: [443], count: 1, owner: 'AS2 Bad', city: 'Nowhere', country: 'NL', lat: 52.3, lon: 4.9, flagged: true, malicious: true, reasons: ['abuse.ch Feodo Tracker (botnet C2): QakBot C2 server'] },
   ],
-  local_peers: 2, flagged: 1, located: 2,
+  local_peers: 2, flagged: 2, malicious: 1, located: 3,
+  feeds: { feodo: { entries: 5, updated: Date.now() / 1000 - 60 }, drop: { entries: 1752, updated: Date.now() / 1000 - 60 } },
+  dns: [{ name: 'github.com', answers: ['140.82.112.3'] }],
   countries: [{ country: 'RU', hosts: 1, connections: 1, flagged: 1 }, { country: 'US', hosts: 1, connections: 5, flagged: 0 }],
   owners: [{ owner: 'AS15169 Google LLC', connections: 5 }], source: 'ipinfo.io',
 };
@@ -180,8 +183,11 @@ describe('GlobalMap', () => {
   it('draws home, arcs and hosts and highlights flagged ones', async () => {
     fake.opsGeo = vi.fn().mockResolvedValue(GEO);
     await mount(createElement(GlobalMap));
-    expect(host.querySelectorAll('.od-map .host')).toHaveLength(2);
-    expect(host.querySelectorAll('.od-map .arc')).toHaveLength(2);
+    expect(host.querySelectorAll('.od-map .host')).toHaveLength(3);
+    expect(host.querySelectorAll('.od-map .arc')).toHaveLength(3);
+    expect(host.querySelector('.od-map .host.mal')).toBeTruthy(); // blocklisted = red
+    expect(host.textContent).toContain('1,757 blocklist entries');
+    expect(host.textContent).toContain('github.com'); // DNS lookups panel
     expect(host.querySelector('.od-map .host.bad')).toBeTruthy();
     expect(host.querySelector('.od-map .home')).toBeTruthy();
     expect(host.textContent).toContain('Gurugram');
