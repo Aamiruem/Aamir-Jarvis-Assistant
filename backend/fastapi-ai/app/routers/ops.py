@@ -46,6 +46,11 @@ def _check_params(action: str, params: dict) -> dict:
         if len(path) > 500 or "\n" in path or "\0" in path:
             raise HTTPException(422, "That file path is not valid.")
         clean["path"] = path
+    if meta.get("input") == "target":
+        target = str(params.get("target") or "").strip()
+        if not target or len(target) > 300 or any(c.isspace() for c in target):
+            raise HTTPException(422, "Enter one domain or public IP, e.g. example.com")
+        clean["target"] = target
     if action == "devices":
         clean["bluetooth"] = params.get("bluetooth", True) is not False
     return clean

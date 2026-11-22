@@ -355,26 +355,28 @@ function ConsentDialog({ action, onOk, onCancel }) {
 
 function InputDialog({ action, onOk, onCancel }) {
   const [value, setValue] = useState('');
-  const isUrl = action.input === 'url';
+  const kind = action.input; // 'url' | 'target' | 'path'
+  const required = kind === 'url' || kind === 'target';
   const submit = (e) => {
     e.preventDefault();
-    if (isUrl && !value.trim()) return;
+    if (required && !value.trim()) return;
     onOk(value.trim());
   };
+  const copy = {
+    url: { blurb: 'A passive check: one normal visit, the HTTPS certificate and the security headers, mapped to the OWASP Top 10. Safe for any public site.', ph: 'example.com', label: 'Website address', cta: 'Check site' },
+    target: { blurb: 'Public records only: DNS, WHOIS/RDAP, the owner and ASN, TLS certificate, subdomains from Certificate Transparency, and email security (SPF/DMARC). Nothing on the target is scanned or accessed beyond one normal visit — safe for any domain or public IP.', ph: 'example.com  or  1.1.1.1', label: 'Domain or public IP', cta: 'Investigate' },
+    path: { blurb: "Leave empty to scan Downloads, Desktop, Documents, Startup and Temp. Or paste one file's full path for a deep analysis: real type, SHA-256, signature, script red flags and a Microsoft Defender scan (nothing is quarantined or deleted).", ph: 'C:\\Users\\you\\Downloads\\file.exe (optional)', label: 'File path', cta: value.trim() ? 'Analyze file' : 'Scan folders' },
+  }[kind];
   return (
     <div className="ops-modal" role="dialog" aria-modal="true" aria-labelledby="ops-input-title" onKeyDown={(e) => e.key === 'Escape' && onCancel()}>
       <form className="ops-modal-card" onSubmit={submit}>
         <h3 id="ops-input-title"><Icon name={action.icon} /> {action.title}</h3>
-        {isUrl ? (
-          <p>A passive check: one normal visit, the HTTPS certificate and the security headers, mapped to the OWASP Top 10. Safe for any public site.</p>
-        ) : (
-          <p>Leave empty to scan Downloads, Desktop, Documents, Startup and Temp. Or paste one file&apos;s full path for a deep analysis: real type, SHA-256, signature, script red flags and a Microsoft Defender scan (nothing is quarantined or deleted).</p>
-        )}
+        <p>{copy.blurb}</p>
         <input className="ops-input" value={value} onChange={(e) => setValue(e.target.value)} autoFocus spellCheck={false}
-          placeholder={isUrl ? 'example.com' : 'C:\\Users\\you\\Downloads\\file.exe (optional)'} aria-label={isUrl ? 'Website address' : 'File path'} />
+          autoCapitalize="none" placeholder={copy.ph} aria-label={copy.label} />
         <div className="row end">
           <button type="button" className="ops-btn" onClick={onCancel}>Cancel</button>
-          <button type="submit" className="ops-btn primary" disabled={isUrl && !value.trim()}><Icon name="search" size="1em" /> {isUrl ? 'Check site' : value.trim() ? 'Analyze file' : 'Scan folders'}</button>
+          <button type="submit" className="ops-btn primary" disabled={required && !value.trim()}><Icon name="search" size="1em" /> {copy.cta}</button>
         </div>
       </form>
     </div>
@@ -605,6 +607,7 @@ export default function OpsCenter({ onAsk }) {
         {[
           { id: 'devices', label: 'Instant device discovery', text: 'Discover accessible laptops, phones, TVs, printers, cameras and Bluetooth electronics.', btn: 'Scan nearby devices', icon: 'radar' },
           { id: 'network', label: 'Ethical hacker', text: 'Audit your authorized network: every device, its open ports and risky services.', btn: 'Audit', icon: 'shield' },
+          { id: 'investigate', label: 'Global intelligence', text: 'Investigate any domain or public IP from public records: DNS, WHOIS, owner, TLS, subdomains.', btn: 'Investigate', icon: 'globe' },
           { id: 'critical', label: 'Autonomous execution', text: 'Plan and perform an approved complex task with the agent team.', btn: 'Execute', icon: 'rocket' },
         ].map((h) => {
           const job = byAction[h.id];
@@ -679,7 +682,7 @@ export default function OpsCenter({ onAsk }) {
       )}
       {dialog?.kind === 'input' && (
         <InputDialog action={dialog.action} onCancel={() => setDialog(null)}
-          onOk={(v) => { setDialog(null); start(dialog.action, dialog.action.input === 'url' ? { url: v } : v ? { path: v } : {}); }} />
+          onOk={(v) => { setDialog(null); const k = dialog.action.input; start(dialog.action, k === 'url' ? { url: v } : k === 'target' ? { target: v } : v ? { path: v } : {}); }} />
       )}
     </div>
   );

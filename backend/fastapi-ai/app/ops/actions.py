@@ -1006,6 +1006,13 @@ def act_report(ctx, params):
             "sections": [table("Areas", ["Area", "Result", "Score"], [[a, r.get("summary"), r.get("score")] for a, r in parts])], "markdown": md}
 
 
+
+
+def act_investigate(ctx, params):
+    from app.ops import osint
+    return osint.investigate(ctx, params.get("target", ""))
+
+
 # ---------- registry ----------
 
 ACTIONS: dict[str, dict] = {
@@ -1024,6 +1031,7 @@ ACTIONS: dict[str, dict] = {
     "website": {"title": "Scan website security", "fn": act_website, "icon": "lock", "input": "url", "does": "HTTPS certificate, TLS version, security headers, cookies, mapped to OWASP Top 10."},
     "ports": {"title": "Check open ports", "fn": act_ports, "icon": "plug", "does": "Every port this PC listens on, the program behind it and who can reach it."},
     "report": {"title": "Generate security report", "fn": act_report, "icon": "report", "does": "Runs the security, ports, Wi-Fi, CPU, disk and IP checks and writes a report you can download."},
+    "investigate": {"title": "Investigate domain / IP", "fn": act_investigate, "icon": "globe", "input": "target", "does": "Passive public-records intelligence on any domain or public IP: DNS, WHOIS/RDAP, owner & ASN, TLS certificate, subdomains, SPF/DMARC."},
     "emergency": {"title": "Emergency system diagnostics", "fn": act_emergency, "icon": "siren", "does": "Fast triage: overload, full disks, network down, crashes, blue screens, antivirus off."},
 }
 

@@ -301,7 +301,7 @@ def test_unknown_action_and_bad_inputs():
 def test_server_mode_refuses(monkeypatch):
     monkeypatch.setattr("app.routers.ops.settings.system_control", False)
     listing = asyncio.run(ops_router.list_actions())
-    assert listing["supported"] is False and len(listing["actions"]) == 16
+    assert listing["supported"] is False and len(listing["actions"]) == 17
     with pytest.raises(HTTPException) as e:
         asyncio.run(ops_router.run(ops_router.RunIn(action="cpu_ram", params={}), ME))
     assert e.value.status_code == 409
@@ -310,6 +310,34 @@ def test_server_mode_refuses(monkeypatch):
 def test_catalog_covers_every_quick_action():
     ids = {a["id"] for a in actions.catalog()}
     assert ids == {"laptop", "devices", "network", "ip", "security", "hardware", "cpu_ram", "disk", "files", "speed",
-                   "bluetooth", "wifi", "website", "ports", "report", "emergency"}
+                   "bluetooth", "wifi", "website", "ports", "report", "emergency", "investigate"}
     from app.agent.tools import DIAGNOSTICS
     assert set(DIAGNOSTICS) == ids
+
+
+# ---------- OSINT (global intelligence) ----------
+
+from app.ops import osint
+
+
+def test_osint_refuses_private_and_junk_targets():
+    for bad in ["192.168.1.1", "10.0.0.5", "127.0.0.1", "169.254.1.1", "::1", "fe80::1"]:
+        with pytest.raises(ValueError):
+            osint.normalize_target(bad)
+    for bad in ["", "not a domain", "no-dot", "http://"]:
+        with pytest.raises(ValueError):
+            osint.normalize_target(bad)
+
+
+def test_osint_accepts_public_ip_and_strips_url():
+    assert osint.normalize_target("1.1.1.1") == ("ip", "1.1.1.1", ["1.1.1.1"])
+    kind, host, _ = osint.normalize_target("https://Example.COM/path?x=1")
+    assert kind == "domain" and host == "example.com"
+
+
+def test_osint_target_param_required(monkeypatch):
+    with pytest.raises(HTTPException) as e:
+        asyncio.run(ops_router.run(ops_router.RunIn(action="investigate", params={"target": "a b"}), ME))
+    assert e.value.status_code == 422
+    # a valid-looking target is accepted by validation (the job itself runs in the background)
+    assert ops_router._check_params("investigate", {"target": "example.com"})["target"] == "example.com"

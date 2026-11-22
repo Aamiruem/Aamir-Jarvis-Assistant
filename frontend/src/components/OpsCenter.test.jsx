@@ -7,8 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 Element.prototype.scrollIntoView = () => {};
 
-const IDS = ['laptop', 'devices', 'network', 'ip', 'security', 'hardware', 'cpu_ram', 'disk', 'files', 'speed', 'bluetooth', 'wifi', 'website', 'ports', 'report', 'emergency'];
-const CATALOG = IDS.map((id) => ({ id, title: `Title ${id}`, icon: 'zap', does: `Does ${id}`, consent: id === 'devices' || id === 'network', input: id === 'website' ? 'url' : id === 'files' ? 'path' : null }));
+const IDS = ['laptop', 'devices', 'network', 'ip', 'security', 'hardware', 'cpu_ram', 'disk', 'files', 'speed', 'bluetooth', 'wifi', 'website', 'ports', 'report', 'emergency', 'investigate'];
+const CATALOG = IDS.map((id) => ({ id, title: `Title ${id}`, icon: 'zap', does: `Does ${id}`, consent: id === 'devices' || id === 'network', input: id === 'website' ? 'url' : id === 'files' ? 'path' : id === 'investigate' ? 'target' : null }));
 const fake = {
   opsActions: vi.fn(), opsJobs: vi.fn(), opsJob: vi.fn(), opsRun: vi.fn(), opsCancel: vi.fn(), opsStopAll: vi.fn(),
   systemStatus: vi.fn(), orchestratorRuns: vi.fn(), runAction: vi.fn(), opsReport: vi.fn(),
@@ -59,12 +59,12 @@ afterEach(() => {
 });
 
 describe('OpsCenter', () => {
-  it('shows all 16 quick actions, numbered, plus live load', async () => {
+  it('shows all 17 quick actions, numbered, plus live load', async () => {
     await mount();
     const actions = host.querySelectorAll('.ops-action');
-    expect(actions).toHaveLength(16);
+    expect(actions).toHaveLength(17);
     expect(actions[0].textContent).toContain('01');
-    expect(actions[15].textContent).toContain('16');
+    expect(actions[16].textContent).toContain('17');
     expect(host.textContent).toContain('Disk 99%');
     expect(host.textContent).toContain('Agent online');
   });
@@ -104,6 +104,20 @@ describe('OpsCenter', () => {
     });
     await act(async () => host.querySelector('.ops-modal form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
     expect(fake.opsRun).toHaveBeenCalledWith('website', { url: 'example.com' });
+  });
+
+
+  it('asks for a domain or IP to investigate and sends it as target', async () => {
+    await mount();
+    await click(button('Title investigate'));
+    const input = host.querySelector('.ops-modal input');
+    await act(async () => {
+      const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+      set.call(input, 'example.com');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => host.querySelector('.ops-modal form').dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+    expect(fake.opsRun).toHaveBeenCalledWith('investigate', { target: 'example.com' });
   });
 
   it('stop all cancels scans and running agent tasks', async () => {

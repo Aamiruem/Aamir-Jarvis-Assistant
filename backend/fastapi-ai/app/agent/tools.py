@@ -135,13 +135,14 @@ class CopyToClipboard(BaseModel):
 
 
 DIAGNOSTICS = ("laptop", "devices", "network", "ip", "security", "hardware", "cpu_ram", "disk", "files", "speed",
-               "bluetooth", "wifi", "website", "ports", "report", "emergency")
+               "bluetooth", "wifi", "website", "ports", "report", "emergency", "investigate")
 
 
 class RunDiagnostic(BaseModel):
     action: str = Field(description="One of: " + ", ".join(DIAGNOSTICS) + ".", json_schema_extra={"enum": list(DIAGNOSTICS)})
     url: str = Field("", description="For 'website': the site to check, e.g. example.com.")
     path: str = Field("", description="For 'files': one file to analyze in depth (leave empty to scan the usual folders).")
+    target: str = Field("", description="For 'investigate': a domain or public IP to look up in public records (e.g. example.com).")
     network_owner_confirmed: bool = Field(False, description=(
         "For 'devices', 'network' and 'report': true ONLY if the user said in this conversation that they own this "
         "network or have the owner's permission to scan it. Never assume it."))
@@ -389,7 +390,7 @@ def run_diagnostic(args: RunDiagnostic, ctx: ToolContext) -> dict:
         return {"needs_confirmation": "Ask the user: do you own this network, or have the owner's permission to scan it? Run it only after they say yes."}
     if args.action == "website" and not args.url:
         return {"error": "Ask which website to check."}
-    params = {"authorized": bool(args.network_owner_confirmed), "url": args.url, "path": args.path}
+    params = {"authorized": bool(args.network_owner_confirmed), "url": args.url, "path": args.path, "target": args.target}
     job = ops_runner.run_sync(ctx.user_id, args.action, meta["title"], {k: v for k, v in params.items() if v not in ("", None)}, meta["fn"], timeout=150)
     r = job.result or {}
     return {

@@ -83,6 +83,7 @@
 .ops-hero-card { background: linear-gradient(160deg, rgba(14, 34, 66, 0.8), rgba(8, 18, 38, 0.7)); border: 1px solid var(--o-line); border-radius: 14px; padding: 16px; display: grid; gap: 8px; align-content: start; color: var(--o-cyan); position: relative; overflow: hidden; }
 .ops-hero-card::after { content: ''; position: absolute; inset: auto -40% -60% auto; width: 70%; aspect-ratio: 1; background: radial-gradient(circle, rgba(34, 211, 238, 0.18), transparent 65%); pointer-events: none; }
 .ops-hero-card.h-network { color: #a78bfa; }
+.ops-hero-card.h-investigate { color: #34d399; }
 .ops-hero-card.h-critical { color: #fb7185; }
 .ops-hero-card h2 { font-size: 1rem; letter-spacing: 0.12em; text-transform: uppercase; }
 .ops-hero-card p { color: var(--o-muted); font-size: 0.86rem; min-height: 2.6em; }
