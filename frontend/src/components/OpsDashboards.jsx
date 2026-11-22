@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
+import { WORLD } from '../data/worldDots.js';
 import './OpsDashboards.css';
 
 // The Cyber Ops dashboards (backend app/ops/live.py and app/ops/insights.py). Everything on them is
@@ -488,7 +489,208 @@ export function SecurityOverview({ onOpenJob, onRun, jobsKey }) {
   );
 }
 
-// ---------- 4. mission control (image 4) ----------
+// ---------- 4. global network map (image 6) ----------
+
+const CELL = 5;
+const MAP_W = WORLD.cols * CELL;
+const MAP_H = WORLD.rows.length * CELL;
+export const project = (lat, lon) => [((lon - WORLD.lonLeft) / 360) * MAP_W, ((WORLD.latTop - lat) / WORLD.step) * CELL];
+
+/** All land dots as one path (thousands of circles would be thousands of DOM nodes). */
+const LAND_PATH = WORLD.rows
+  .map((hex, r) => {
+    const bits = [...hex].map((h) => parseInt(h, 16).toString(2).padStart(4, '0')).join('');
+    let d = '';
+    for (let c = 0; c < WORLD.cols; c += 1) if (bits[c] === '1') d += `M${c * CELL + CELL / 2} ${r * CELL + CELL / 2}h0`;
+    return d;
+  })
+  .join('');
+
+const place = (cc) => (cc === 'pending' ? 'looking up…' : cc || '—');
+
+export function GlobalMap() {
+  const [g, error] = usePoll(() => api.opsGeo(), 20000);
+  const [sel, setSel] = useState(null);
+  if (!g) return error ? <p className="od-error"><Icon name="alert" size="1em" /> {error}</p> : <div className="od-loading"><span className="od-spin" /> Tracing this PC's connections…</div>;
+  const home = g.home.lat != null ? project(g.home.lat, g.home.lon) : null;
+  const located = g.hosts.filter((h) => h.lat != null);
+  const maxCount = Math.max(1, ...located.map((h) => h.count));
+  const picked = located.find((h) => h.ip === sel);
+  return (
+    <div className="od-geo">
+      <div className="od-mission-stats">
+        <div className="od-big"><small>Remote hosts</small><b>{g.hosts.length}</b><span>{g.located} on the map · {g.local_peers} on your local network</span></div>
+        <div className="od-big"><small>Countries</small><b>{g.countries.filter((c) => c.country.length === 2).length}</b><span>{g.countries.filter((c) => c.country.length === 2).map((c) => c.country).join(' · ') || '—'}</span></div>
+        <div className={`od-big ${g.flagged ? 'attn' : ''}`}><small>Flagged</small><b className={g.flagged ? 't-bad' : 't-ok'}>{g.flagged}</b><span>{g.flagged ? 'suspicious ports or programs' : 'no suspicious connections'}</span></div>
+        <div className="od-big"><small>You are here</small><b className="od-home-txt">{g.home.city || '—'}</b><span>{g.home.country} · {g.home.owner || 'public IP unknown'}</span></div>
+      </div>
+
+      <Panel title="Global network map" icon="globe" right={<span className="od-chip">live · refreshes every 20 s</span>} className="od-geo-panel">
+        <div className="od-map-wrap">
+          <svg className="od-map" viewBox={`0 0 ${MAP_W} ${MAP_H}`} role="img" aria-label={`World map: this PC talks to ${located.length} located hosts`}>
+            <path d={LAND_PATH} className="land" />
+            {home && located.map((h) => {
+              const [x, y] = project(h.lat, h.lon);
+              const mx = (home[0] + x) / 2;
+              const my = Math.min(home[1], y) - Math.max(18, Math.abs(x - home[0]) * 0.22);
+              return <path key={`a${h.ip}`} d={`M${home[0]} ${home[1]} Q${mx} ${my} ${x} ${y}`} className={`arc ${h.flagged ? 'bad' : ''} ${sel === h.ip ? 'sel' : ''}`} />;
+            })}
+            {located.map((h) => {
+              const [x, y] = project(h.lat, h.lon);
+              return (
+                <g key={h.ip} className={`host ${h.flagged ? 'bad' : ''} ${sel === h.ip ? 'sel' : ''}`} onClick={() => setSel(sel === h.ip ? null : h.ip)}>
+                  <title>{`${h.ip} · ${h.owner || 'unknown owner'} · ${[h.city, h.country].filter(Boolean).join(', ')} · ${h.programs.join(', ')}`}</title>
+                  <circle cx={x} cy={y} r={3 + (5 * h.count) / maxCount} />
+                </g>
+              );
+            })}
+            {home && <g className="home"><circle cx={home[0]} cy={home[1]} r="13" className="ping" /><circle cx={home[0]} cy={home[1]} r="5.5" /></g>}
+          </svg>
+        </div>
+        {picked ? (
+          <p className="od-pick"><b>{picked.ip}</b> · {picked.owner || 'unknown owner'} · {[picked.city, picked.country].filter(Boolean).join(', ')} · {picked.programs.join(', ')} · ports {picked.ports.join(', ')}
+            {picked.flagged && <span className="t-bad"> · {picked.reasons.join('; ')}</span>}</p>
+        ) : <p className="muted small">Click a node for details. {g.source}.</p>}
+      </Panel>
+
+      <div className="od-geo-grid">
+        <Panel title="By country" icon="globe">
+          <ul className="od-meter">
+            {g.countries.map((c) => (
+              <li key={c.country}><span>{place(c.country)}</span><i><em className={c.flagged ? 'bad' : ''} style={{ width: `${(100 * c.connections) / Math.max(1, ...g.countries.map((x) => x.connections))}%` }} /></i><b>{c.hosts}</b></li>
+            ))}
+          </ul>
+        </Panel>
+        <Panel title="Network owners" icon="briefcase">
+          <ul className="od-meter">
+            {g.owners.map((o) => (
+              <li key={o.owner}><span title={o.owner}>{o.owner}</span><i><em style={{ width: `${(100 * o.connections) / Math.max(1, g.owners[0].connections)}%` }} /></i><b>{o.connections}</b></li>
+            ))}
+          </ul>
+        </Panel>
+        <Panel title="Connections" icon="network" className="od-geo-hosts">
+          <div className="od-table-wrap">
+            <table className="od-table">
+              <thead><tr><th>Program</th><th>Owner</th><th>Where</th><th>Conns</th></tr></thead>
+              <tbody>
+                {g.hosts.slice(0, 14).map((h) => (
+                  <tr key={h.ip} className={h.flagged ? 'bad' : ''} onClick={() => setSel(h.ip)}>
+                    <td title={h.ip}>{h.programs.join(', ')}</td><td>{(h.owner || '—').replace(/^AS\d+\s*/, '')}</td><td>{h.city ? `${h.city}, ${h.country}` : place(h.country)}</td><td>{h.count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+// ---------- 5. the AI brain (image 5) ----------
+
+/** Deterministic pseudo-random numbers, so the brain has the same shape on every render. */
+function mulberry32(seed) {
+  let a = seed;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const BRAIN_W = 560;
+const BRAIN_H = 330;
+const BCX = 280;
+const BCY = 150;
+
+/** Neuron nodes inside two hemispheres; each belongs to one of n regions (angle sectors). */
+export function brainNetwork(regions, count = 130) {
+  const rnd = mulberry32(42);
+  const inside = (x, y) => {
+    const l = ((x - 205) / 150) ** 2 + ((y - BCY) / 118) ** 2 <= 1;
+    const r = ((x - 355) / 150) ** 2 + ((y - BCY) / 118) ** 2 <= 1;
+    return (l || r) && Math.abs(x - BCX) > 4;
+  };
+  const nodes = [];
+  while (nodes.length < count) {
+    const x = 50 + rnd() * 460;
+    const y = 30 + rnd() * 240;
+    if (!inside(x, y)) continue;
+    const ang = (Math.atan2(y - BCY, x - BCX) + Math.PI * 2.5) % (Math.PI * 2);
+    nodes.push({ x, y, r: 1.4 + rnd() * 2.2, region: Math.floor((ang / (Math.PI * 2)) * regions) % regions });
+  }
+  const edges = [];
+  nodes.forEach((a, i) => {
+    nodes
+      .map((b, j) => [j, (a.x - b.x) ** 2 + (a.y - b.y) ** 2])
+      .filter(([j]) => j > i)
+      .sort((p, q) => p[1] - q[1])
+      .slice(0, 2)
+      .forEach(([j, d]) => d < 70 ** 2 && edges.push([i, j]));
+  });
+  return { nodes, edges };
+}
+
+export function AgentBrain({ agents }) {
+  const n = agents.length || 1;
+  const net = useMemo(() => brainNetwork(n), [n]);
+  const stateOf = (region) => agents[region]?.state || 'ready';
+  const working = agents.filter((a) => a.state === 'working');
+  const waiting = agents.filter((a) => a.state === 'waiting');
+  const hemi = 'M280 34 C232 14 150 18 108 58 C64 70 40 112 50 150 C34 186 52 232 96 246 C116 282 176 296 222 282 C246 292 268 288 280 276';
+  return (
+    <figure className="od-brain">
+      <svg viewBox={`0 0 ${BRAIN_W} ${BRAIN_H}`} role="img"
+        aria-label={`AI brain: ${working.length} agents working, ${waiting.length} awaiting approval, ${n - working.length - waiting.length} ready`}>
+        <defs>
+          <radialGradient id="od-brain-core" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+            <stop offset="30%" stopColor="#67e8f9" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0" />
+          </radialGradient>
+          <linearGradient id="od-brain-beam" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#67e8f9" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#67e8f9" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d="M262 268 L298 268 L340 330 L220 330 Z" fill="url(#od-brain-beam)" className="beam" />
+        <ellipse cx={BCX} cy="318" rx="120" ry="9" className="pad" />
+        <g className="shell">
+          <path d={hemi} />
+          <path d={hemi} transform={`translate(${BCX * 2} 0) scale(-1 1)`} />
+          <path d="M280 40 C270 90 292 140 278 190 C270 230 286 262 280 276" className="fissure" />
+          {[['M120 90 C160 70 210 84 240 70'], ['M80 150 C120 130 170 150 220 130'], ['M110 214 C150 196 200 214 240 196'], ['M150 120 C180 110 200 124 230 112']].map(([d], i) => (
+            <g key={i}><path d={d} className="gyrus" /><path d={d} className="gyrus" transform={`translate(${BCX * 2} 0) scale(-1 1)`} /></g>
+          ))}
+        </g>
+        <g className="synapses">
+          {net.edges.map(([i, j], k) => {
+            const a = net.nodes[i];
+            const b = net.nodes[j];
+            const st = a.region === b.region ? stateOf(a.region) : 'ready';
+            return <line key={k} x1={a.x} y1={a.y} x2={b.x} y2={b.y} className={`syn st-${st}`} style={{ animationDelay: `${(k % 9) * 0.17}s` }} />;
+          })}
+        </g>
+        <g className="neurons">
+          {net.nodes.map((p, k) => (
+            <circle key={k} cx={p.x} cy={p.y} r={p.r} className={`neu st-${stateOf(p.region)}`} style={{ animationDelay: `${(k % 7) * 0.23}s` }}>
+              <title>{agents[p.region]?.name}</title>
+            </circle>
+          ))}
+        </g>
+        <circle cx={BCX} cy={BCY} r="46" fill="url(#od-brain-core)" className={`core ${working.length ? 'hot' : ''}`} />
+      </svg>
+      <figcaption>
+        {working.length ? <span className="t-ok">Thinking: {working.map((a) => a.name.replace(' Agent', '')).join(', ')}</span> : <span>All {n} specialists ready</span>}
+        {waiting.length > 0 && <span className="t-warn"> · waiting for your approval: {waiting.map((a) => a.name.replace(' Agent', '')).join(', ')}</span>}
+      </figcaption>
+    </figure>
+  );
+}
+
+// ---------- 6. mission control (image 4) ----------
 
 const STATE_LABEL = { working: 'Working', waiting: 'Awaiting approval', ready: 'Ready' };
 
@@ -509,6 +711,8 @@ export function MissionControl({ onCritical, jobsKey }) {
         <small>{now.toLocaleString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</small>
         <h2>Agentic AI command</h2>
       </div>
+
+      <AgentBrain agents={m.agents} />
 
       <ol className="od-pipeline" aria-label="Specialist agents">
         {m.agents.map((g) => (

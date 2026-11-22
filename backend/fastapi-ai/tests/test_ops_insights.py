@@ -141,3 +141,91 @@ def test_mission_endpoint_and_overview_endpoint_answer_for_a_new_user():
     o = asyncio.run(ops_router.security_overview(me))
     assert m["totals"]["completed"] == 0 and m["approvals"]["human_rate"] is None
     assert o["posture"] is None
+
+
+# ---------- safe testing profiles ----------
+
+from app.ops import actions as ops_actions, profiles  # noqa: E402
+
+
+def test_profiles_are_catalog_actions_with_scope():
+    cat = {a["id"]: a for a in ops_actions.catalog()}
+    assert all(cat[p]["profile"] for p in profiles.PROFILES)
+    assert cat["lab_local"]["consent"] is True  # active scanning of the network still needs authorization
+    assert cat["lab_passive"]["input"] == "target" and cat["lab_webapp"]["input"] == "url"
+    # every bundled check exists, and third-party profiles never include an active network scan
+    for pid, pr in profiles.PROFILES.items():
+        assert all(a in ops_actions.ACTIONS for _, a in pr["checks"])
+    assert not {"network", "devices"} & {a for _, a in profiles.PROFILES["lab_passive"]["checks"] + profiles.PROFILES["lab_webapp"]["checks"]}
+
+
+def test_profile_inputs_reach_each_check():
+    p = {"url": "https://shop.example.com/login", "authorized": True}
+    assert profiles.params_for("website", p)["url"] == "https://shop.example.com/login"
+    assert profiles.params_for("investigate", p)["target"] == "shop.example.com"
+    assert profiles.params_for("files", {"path": "C:/x"}) == {}
+
+
+def test_verify_plan_reruns_only_checks_with_problems():
+    jobs = [job("ports", findings=[f("high", "RDP open")], t=NOW - 10), job("ports", findings=[f("high", "old")], t=NOW - 99),
+            job("wifi", findings=[f("ok", "WPA3")]), job("network", findings=[f("high", "ADB")]), job("cve", findings=[f("critical", "x")])]
+    plan, skipped = profiles.verify_plan(jobs, authorized=False)
+    assert [j["action"] for j in plan] == ["ports"] and plan[0]["created_at"] == NOW - 10
+    assert skipped and "authorization" in skipped[0]
+    plan, _ = profiles.verify_plan(jobs, authorized=True)
+    assert {j["action"] for j in plan} == {"ports", "network"}
+
+
+def test_compare_says_fixed_open_new():
+    before = {"findings": [f("high", "A"), f("medium", "B"), f("ok", "C")]}
+    after = {"findings": [f("medium", "B"), f("low", "D")]}
+    assert profiles.compare(before, after) == {"fixed": ["A"], "open": ["B"], "new": ["D"]}
+
+
+def test_profile_job_runs_checks_concurrently_and_combines(monkeypatch):
+    from app.ops.jobs import JobRunner
+
+    calls = []
+
+    def fake(name, score, sev):
+        def fn(ctx, p):
+            calls.append((name, dict(p)))
+            return {"summary": name, "score": score, "findings": [f(sev, f"{name} issue")], "sections": [{"type": "kv", "title": "Detail", "items": []}]}
+        return fn
+
+    for a in ("website", "investigate", "traceroute"):
+        monkeypatch.setitem(ops_actions.ACTIONS, a, {**ops_actions.ACTIONS[a], "fn": fake(a, 80, "medium")})
+    r = JobRunner.__new__(JobRunner)
+    r._jobs, r._lock = {}, __import__("threading").Lock()
+    monkeypatch.setattr(JobRunner, "_save", lambda self: None)
+    j = r.run_sync("u", "lab_webapp", "Web audit", {"url": "example.com"}, profiles.act_profile("lab_webapp"), timeout=30)
+    assert j.status == "done", j.error
+    assert {c[0] for c in calls} == {"website", "investigate", "traceroute"}
+    assert dict(calls)["investigate"]["target"] == "example.com"
+    res = j.result
+    assert res["score"] == 100 - 3 * 6 and len(res["findings"]) == 3 and res["markdown"].startswith("# Authorized web application audit")
+    assert any(s["title"].startswith("investigate") or s["title"].startswith("Domain intelligence") for s in res["sections"])
+
+
+# ---------- global network map ----------
+
+from app.ops import geomap  # noqa: E402
+
+
+def test_map_places_public_hosts_and_flags_suspicious_ones():
+    hosts = [
+        {"ip": "142.250.1.1", "ports": {443}, "programs": {"chrome.exe"}, "exes": {r"C:\Program Files\chrome.exe"}, "count": 5, "established": 5},
+        {"ip": "45.9.9.9", "ports": {4444}, "programs": {"x.exe"}, "exes": {r"C:\Users\me\Downloads\x.exe"}, "count": 1, "established": 1},
+        {"ip": "192.168.1.1", "ports": {80}, "programs": {"svchost.exe"}, "exes": set(), "count": 2, "established": 2},
+        {"ip": "8.8.4.4", "ports": {443}, "programs": {"app.exe"}, "exes": set(), "count": 1, "established": 1},
+    ]
+    intel = {"142.250.1.1": {"owner": "AS15169 Google LLC", "city": "Mountain View", "country": "US", "loc": "37.4,-122.1"},
+             "45.9.9.9": {"owner": "AS1 Example", "city": "Moscow", "country": "RU", "loc": "55.75,37.6"}}
+    m = geomap.build(hosts, intel, {"ip": "1.2.3.4", "city": "Gurugram", "country": "IN", "loc": "28.46,77.03"})
+    assert m["local_peers"] == 1 and len(m["hosts"]) == 3 and m["located"] == 2
+    bad = next(h for h in m["hosts"] if h["ip"] == "45.9.9.9")
+    assert bad["flagged"] and any("4444" in r for r in bad["reasons"]) and any("Downloads" in r for r in bad["reasons"])
+    assert m["flagged"] == 1 and m["countries"][0]["country"] == "RU"  # flagged countries first
+    assert next(h for h in m["hosts"] if h["ip"] == "8.8.4.4")["lat"] is None  # no registry data -> not placed
+    assert m["home"]["lat"] == 28.46 and m["owners"][0]["owner"] == "Google LLC"
+    assert {c["country"] for c in m["countries"]} == {"RU", "US", "pending"}  # 8.8.4.4 not looked up yet

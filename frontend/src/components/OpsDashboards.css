@@ -281,3 +281,72 @@
 @media (prefers-reduced-motion: reduce) {
   .od-robot *, .od-core *, .od-topo *, .od-pipeline * { animation: none !important; }
 }
+
+/* ---------- safe testing profiles ---------- */
+.od-chip.t-warn { color: var(--o-warn); border-color: rgba(251, 191, 36, 0.45); }
+.od-profiles { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 980px) { .od-profiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .od-profiles { grid-template-columns: minmax(0, 1fr); } }
+.od-profile {
+  position: relative; display: grid; gap: 8px; align-content: start; padding: 14px; border-radius: 14px; border: 1px solid var(--o-line);
+  background: linear-gradient(160deg, rgba(34, 211, 238, 0.07), rgba(167, 139, 250, 0.05) 60%, transparent), var(--o-panel); color: var(--o-cyan);
+}
+.od-profile.busy { border-color: var(--o-line-hi); box-shadow: 0 0 22px rgba(34, 211, 238, 0.2); }
+.od-profile .num { position: absolute; top: 10px; right: 12px; font: 700 0.72rem var(--o-mono); color: var(--o-muted); }
+.od-profile h3 { margin: 0; font-size: 0.98rem; color: var(--o-text); }
+.od-profile p { margin: 0; font-size: 0.8rem; color: var(--o-muted); line-height: 1.4; }
+.od-profile .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.od-profile .ops-btn { justify-self: start; }
+.od-profile .ops-link { font-size: 0.74rem; text-align: left; color: var(--o-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+
+/* ---------- AI brain ---------- */
+.od-brain { margin: 0; display: grid; justify-items: center; gap: 6px; }
+.od-brain svg { width: 100%; max-width: 640px; height: auto; overflow: visible; }
+.od-brain .shell path { fill: none; stroke: rgba(103, 232, 249, 0.55); stroke-width: 1.6; filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.6)); }
+.od-brain .shell .fissure { stroke: rgba(103, 232, 249, 0.35); stroke-dasharray: 3 4; }
+.od-brain .shell .gyrus { stroke: rgba(103, 232, 249, 0.18); stroke-width: 1.2; filter: none; }
+.od-brain .syn { stroke: rgba(56, 189, 248, 0.22); stroke-width: 0.8; }
+.od-brain .syn.st-working { stroke: #67e8f9; stroke-width: 1.3; stroke-dasharray: 4 6; animation: od-fire 1s linear infinite; filter: drop-shadow(0 0 3px #22d3ee); }
+.od-brain .syn.st-waiting { stroke: rgba(251, 191, 36, 0.7); stroke-dasharray: 2 5; }
+.od-brain .neu { fill: rgba(125, 211, 252, 0.55); }
+.od-brain .neu.st-working { fill: #e0fbff; filter: drop-shadow(0 0 4px #22d3ee); animation: od-neuron 1.2s ease-in-out infinite; }
+.od-brain .neu.st-waiting { fill: #fbbf24; filter: drop-shadow(0 0 4px #fbbf24); animation: od-neuron 2s ease-in-out infinite; }
+.od-brain .core { animation: od-pulse 3s ease-in-out infinite; transform-origin: 280px 150px; }
+.od-brain .core.hot { animation: od-core 0.9s ease-in-out infinite alternate; }
+.od-brain .beam { opacity: 0.7; }
+.od-brain .pad { fill: rgba(34, 211, 238, 0.18); stroke: rgba(34, 211, 238, 0.5); }
+.od-brain figcaption { font-size: 0.82rem; color: var(--o-muted); text-align: center; }
+@keyframes od-fire { to { stroke-dashoffset: -20; } }
+@keyframes od-neuron { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+@keyframes od-core { from { transform: scale(0.9); opacity: 0.75; } to { transform: scale(1.15); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .od-brain * { animation: none !important; } }
+
+/* ---------- global network map ---------- */
+.od-geo { display: grid; gap: 12px; }
+.od-home-txt { font-size: 1.3rem !important; }
+.od-map-wrap { overflow-x: auto; border-radius: 10px; background: radial-gradient(ellipse at 50% 40%, rgba(14, 165, 233, 0.12), transparent 70%); }
+.od-map { width: 100%; min-width: 560px; height: auto; display: block; }
+.od-map .land { stroke: rgba(56, 189, 248, 0.42); stroke-width: 2.6; stroke-linecap: round; fill: none; }
+.od-map .arc { fill: none; stroke: rgba(34, 211, 238, 0.55); stroke-width: 1.1; stroke-dasharray: 5 5; animation: od-dash 1.4s linear infinite; filter: drop-shadow(0 0 2px #22d3ee); }
+.od-map .arc.bad { stroke: #fb923c; filter: drop-shadow(0 0 3px #fb923c); }
+.od-map .arc.sel { stroke: #fff; stroke-width: 1.8; }
+.od-map .host { cursor: pointer; }
+.od-map .host circle { fill: rgba(34, 211, 238, 0.35); stroke: #67e8f9; stroke-width: 1.4; filter: drop-shadow(0 0 4px #22d3ee); }
+.od-map .host.bad circle { fill: rgba(251, 146, 60, 0.4); stroke: #fb923c; filter: drop-shadow(0 0 5px #fb923c); animation: od-pulse 1.2s infinite; }
+.od-map .host.sel circle { stroke: #fff; stroke-width: 2.2; }
+.od-map .home circle { fill: #a78bfa; filter: drop-shadow(0 0 6px #a78bfa); }
+.od-map .home .ping { fill: none; stroke: #a78bfa; stroke-width: 1.5; transform-box: fill-box; transform-origin: center; animation: od-ping 2s ease-out infinite; }
+@keyframes od-ping { from { transform: scale(0.4); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+.od-pick { font-size: 0.84rem; margin: 0; overflow-wrap: anywhere; }
+.od-geo-grid { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr); }
+.od-meter { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.od-meter li { display: grid; grid-template-columns: minmax(0, 1.3fr) 1fr 28px; gap: 8px; align-items: center; font-size: 0.82rem; }
+.od-meter span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.od-meter i { height: 6px; border-radius: 3px; background: rgba(56, 189, 248, 0.1); overflow: hidden; }
+.od-meter em { display: block; height: 100%; background: linear-gradient(90deg, var(--o-cyan), var(--o-violet)); }
+.od-meter em.bad { background: #fb923c; }
+.od-meter b { text-align: right; font-family: var(--o-mono); }
+.od-geo-hosts tr { cursor: pointer; }
+.od-geo-hosts tr.bad td { color: #fb923c; }
+@media (max-width: 1080px) { .od-geo-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .od-map * { animation: none !important; } }

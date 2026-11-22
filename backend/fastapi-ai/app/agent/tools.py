@@ -136,17 +136,18 @@ class CopyToClipboard(BaseModel):
 
 DIAGNOSTICS = ("laptop", "devices", "network", "ip", "security", "hardware", "cpu_ram", "disk", "files", "speed",
                "bluetooth", "wifi", "website", "ports", "report", "emergency", "investigate", "netfix", "traceroute",
-               "connections", "deps", "cve", "code_audit", "toolbox")
+               "connections", "deps", "cve", "code_audit", "toolbox",
+               "lab_passive", "lab_local", "lab_webapp", "lab_code", "lab_verify", "lab_incident")
 
 
 class RunDiagnostic(BaseModel):
     action: str = Field(description="One of: " + ", ".join(DIAGNOSTICS) + ".", json_schema_extra={"enum": list(DIAGNOSTICS)})
-    url: str = Field("", description="For 'website': the site to check, e.g. example.com.")
-    path: str = Field("", description="For 'files': one file to analyze in depth (empty = scan the usual folders). For 'deps' / 'code_audit': a project folder (empty = the Jarvis project).")
-    target: str = Field("", description="For 'investigate': a domain or public IP (public records only). For 'traceroute': a host name or IP.")
+    url: str = Field("", description="For 'website' and 'lab_webapp': the site to check, e.g. example.com.")
+    path: str = Field("", description="For 'files': one file to analyze in depth (empty = scan the usual folders). For 'deps' / 'code_audit' / 'lab_code': a project folder (empty = the Jarvis project).")
+    target: str = Field("", description="For 'investigate' / 'lab_passive': a domain or public IP (public records only). For 'traceroute': a host name or IP.")
     query: str = Field("", description="For 'cve': a CVE id (CVE-2021-44228) or product name ('openssh 9.6').")
     network_owner_confirmed: bool = Field(False, description=(
-        "For 'devices', 'network' and 'report': true ONLY if the user said in this conversation that they own this "
+        "For 'devices', 'network', 'report' and 'lab_local': true ONLY if the user said in this conversation that they own this "
         "network or have the owner's permission to scan it. Never assume it."))
 
 
@@ -390,8 +391,10 @@ def run_diagnostic(args: RunDiagnostic, ctx: ToolContext) -> dict:
     meta = ops_actions.ACTIONS[args.action]
     if meta.get("consent") and not args.network_owner_confirmed:
         return {"needs_confirmation": "Ask the user: do you own this network, or have the owner's permission to scan it? Run it only after they say yes."}
-    if args.action == "website" and not args.url:
+    if args.action in ("website", "lab_webapp") and not args.url:
         return {"error": "Ask which website to check."}
+    if args.action in ("investigate", "lab_passive", "traceroute") and not args.target:
+        return {"error": "Ask which domain or public IP to look at."}
     params = {"authorized": bool(args.network_owner_confirmed), "url": args.url, "path": args.path, "target": args.target, "query": args.query}
     job = ops_runner.run_sync(ctx.user_id, args.action, meta["title"], {k: v for k, v in params.items() if v not in ("", None)}, meta["fn"], timeout=240)
     r = job.result or {}

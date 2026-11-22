@@ -1080,5 +1080,16 @@ ACTIONS: dict[str, dict] = {
 }
 
 
+def _register_profiles():
+    from app.ops import profiles
+    for pid, pr in profiles.PROFILES.items():
+        ACTIONS[pid] = {"title": pr["title"], "fn": profiles.act_profile(pid), "icon": pr["icon"], "does": pr["scope"],
+                        "consent": bool(pr.get("consent")), "input": pr.get("input"), "profile": True}
+
+
+_register_profiles()
+
+
 def catalog() -> list[dict]:
-    return [{"id": k, "title": a["title"], "icon": a["icon"], "does": a["does"], "consent": bool(a.get("consent")), "input": a.get("input")} for k, a in ACTIONS.items()]
+    return [{"id": k, "title": a["title"], "icon": a["icon"], "does": a["does"], "consent": bool(a.get("consent")), "input": a.get("input"),
+             "profile": bool(a.get("profile"))} for k, a in ACTIONS.items()]

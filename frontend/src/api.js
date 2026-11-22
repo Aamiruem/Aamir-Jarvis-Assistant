@@ -218,6 +218,7 @@ export const api = {
   opsFix: (fix) => request('/ai/ops/fix', { method: 'POST', body: { fix, approve: true } }),
   opsSetSafeMode: (on) => request('/ai/ops/safe-mode', { method: 'POST', body: { on } }),
   opsLive: () => request('/ai/ops/live'),
+  opsGeo: () => request('/ai/ops/geo'),
   opsOverview: () => request('/ai/ops/overview'),
   opsMission: () => request('/ai/ops/mission'),
   opsReport: async (id) => {

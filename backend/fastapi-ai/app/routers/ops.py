@@ -10,6 +10,7 @@ POST /ops/jobs/{id}/cancel        -> cancel one job (kills its child processes)
 POST /ops/stop-all                -> cancel every running job
 POST /ops/fix {fix, approve}      -> run one whitelisted network fix the user approved, then verify
 GET/POST /ops/safe-mode {on}      -> emergency safe mode (switching on also stops everything)
+GET  /ops/geo                     -> global map: where this PC is talking to (owner, city, country)
 GET  /ops/live                    -> hardware monitor: CPU/GPU/RAM/disk/network now + recent history
 GET  /ops/overview                -> security posture, alerts, incidents, asset health (from real scans)
 GET  /ops/mission                 -> mission control: specialist agents, approvals, completions
@@ -49,6 +50,9 @@ TOOLS_USED = {
     "emergency": "psutil · event logs · ping · DNS · HTTPS", "netfix": "ping · system DNS vs 1.1.1.1 · captive-portal probe · proxy/VPN/event-log checks",
     "traceroute": "tracert (ICMP) · ipinfo.io", "connections": "connection table · adapter counters · netstat -s · ipinfo.io",
     "deps": "OSV.dev", "cve": "NIST NVD API 2.0 · CISA KEV", "code_audit": "secret rules · Bandit · JS/TS rules", "toolbox": "PATH / Program Files detection",
+    "lab_passive": "DNS-over-HTTPS · RDAP · ipinfo.io · crt.sh · TLS", "lab_local": "ARP · mDNS · UPnP · TCP connect · Nmap -sV when installed · netsh wlan · WinRT Bluetooth",
+    "lab_webapp": "TLS handshake · HTTP headers · RDAP · crt.sh · tracert", "lab_code": "secret rules · Bandit · JS/TS rules · OSV.dev",
+    "lab_verify": "re-runs earlier checks and diffs their findings", "lab_incident": "Microsoft Defender · file signatures · connection table · event logs",
 }
 
 
@@ -226,6 +230,14 @@ def live_telemetry():
     _require_pc()
     from app.ops import live
     return live.snapshot()
+
+
+@router.get("/geo")
+def global_map():
+    """Where this PC is talking to right now: remote hosts with owner, city and country."""
+    _require_pc()
+    from app.ops import geomap
+    return geomap.snapshot()
 
 
 @router.get("/overview")

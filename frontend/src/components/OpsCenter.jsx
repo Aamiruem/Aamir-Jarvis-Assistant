@@ -3,13 +3,14 @@ import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { toast } from '../ui.jsx';
 import { useListen } from '../useListen.js';
-import { LiveMonitor, MissionControl, RobotCore, SecurityOverview } from './OpsDashboards.jsx';
+import { GlobalMap, LiveMonitor, MissionControl, RobotCore, SecurityOverview } from './OpsDashboards.jsx';
 import './OpsCenter.css';
 
 const VIEWS = [
   ['ops', 'Operations', 'zap'],
   ['live', 'Live monitor', 'pulse'],
   ['overview', 'Security overview', 'shield'],
+  ['geo', 'Global map', 'globe'],
   ['mission', 'Mission control', 'rocket'],
 ];
 const VIEW_KEY = 'ops.view';
@@ -885,12 +886,13 @@ export default function OpsCenter({ onAsk }) {
   const current = running[0];
   const grouped = useMemo(() => {
     if (!catalog) return [];
-    const placed = new Set(GROUPS.flatMap(([, ids]) => ids));
+    const placed = new Set([...GROUPS.flatMap(([, ids]) => ids), ...catalog.filter((a) => a.profile).map((a) => a.id)]);
     let n = 0;
     return [...GROUPS, ['More', catalog.map((a) => a.id).filter((id) => !placed.has(id))]]
       .map(([g, ids]) => [g, ids.map((id) => catalog.find((a) => a.id === id)).filter(Boolean).map((a) => ({ a, n: ++n }))])
       .filter(([, list]) => list.length);
   }, [catalog]);
+  const labProfiles = (catalog || []).filter((a) => a.profile);
   const [mood, moodText] = robotMood({ offline, safe: safe.on, running, latest: jobs.find((j) => !ACTIVE.has(j.status)) });
   const jobsKey = `${jobs.length}:${jobs[0]?.id || ''}:${jobs[0]?.status || ''}`; // refresh dashboards when a scan finishes
   const openJob = (id) => {
@@ -951,7 +953,8 @@ export default function OpsCenter({ onAsk }) {
       {view === 'live' && !offline && <LiveMonitor />}
       {view === 'overview' && <SecurityOverview onOpenJob={openJob} onRun={runFromDashboard} jobsKey={jobsKey} />}
       {view === 'mission' && <MissionControl onCritical={goCritical} jobsKey={jobsKey} />}
-      {view === 'live' && offline && <p className="muted">The live monitor reads the PC the AI service runs on, which isn't reachable here.</p>}
+      {view === 'geo' && !offline && <GlobalMap />}
+      {(view === 'live' || view === 'geo') && offline && <p className="muted">This view reads the PC the AI service runs on, which isn't reachable here.</p>}
 
       {view === 'ops' && <>
       <div className="ops-hero">
@@ -976,6 +979,35 @@ export default function OpsCenter({ onAsk }) {
           );
         })}
       </div>
+
+      {labProfiles.length > 0 && (
+        <section className="ops-panel" aria-labelledby="ops-profiles-title">
+          <header><h2 id="ops-profiles-title"><Icon name="shield" /> Safe testing profiles</h2>
+            <p>One click runs a bundle of real checks at the same time, as one job with one report. Active probing only on networks you authorize.</p></header>
+          <div className="od-profiles">
+            {labProfiles.map((a, i) => {
+              const job = byAction[a.id];
+              const busy = job && ACTIVE.has(job.status);
+              return (
+                <article key={a.id} className={`od-profile ${busy ? 'busy' : ''}`}>
+                  <span className="num">P{i + 1}</span>
+                  <Icon name={a.icon} size="1.5em" />
+                  <h3>{a.title}</h3>
+                  <p>{a.does}</p>
+                  <div className="tags">
+                    {a.consent ? <span className="od-chip t-warn">Authorization required</span> : <span className="od-chip t-ok">Read-only</span>}
+                    {a.input && <span className="od-chip">{{ url: 'Needs a website', target: 'Needs a domain or IP', folder: 'Project folder' }[a.input] || a.input}</span>}
+                  </div>
+                  <button type="button" className="ops-btn primary" onClick={() => trigger(a)} disabled={Boolean(offline)}>
+                    {busy ? <><span className="ops-spinner" aria-hidden="true" /> {job.steps.at(-1)?.label || 'Starting'}…</> : job ? 'Run again' : 'Run profile'}
+                  </button>
+                  {job && !busy && <button type="button" className="ops-link" onClick={() => setSelectedId(job.id)}>{job.status === 'done' ? (job.summary || 'Done') : job.status} · {ago(job.created_at)}</button>}
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <section className="ops-panel">
         <header><h2><Icon name="zap" /> Quick actions</h2><p>One click, real results. Nothing on your PC or network is changed unless you approve a fix.</p></header>

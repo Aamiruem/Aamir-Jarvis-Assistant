@@ -206,4 +206,23 @@ describe('OpsCenter', () => {
     expect(host.textContent).toContain('Start Azarvis on your PC');
     expect(button('Title laptop').disabled).toBe(true);
   });
+
+  it('shows the safe testing profiles apart from quick actions; the network one still asks for consent', async () => {
+    const profiles = [
+      { id: 'lab_code', title: 'Source-code security analysis', icon: 'code', does: 'Read only', consent: false, input: 'folder', profile: true },
+      { id: 'lab_local', title: 'Local network audit', icon: 'network', does: 'Your network', consent: true, input: null, profile: true },
+      { id: 'lab_incident', title: 'Defensive incident investigation', icon: 'siren', does: 'This PC', consent: false, input: null, profile: true },
+    ];
+    fake.opsActions.mockResolvedValue({ supported: true, actions: [...CATALOG, ...profiles] });
+    await mount();
+    expect(host.querySelectorAll('.ops-action')).toHaveLength(24); // profiles are not quick actions
+    const cards = host.querySelectorAll('.od-profile');
+    expect(cards).toHaveLength(3);
+    expect(cards[1].textContent).toContain('Authorization required');
+    await click(cards[2].querySelector('button'));
+    expect(fake.opsRun).toHaveBeenCalledWith('lab_incident', {});
+    await click(host.querySelectorAll('.od-profile')[1].querySelector('button'));
+    expect(fake.opsRun).not.toHaveBeenCalledWith('lab_local', expect.anything());
+    expect(host.querySelector('.ops-modal')).toBeTruthy();
+  });
 });

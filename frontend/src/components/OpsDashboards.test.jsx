@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
-const fake = { opsLive: vi.fn(), opsOverview: vi.fn(), opsMission: vi.fn() };
+const fake = { opsLive: vi.fn(), opsOverview: vi.fn(), opsMission: vi.fn(), opsGeo: vi.fn() };
 vi.mock('../api.js', () => ({ api: new Proxy({}, { get: (_, k) => (...a) => fake[k](...a) }) }));
 const { LiveMonitor, SecurityOverview, MissionControl, RobotCore, fmtBytes, fmtUptime } = await import('./OpsDashboards.jsx');
 const { robotMood } = await import('./OpsCenter.jsx');
@@ -152,5 +152,56 @@ describe('MissionControl', () => {
     expect(t).toContain('Speed up my laptop');
     await click([...host.querySelectorAll('button')].find((b) => b.textContent.includes('New critical task')));
     expect(onCritical).toHaveBeenCalled();
+  });
+});
+
+const { GlobalMap, AgentBrain, brainNetwork, project } = await import('./OpsDashboards.jsx');
+
+const GEO = {
+  home: { ip: '1.2.3.4', city: 'Gurugram', country: 'IN', owner: 'AS9 ISP', lat: 28.46, lon: 77.03 },
+  hosts: [
+    { ip: '142.250.1.1', programs: ['chrome.exe'], ports: [443], count: 5, owner: 'AS15169 Google LLC', city: 'Mountain View', country: 'US', lat: 37.4, lon: -122.1, flagged: false, reasons: [] },
+    { ip: '45.9.9.9', programs: ['x.exe'], ports: [4444], count: 1, owner: 'AS1 Example', city: 'Moscow', country: 'RU', lat: 55.75, lon: 37.6, flagged: true, reasons: ['port 4444: Metasploit default listener'] },
+  ],
+  local_peers: 2, flagged: 1, located: 2,
+  countries: [{ country: 'RU', hosts: 1, connections: 1, flagged: 1 }, { country: 'US', hosts: 1, connections: 5, flagged: 0 }],
+  owners: [{ owner: 'AS15169 Google LLC', connections: 5 }], source: 'ipinfo.io',
+};
+
+describe('GlobalMap', () => {
+  it('projects coordinates onto the dot map', () => {
+    const [x0, y0] = project(0, -180);
+    const [x1] = project(0, 180);
+    expect(x0).toBe(0);
+    expect(x1).toBeGreaterThan(800);
+    expect(project(84, 0)[1]).toBe(0);
+    expect(y0).toBeGreaterThan(0);
+  });
+  it('draws home, arcs and hosts and highlights flagged ones', async () => {
+    fake.opsGeo = vi.fn().mockResolvedValue(GEO);
+    await mount(createElement(GlobalMap));
+    expect(host.querySelectorAll('.od-map .host')).toHaveLength(2);
+    expect(host.querySelectorAll('.od-map .arc')).toHaveLength(2);
+    expect(host.querySelector('.od-map .host.bad')).toBeTruthy();
+    expect(host.querySelector('.od-map .home')).toBeTruthy();
+    expect(host.textContent).toContain('Gurugram');
+    await click(host.querySelector('.od-map .host.bad'));
+    expect(host.textContent).toContain('Metasploit default listener');
+  });
+});
+
+describe('AgentBrain', () => {
+  it('builds the same network every time', () => {
+    const a = brainNetwork(10);
+    expect(a.nodes).toHaveLength(130);
+    expect(brainNetwork(10).nodes[7]).toEqual(a.nodes[7]);
+    expect(new Set(a.nodes.map((n) => n.region)).size).toBe(10);
+  });
+  it('lights up working and waiting agents', async () => {
+    await mount(createElement(AgentBrain, { agents: MISSION.agents }));
+    expect(host.querySelector('.neu.st-working')).toBeTruthy();
+    expect(host.querySelector('.neu.st-waiting')).toBeTruthy();
+    expect(host.textContent).toContain('Thinking: Cybersecurity');
+    expect(host.textContent).toContain('waiting for your approval: Browser Automation');
   });
 });
