@@ -13,9 +13,9 @@ import './Bookings.css';
 // the confirmation on the full summary, and "Confirmed" appears only after the provider confirmed it.
 
 const CATS = [
-  { id: 'flights', label: 'Flights', sub: 'Search & book', icon: 'plane', hue: 245 },
-  { id: 'hotels', label: 'Hotels', sub: 'Find stays', icon: 'bed', hue: 215 },
-  { id: 'events', label: 'Events', sub: 'Concerts & shows', icon: 'ticket', hue: 330 },
+  { id: 'flights', label: 'Flights', sub: 'All airlines', icon: 'plane', hue: 245 },
+  { id: 'hotels', label: 'Hotels', sub: 'Stays', icon: 'bed', hue: 215 },
+  { id: 'events', label: 'Events', sub: 'Live shows', icon: 'ticket', hue: 330 },
   { id: 'trains', label: 'Trains', sub: 'Plan + IRCTC', icon: 'train', hue: 200 },
   { id: 'buses', label: 'Buses', sub: 'Operators', icon: 'bus', hue: 30, partner: 'buses' },
   { id: 'movies', label: 'Movies', sub: 'Cinemas', icon: 'film', hue: 0, partner: 'movies' },
