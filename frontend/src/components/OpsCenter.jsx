@@ -3,6 +3,7 @@ import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { toast } from '../ui.jsx';
 import { useListen } from '../useListen.js';
+import AiOffline, { isAiDown } from './AiOffline.jsx';
 import { GlobalMap, LiveMonitor, MissionControl, RobotCore, SecurityOverview } from './OpsDashboards.jsx';
 import './OpsCenter.css';
 
@@ -1001,7 +1002,9 @@ export default function OpsCenter({ onAsk }) {
         </div>
       </header>
 
-      {offline && <p className="ops-error"><Icon name="alert" size="1em" /> {offline}</p>}
+      {offline && (unreachable && isAiDown(unreachable)
+        ? <AiOffline message={unreachable} what="Cyber Ops" onReady={() => { setUnreachable(''); api.opsActions().then((d) => { setCatalog(d.actions); setUnsupported(d.supported ? '' : d.reason); }).catch((e) => setUnreachable(e.message)); loadJobs(); }} />
+        : <p className="ops-error"><Icon name="alert" size="1em" /> {offline}</p>)}
       {safe.on && (
         <p className="ops-safe-banner"><Icon name="shield" size="1em" /> Emergency safe mode is on: Jarvis takes no actions (no PC control, fixes or network scans). Read-only checks still work.
           <button type="button" className="ops-btn sm" onClick={toggleSafe}>Turn off</button></p>

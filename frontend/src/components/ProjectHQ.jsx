@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { toast } from '../ui.jsx';
+import { GITHUB_USER, LIVE_APPS } from '../siteLinks.js';
+import AiOffline, { isAiDown } from './AiOffline.jsx';
 import './ProjectHQ.css';
 
 // Project HQ: every project the user owns (live sites, APIs, repositories) checked for real from one
@@ -319,7 +321,32 @@ export default function ProjectHQ() {
   };
 
   if (!data) {
-    return <div className="hq">{error ? <p className="t-bad"><Icon name="alert" size="1em" /> {error}</p> : <p className="muted"><span className="hq-spin" /> Loading projects…</p>}</div>;
+    if (error && isAiDown(error)) {
+      return (
+        <div className="hq">
+          <header className="hq-head"><div><h1>Project HQ</h1><p>Your live sites, APIs and repositories, checked for real.</p></div></header>
+          <AiOffline message={error} what="Checking your projects" onReady={load} />
+          <section className="hq-offline">
+            <h3>Your live projects <small>links work now; health checks start once the AI service is on</small></h3>
+            <div className="hq-grid">
+              {LIVE_APPS.map((a) => (
+                <article key={a.href} className="hq-card s-unknown">
+                  <header><div className="ttl"><b>{a.label}</b><small>{a.short}</small><span className="tags"><i>{a.platform}</i><i className="st t-muted">Not checked</i></span></div></header>
+                  <footer>
+                    <small className="muted">{new URL(a.href).hostname}</small>
+                    <div className="hq-actions">
+                      <a className="hq-btn" href={a.href} target="_blank" rel="noreferrer"><Icon name="external" size="1em" /> Open</a>
+                      {a.repo && <a className="hq-btn" href={`https://github.com/${GITHUB_USER}/${a.repo}`} target="_blank" rel="noreferrer"><Icon name="github" size="1em" /> GitHub</a>}
+                    </div>
+                  </footer>
+                </article>
+              ))}
+            </div>
+          </section>
+        </div>
+      );
+    }
+    return <div className="hq">{error ? <p className="t-bad"><Icon name="alert" size="1em" /> {error} <button type="button" className="hq-btn sm" onClick={load}>Try again</button></p> : <p className="muted"><span className="hq-spin" /> Loading projects…</p>}</div>;
   }
   const counts = data.projects.reduce((m, p) => ((m[p.health.state] = (m[p.health.state] || 0) + 1), m), {});
   const shown = data.projects.filter((p) => filter === 'all' || p.health.state === filter);

@@ -3,6 +3,7 @@ import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { toast } from '../ui.jsx';
 import { CLASSES, QUOTAS, findStations } from '../data/stations.js';
+import AiOffline, { isAiDown } from './AiOffline.jsx';
 import './Bookings.css';
 
 // Bookings: one place to search, compare and book real travel (backend app/booking).
@@ -738,10 +739,11 @@ export default function Bookings({ onAsk }) {
   const [error, setError] = useState('');
 
   const loadBookings = useCallback(() => api.bookingList().then((d) => setBookings(d.bookings)).catch(() => {}), []);
+  const loadProviders = useCallback(() => api.bookingProviders().then((d) => { setProviders(d.providers); setError(''); }).catch((e) => setError(e.message)), []);
   useEffect(() => {
-    api.bookingProviders().then((d) => setProviders(d.providers)).catch((e) => setError(e.message));
+    loadProviders();
     loadBookings();
-  }, [loadBookings]);
+  }, [loadProviders, loadBookings]);
   const prov = Object.fromEntries((providers || []).map((p) => [p.id, p]));
   const need = { flights: 'duffel_flights', hotels: 'duffel_stays', events: 'ticketmaster' }[cat];
   const connected = need ? prov[need]?.connected : false;
@@ -784,7 +786,8 @@ export default function Bookings({ onAsk }) {
         ))}
       </nav>
 
-      {error && <p className="bk-error"><Icon name="alert" size="1em" /> {error}</p>}
+      {error && (isAiDown(error) ? <AiOffline message={error} what="Searching and booking (flights, hotels, events)" onReady={() => { loadProviders(); loadBookings(); }} />
+        : <p className="bk-error"><Icon name="alert" size="1em" /> {error}</p>)}
 
       <div className="bk-main">
         <div className="bk-col">

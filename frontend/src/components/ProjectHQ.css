@@ -113,3 +113,7 @@
   .hq-form .row { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) { .hq-spin { animation-duration: 3s; } .hq-ring .va { transition: none; } }
+
+.hq-offline { display: grid; gap: 10px; }
+.hq-offline h3 { margin: 0; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.hq-offline h3 small { color: var(--muted); font-weight: 400; font-size: 0.82rem; }

@@ -128,6 +128,7 @@ export const auth = {
 
 export const api = {
   health: () => request('/health', { auth: false }),
+  startAiService: () => request('/dev/start-ai', { method: 'POST' }), // owner's PC, development only
   me: () => request('/auth/me'),
   updateMe: (patch) => request('/auth/me', { method: 'PATCH', body: patch }),
   changePassword: (currentPassword, newPassword) => post('/auth/password', { currentPassword, newPassword }),

@@ -5,14 +5,19 @@
 // A service whose port is already in use is assumed to be running and is skipped.
 // A service that crashes is restarted automatically (with a growing pause; after 5 crashes in 2 minutes it waits 60s, then keeps trying).
 import { exec, spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
+// The AI service's own virtual environment when it exists, so "python" on PATH (maybe another version
+// without the packages) can't break it.
+const venvPython = path.join(root, 'backend/fastapi-ai/.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
+const aiPython = existsSync(venvPython) ? `"${venvPython}"` : 'python';
 const SERVICES = [
-  { name: 'ai     ', port: 8001, cwd: 'backend/fastapi-ai/app', cmd: 'python main.py', color: 35 },
+  { name: 'ai     ', port: 8001, cwd: 'backend/fastapi-ai/app', cmd: `${aiPython} main.py`, color: 35 },
   { name: 'api    ', port: 4000, cwd: 'backend/express-api', cmd: 'npm run dev', color: 36 },
   { name: 'web    ', port: 5173, cwd: 'frontend', cmd: 'npm run dev', color: 32 },
   { name: 'dash   ', port: 3001, cwd: 'dashboard', cmd: 'npm run dev', color: 33 },

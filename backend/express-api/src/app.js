@@ -10,6 +10,7 @@ import os from 'node:os';
 import morgan from 'morgan';
 import { aiGate, aiHeaders, checkAi, markAiDown } from './ai.js';
 import { aiEndpointRoutes, aiUrlNow } from './aiEndpoint.js';
+import { localAiRoutes, localStartAllowed } from './localAi.js';
 import { AppError } from './auth/errors.js';
 import { config } from './config.js';
 import { logServerError } from './errorLog.js';
@@ -133,9 +134,13 @@ export function createApp(container) {
   app.use('/api/feedback', createFeedbackRouter({ feedback, tokens: container.tokens, settings: container.settings, limit }));
   app.use('/api/admin', createAdminRouter({ requireAuth, requireAdmin, users, conversations, sessions, audit, feedback }));
 
-  app.get('/api/health', async (_req, res) => {
+  localAiRoutes(app, requireAuth); // POST /api/dev/start-ai: owner's PC, development only
+
+  app.get('/api/health', async (req, res) => {
     const info = await checkAi(); // 2 s timeout, so a hung AI service can't hang the health check
     res.json({
+      // Only true on the owner's own PC in development: the app may offer a "Start AI service" button.
+      canStartAi: !info && localStartAllowed(req),
       server: 'up',
       storage: container.storage, // "mongo", or "file" when MongoDB wasn't reachable in development
       mongo: mongoose.connection.readyState === 1 ? 'up' : 'down',
