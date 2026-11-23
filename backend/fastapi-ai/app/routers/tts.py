@@ -59,7 +59,7 @@ async def speak(body: SpeakIn):
     except ImportError:
         raise HTTPException(status_code=503, detail="Neural voice needs edge-tts: pip install edge-tts")
     voice = body.voice if body.voice in VOICES or VOICE_NAME.fullmatch(body.voice) else DEFAULT_VOICE
-    key = hashlib.sha1(f"{voice}|{body.rate}|{body.pitch}|{body.text}".encode()).hexdigest()
+    key = hashlib.sha1(f"{voice}|{body.rate}|{body.pitch}|{body.text}".encode(), usedforsecurity=False).hexdigest()
     if key in _CACHE:
         _CACHE.move_to_end(key)
         return Response(_CACHE[key], media_type="audio/mpeg", headers={"Cache-Control": "private, max-age=86400", "X-Cache": "hit"})

@@ -111,7 +111,7 @@ def _dataset() -> tuple[list[str], list[str], str]:
     for label, examples in data.items():
         texts += examples
         labels += [label] * len(examples)
-    return texts, labels, hashlib.sha1(raw.encode()).hexdigest()[:10]
+    return texts, labels, hashlib.sha1(raw.encode(), usedforsecurity=False).hexdigest()[:10]
 
 
 def build_pipeline() -> Pipeline:
