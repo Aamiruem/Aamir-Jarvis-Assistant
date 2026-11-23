@@ -66,6 +66,32 @@ export function createApp(container) {
     rateLimit({ standardHeaders: true, legacyHeaders: false, passOnStoreError: true, store: container.rateLimitStore?.(prefix), ...options });
   app.use('/api', limit('api', { windowMs: 60_000, limit: 300, skip: (req) => req.path.startsWith('/health') }));
 
+  // Razorpay webhooks (bookings): no user token, so they can't use /api/ai. The raw body goes through
+  // untouched because the AI service checks Razorpay's HMAC signature over those exact bytes (with
+  // RAZORPAY_WEBHOOK_SECRET, which only the AI service holds). If the AI service is down, answer 503 so
+  // Razorpay retries later instead of losing the event.
+  app.post('/api/webhooks/razorpay', express.raw({ type: '*/*', limit: '512kb' }), async (req, res) => {
+    const signature = req.get('x-razorpay-signature');
+    if (!signature) return res.status(400).json({ error: 'Missing signature' });
+    try {
+      const upstream = await fetch(`${aiUrlNow()}/booking/webhooks/razorpay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Razorpay-Signature': signature,
+          'X-Razorpay-Event-Id': req.get('x-razorpay-event-id') || '',
+          'X-Internal-Key': config.internalApiKey,
+          'X-Request-Id': req.id,
+        },
+        body: Buffer.isBuffer(req.body) ? req.body : Buffer.from(''),
+        signal: AbortSignal.timeout(60_000),
+      });
+      res.status(upstream.status).type('application/json').send(await upstream.text());
+    } catch {
+      res.status(503).json({ error: 'AI service unavailable; Razorpay will retry', code: 'AI_UNAVAILABLE' });
+    }
+  });
+
   // Everything under /api/ai/* (RAG, vision, NLP, tasks, memory, notifications, stats) is
   // forwarded to the Python FastAPI service after the JWT check. User identity headers come
   // from the verified token and overwrite anything the browser tried to send.

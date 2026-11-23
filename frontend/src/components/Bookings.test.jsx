@@ -74,11 +74,20 @@ describe('Bookings', () => {
     expect(host.querySelector('form.bk-form')).toBeNull();
   });
 
-  it('trains link to IRCTC because only authorised agents get the booking API', async () => {
+  it('trains: plans the journey and hands it to IRCTC, never charging for train tickets', async () => {
     await mount();
     await click(button('Trains'));
-    expect(host.textContent).toContain('IRCTC-authorised agents');
-    expect(host.querySelector('a[href="https://www.irctc.co.in/nget/train-search"]')).toBeTruthy();
+    const [from, to] = host.querySelectorAll('.bk-place input');
+    await type(from, 'new delhi');
+    await act(async () => from.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
+    await type(to, 'JP');
+    await act(async () => to.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
+    await submit(host.querySelector('form.bk-form'));
+    const plan = host.querySelector('.bk-train-plan');
+    expect(plan.textContent).toContain('New Delhi (NDLS) → Jaipur Jn (JP)');
+    expect(plan.querySelector('a[href="https://www.irctc.co.in/nget/train-search"]')).toBeTruthy();
+    expect(host.textContent).toContain('never charges for train tickets');
+    expect(fake.bookingQuote).not.toHaveBeenCalled();
   });
 
   it('search → select → details → review → explicit confirmation → provider reference', async () => {
@@ -131,5 +140,26 @@ describe('Bookings', () => {
     await mount();
     await click(button('Plan a 3-day trip'));
     expect(fake.onAsk).toHaveBeenCalledWith(expect.stringContaining('Jaipur'));
+  });
+
+  it('live payments: pick a method, see the real-money warning, Razorpay opens on that method', async () => {
+    const live = { ...QUOTED, live_mode: true };
+    fake.bookingProviders.mockResolvedValue({ providers: [...PROVIDERS(true).providers, { id: 'razorpay', name: 'Razorpay', connected: true, mode: 'live', can: ['checkout'] }]
+      .filter((p, i, a) => a.findIndex((x) => x.id === p.id) === i || p.connected) });
+    fake.bookingList.mockResolvedValue({ bookings: [live] });
+    fake.bookingConfirm.mockResolvedValue({ ...live, status: 'awaiting_payment', checkout: { key: 'rzp_live_x', order_id: 'order_1', amount: 12050, currency: 'GBP', prefill: {} } });
+    const opened = [];
+    window.Razorpay = function Razorpay(opts) { opened.push(opts); return { on() {}, open() { opts.modal.ondismiss(); } }; };
+    await mount();
+    await click(host.querySelector('.bk-list button'));
+    expect(host.textContent).toContain('real money will be charged');
+    await click([...host.querySelectorAll('.bk-methods label')].find((l) => l.textContent.includes('Card')).querySelector('input'));
+    await click(host.querySelector('.bk-review input[type=checkbox]'));
+    await click(button('Confirm & pay'));
+    expect(opened).toHaveLength(1);
+    expect(opened[0].order_id).toBe('order_1');
+    expect(opened[0].prefill.method).toBe('card');
+    expect(opened[0].config.display.blocks.pref.instruments).toEqual([{ method: 'card' }]);
+    delete window.Razorpay;
   });
 });

@@ -47,6 +47,7 @@ class Booking(Base):
     provider_ref: Mapped[str | None] = mapped_column(String(80), nullable=True)  # Duffel order / stay booking id
     booking_reference: Mapped[str | None] = mapped_column(String(64), nullable=True)  # airline PNR / hotel reference
     error: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    payment_info: Mapped[str] = mapped_column(Text, default="{}")  # method, bank/UPI/card network + last 4 (never full numbers)
     events: Mapped[str] = mapped_column(Text, default="[]")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
@@ -59,10 +60,20 @@ def _ensure():
     global _ready
     if not _ready:
         Base.metadata.create_all(engine, tables=[Booking.__table__])
+        _migrate()
         _ready = True
 
 
-JSON_COLS = ("summary", "travellers", "contact", "events")
+def _migrate():
+    """Add columns introduced after the table was first created (no Alembic here)."""
+    from sqlalchemy import inspect, text
+    have = {c["name"] for c in inspect(engine).get_columns("bookings")}
+    with engine.begin() as conn:
+        if "payment_info" not in have:
+            conn.execute(text("ALTER TABLE bookings ADD COLUMN payment_info TEXT DEFAULT '{}'"))
+
+
+JSON_COLS = ("summary", "travellers", "contact", "events", "payment_info")
 
 
 def to_dict(b: Booking) -> dict:
@@ -93,6 +104,14 @@ def get(user_id: str, booking_id: str) -> dict | None:
     with SessionLocal() as s:
         b = s.get(Booking, booking_id)
         return to_dict(b) if b and b.user_id == user_id else None
+
+
+def find_by_payment_order(order_id: str) -> tuple[str, dict] | None:
+    """(user_id, booking) for a Razorpay order id: webhooks carry no user."""
+    _ensure()
+    with SessionLocal() as s:
+        b = s.scalars(select(Booking).where(Booking.payment_order_id == order_id)).first()
+        return (b.user_id, to_dict(b)) if b else None
 
 
 def list_for(user_id: str, limit: int = 100) -> list[dict]:

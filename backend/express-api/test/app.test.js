@@ -8,9 +8,13 @@ let upstream, lastUpstreamRequest, server, baseUrl, container, inbox;
 
 before(async () => {
   upstream = http.createServer((req, res) => {
-    lastUpstreamRequest = { url: req.url, headers: req.headers };
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end('[]');
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    req.on('end', () => {
+      lastUpstreamRequest = { url: req.url, headers: req.headers, body: Buffer.concat(chunks).toString('utf8') };
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end('[]');
+    });
   });
   await new Promise((r) => upstream.listen(0, r));
 
@@ -231,4 +235,25 @@ test('every response carries a request id; a valid incoming one is kept', async 
   assert.equal(kept.headers.get('x-request-id'), 'nginx-abc12345');
   const bad = await fetch(`${baseUrl}/api/health/live`, { headers: { 'X-Request-Id': '<script>' } });
   assert.notEqual(bad.headers.get('x-request-id'), '<script>');
+});
+
+test('Razorpay webhooks pass through with the exact body and signature, no user token needed', async () => {
+  const raw = '{"event":"payment.captured","payload":{"payment":{"entity":{"id":"pay_1","amount":12050}}}}';
+  const res = await fetch(`${baseUrl}/api/webhooks/razorpay`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Razorpay-Signature': 'sig123', 'X-Razorpay-Event-Id': 'evt_1' },
+    body: raw,
+  });
+  assert.equal(res.status, 200);
+  assert.equal(lastUpstreamRequest.url, '/booking/webhooks/razorpay');
+  assert.equal(lastUpstreamRequest.body, raw); // byte-for-byte: the signature covers it
+  assert.equal(lastUpstreamRequest.headers['x-razorpay-signature'], 'sig123');
+  assert.equal(lastUpstreamRequest.headers['x-razorpay-event-id'], 'evt_1');
+  assert.equal(lastUpstreamRequest.headers['x-internal-key'], 'test-internal');
+  assert.equal(lastUpstreamRequest.headers['x-user-id'], undefined); // no user identity is invented
+});
+
+test('Razorpay webhooks without a signature are refused at the gateway', async () => {
+  const res = await fetch(`${baseUrl}/api/webhooks/razorpay`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  assert.equal(res.status, 400);
 });

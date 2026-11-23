@@ -66,7 +66,34 @@ def signature_ok(order_id: str, payment_id: str, signature: str) -> bool:
 
 
 def get_payment(payment_id: str) -> dict:
-    return _call("GET", f"/payments/{payment_id}")
+    return _call("GET", f"/payments/{payment_id}", params={"expand[]": "card"})
+
+
+def _mask_vpa(vpa: str | None) -> str | None:
+    if not vpa or "@" not in vpa:
+        return vpa
+    name, bank = vpa.split("@", 1)
+    return f"{name[:2]}{'*' * max(2, len(name) - 2)}@{bank}"
+
+
+def payment_details(p: dict) -> dict:
+    """What a receipt needs about how the customer paid: never a full card number or UPI ID."""
+    card = p.get("card") or {}
+    return {k: v for k, v in {
+        "method": p.get("method"), "bank": p.get("bank"), "wallet": p.get("wallet"), "vpa": _mask_vpa(p.get("vpa")),
+        "card_network": card.get("network"), "card_last4": card.get("last4"), "card_type": card.get("type"), "card_issuer": card.get("issuer"),
+        "international": p.get("international"), "captured_at": p.get("created_at"), "fee": p.get("fee"), "tax": p.get("tax"),
+        "payment_id": p.get("id"), "order_id": p.get("order_id"),
+    }.items() if v not in (None, "")}
+
+
+def webhook_signature_ok(raw_body: bytes, signature: str) -> bool:
+    """Webhook signature = HMAC-SHA256(raw body) with the webhook secret (different from the key secret)."""
+    secret = settings.razorpay_webhook_secret.strip()
+    if not (secret and signature):
+        return False
+    expected = hmac.new(secret.encode(), raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(expected, signature)
 
 
 def capture(payment_id: str, amount_subunits: int, currency: str) -> dict:

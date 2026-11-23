@@ -111,6 +111,15 @@ def quote_stay(user_id: str, rate_id: str, guests: list[dict], contact: dict, st
 def payment_plan(b: dict) -> str:
     """How this booking will be paid: razorpay, test_balance (sandbox, no money) or duffel_balance."""
     if razorpay.configured():
+        rp = razorpay.mode()
+        if rp is None:
+            raise BookingError("The Razorpay key isn't recognised (it should start with rzp_live_ or rzp_test_).", 409)
+        if rp == "live" and not b["live_mode"]:
+            raise BookingError("Razorpay is in LIVE mode but this booking is a provider TEST booking: real money can't pay for a sandbox ticket. "
+                               "Use a live provider token, or Razorpay test keys.", 409)
+        if rp == "test" and b["live_mode"]:
+            raise BookingError("This is a LIVE booking but Razorpay has TEST keys: a real ticket can't be issued against test money. "
+                               "Switch to rzp_live_ keys.", 409)
         return "razorpay"
     if not b["live_mode"]:
         return "test_balance"
@@ -177,10 +186,65 @@ def pay(user_id: str, booking_id: str, order_id: str, payment_id: str, signature
         p = razorpay.capture(payment_id, want, b["currency"])
     if p.get("status") != "captured":
         raise BookingError(f"The payment is {p.get('status')}, not captured. Nothing was booked.", 402)
-    b = store.transition(user_id, booking_id, ("awaiting_payment",), "paid", f"Payment {payment_id} verified with Razorpay ({b['amount']} {b['currency']})", payment_id=payment_id)
+    return _settle(user_id, booking_id, p, "checkout")
+
+
+def _settle(user_id: str, booking_id: str, p: dict, via: str) -> dict:
+    """A captured payment for this booking: record it and book (exactly once, from checkout or webhook)."""
+    info = razorpay.payment_details(p)
+    how = info.get("method", "payment")
+    b = store.transition(user_id, booking_id, ("awaiting_payment",), "paid",
+                         f"{how.upper() if how == 'upi' else how.title()} payment {p['id']} captured and verified with Razorpay (via {via})",
+                         payment_id=p["id"], payment_info=info)
     if not b:
         return store.get(user_id, booking_id)
     return book(user_id, booking_id)
+
+
+def handle_webhook(event: dict) -> str:
+    """Razorpay webhook (signature already verified): settles payments the browser didn't report, refunds
+    duplicate or orphan payments, records refunds. Idempotent: Razorpay may deliver an event twice."""
+    kind = event.get("event", "")
+    payload = event.get("payload") or {}
+    pay = (payload.get("payment") or {}).get("entity") or {}
+    if kind == "payment.captured" and pay.get("order_id"):
+        found = store.find_by_payment_order(pay["order_id"])
+        if not found:
+            return "ignored: unknown order"
+        user_id, b = found
+        if b.get("payment_id") == pay["id"]:
+            return "already settled"
+        want = razorpay.to_subunits(b["amount"], b["currency"])
+        if b["status"] == "awaiting_payment" and int(pay.get("amount") or -1) == want and (pay.get("currency") or "").upper() == b["currency"].upper():
+            _settle(user_id, b["id"], pay, "webhook")
+            return "settled"
+        # Paid twice, or paid for a booking that can no longer be completed: give the money back.
+        try:
+            rf = razorpay.refund(pay["id"], notes={"booking": b["id"], "reason": "duplicate or orphan payment"})
+            store.patch(user_id, b["id"], f"Extra payment {pay['id']} received while the booking was {b['status'].replace('_', ' ')}: refunded in full ({rf.get('id')})")
+            return "refunded duplicate"
+        except ProviderError as e:
+            store.patch(user_id, b["id"], f"Extra payment {pay['id']} received; automatic refund failed ({e.message}). Refund it from the Razorpay dashboard.")
+            return "duplicate: refund failed"
+    if kind == "payment.failed" and pay.get("order_id"):
+        found = store.find_by_payment_order(pay["order_id"])
+        if found:
+            reason = pay.get("error_description") or pay.get("error_reason") or "declined"
+            store.patch(found[0], found[1]["id"], f"A payment attempt failed ({pay.get('method') or 'payment'}): {reason}. Nothing was booked.")
+            return "recorded failure"
+        return "ignored: unknown order"
+    if kind in ("refund.processed", "refund.failed", "refund.created"):
+        rf = (payload.get("refund") or {}).get("entity") or {}
+        pay_order = pay.get("order_id")
+        found = store.find_by_payment_order(pay_order) if pay_order else None
+        if found:
+            amount = f"{(rf.get('amount') or 0) / 100:.2f} {(rf.get('currency') or found[1]['currency'])}"
+            word = {"refund.processed": "processed: the money is on its way back", "refund.failed": "FAILED: refund it from the Razorpay dashboard",
+                    "refund.created": "started"}[kind]
+            store.patch(found[0], found[1]["id"], f"Refund {rf.get('id')} of {amount} {word}")
+            return "recorded refund"
+        return "ignored: unknown order"
+    return f"ignored: {kind}"
 
 
 # ---------- the provider booking ----------

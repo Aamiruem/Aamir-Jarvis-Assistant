@@ -204,13 +204,15 @@ def test_unknown_outcome_goes_to_review_not_refund(fake):
 
 class FakeRazorpay:
     def __init__(self):
+        import uuid
         self.refunds, self.payment_status = [], "captured"
+        self.last_order = f"order_{uuid.uuid4().hex[:10]}"  # unique like real Razorpay order ids
 
     def create_order(self, amount, currency, receipt, notes=None):
-        return {"id": "order_9"}
+        return {"id": self.last_order}
 
     def get_payment(self, pid):
-        return {"id": pid, "order_id": "order_9", "amount": 12050, "currency": "GBP", "status": self.payment_status}
+        return {"id": pid, "order_id": self.last_order, "amount": 12050, "currency": "GBP", "status": self.payment_status}
 
     def capture(self, pid, amount, currency):
         return {"id": pid, "status": "captured"}
@@ -237,22 +239,22 @@ def sig(order, pay):
 def test_razorpay_flow_verifies_payment_then_books(fake, rp):
     b = engine.quote_flight(USER, "off_1", [TRAVELLER], CONTACT)
     c = engine.confirm(USER, b["id"], accepted=True)
-    assert c["status"] == "awaiting_payment" and c["checkout"]["order_id"] == "order_9" and c["checkout"]["amount"] == 12050
+    assert c["status"] == "awaiting_payment" and c["checkout"]["order_id"] == rp.last_order and c["checkout"]["amount"] == 12050
     assert not fake.orders  # nothing booked before payment
     with pytest.raises(BookingError):
-        engine.pay(USER, b["id"], "order_9", "pay_1", "forged")
+        engine.pay(USER, b["id"], rp.last_order, "pay_1", "forged")
     assert not fake.orders
-    done = engine.pay(USER, b["id"], "order_9", "pay_1", sig("order_9", "pay_1"))
+    done = engine.pay(USER, b["id"], rp.last_order, "pay_1", sig(rp.last_order, "pay_1"))
     assert done["status"] == "confirmed" and done["payment_id"] == "pay_1" and len(fake.orders) == 1
     # the same callback again is harmless
-    assert engine.pay(USER, b["id"], "order_9", "pay_1", sig("order_9", "pay_1"))["status"] == "confirmed" and len(fake.orders) == 1
+    assert engine.pay(USER, b["id"], rp.last_order, "pay_1", sig(rp.last_order, "pay_1"))["status"] == "confirmed" and len(fake.orders) == 1
 
 
 def test_failed_provider_booking_is_refunded_automatically(fake, rp):
     fake.fail = ProviderError("Seats sold out", 422)
     b = engine.quote_flight(USER, "off_1", [TRAVELLER], CONTACT)
     engine.confirm(USER, b["id"], accepted=True)
-    r = engine.pay(USER, b["id"], "order_9", "pay_1", sig("order_9", "pay_1"))
+    r = engine.pay(USER, b["id"], rp.last_order, "pay_1", sig(rp.last_order, "pay_1"))
     assert r["status"] == "refunded" and rp.refunds == [("pay_1", None)]
 
 
@@ -261,14 +263,14 @@ def test_uncaptured_payment_books_nothing(fake, rp):
     b = engine.quote_flight(USER, "off_1", [TRAVELLER], CONTACT)
     engine.confirm(USER, b["id"], accepted=True)
     with pytest.raises(BookingError) as e:
-        engine.pay(USER, b["id"], "order_9", "pay_1", sig("order_9", "pay_1"))
+        engine.pay(USER, b["id"], rp.last_order, "pay_1", sig(rp.last_order, "pay_1"))
     assert e.value.status == 402 and not fake.orders
 
 
 def test_cancellation_passes_the_airline_refund_back_to_the_card(fake, rp):
     b = engine.quote_flight(USER, "off_1", [TRAVELLER], CONTACT)
     engine.confirm(USER, b["id"], accepted=True)
-    engine.pay(USER, b["id"], "order_9", "pay_1", sig("order_9", "pay_1"))
+    engine.pay(USER, b["id"], rp.last_order, "pay_1", sig(rp.last_order, "pay_1"))
     q = engine.cancellation_quote(USER, b["id"])
     assert q["refund_amount"] == "100.50"
     with pytest.raises(BookingError):
@@ -315,3 +317,111 @@ def test_agent_tools_report_missing_keys_instead_of_inventing(monkeypatch):
     monkeypatch.setattr(settings, "ticketmaster_api_key", "")
     assert "DUFFEL_ACCESS_TOKEN" in tools.search_hotels(tools.SearchHotels(city="Jaipur", check_in="2027-01-10", check_out="2027-01-12"), None)["error"]
     assert "TICKETMASTER_API_KEY" in tools.search_events(tools.SearchEvents(keyword="coldplay"), None)["error"]
+
+
+# ---------- real money: mode safety, webhooks, receipts ----------
+
+def test_live_razorpay_never_pays_for_a_sandbox_booking(fake, rp, monkeypatch):
+    monkeypatch.setattr(settings, "razorpay_key_id", "rzp_live_abc")
+    b = engine.quote_flight(USER, "off_1", [TRAVELLER], CONTACT)  # FakeDuffel: test offer
+    with pytest.raises(BookingError) as e:
+        engine.confirm(USER, b["id"], accepted=True)
+    assert e.value.status == 409 and "real money can't pay for a sandbox ticket" in e.value.message
+
+
+def test_live_booking_never_uses_test_money(fake, rp):
+    fake.live = True
+    b = engine.quote_flight(USER, "off_1", [TRAVELLER], CONTACT)
+    with pytest.raises(BookingError) as e:
+        engine.confirm(USER, b["id"], accepted=True)
+    assert "rzp_live_" in e.value.message and not fake.orders
+
+
+def test_receipt_details_are_masked():
+    d = razorpay.payment_details({"id": "pay_1", "order_id": "order_9", "method": "upi", "vpa": "aamirhussain@okaxis", "created_at": 1,
+                                  "card": None, "fee": 236, "tax": 36})
+    assert d["vpa"] == "aa**********@okaxis" and d["method"] == "upi" and "card_last4" not in d
+    c = razorpay.payment_details({"id": "pay_2", "method": "card", "card": {"network": "Visa", "last4": "1111", "type": "credit", "issuer": "HDFC"}})
+    assert (c["card_network"], c["card_last4"], c["card_issuer"]) == ("Visa", "1111", "HDFC")
+
+
+def test_checkout_records_how_the_customer_paid(fake, rp, monkeypatch):
+    monkeypatch.setattr(rp, "get_payment", lambda pid: {"id": pid, "order_id": rp.last_order, "amount": 12050, "currency": "GBP", "status": "captured",
+                                                       "method": "card", "card": {"network": "RuPay", "last4": "4242", "type": "debit"}})
+    monkeypatch.setattr(razorpay, "get_payment", rp.get_payment)
+    b = engine.quote_flight(USER, "off_1", [TRAVELLER], CONTACT)
+    engine.confirm(USER, b["id"], accepted=True)
+    done = engine.pay(USER, b["id"], rp.last_order, "pay_1", sig(rp.last_order, "pay_1"))
+    assert done["payment_info"]["card_network"] == "RuPay" and done["payment_info"]["card_last4"] == "4242"
+    assert any("Card payment pay_1 captured" in e["what"] for e in done["events"])
+
+
+def webhook(event, entity, refund=None):
+    payload = {"payment": {"entity": entity}}
+    if refund:
+        payload["refund"] = {"entity": refund}
+    return {"event": event, "payload": payload}
+
+
+def test_webhook_settles_a_payment_when_the_browser_closed(fake, rp):
+    b = engine.quote_flight(USER, "off_1", [TRAVELLER], CONTACT)
+    engine.confirm(USER, b["id"], accepted=True)  # Razorpay order created; customer pays, then closes the tab
+    pay = {"id": "pay_7", "order_id": rp.last_order, "amount": 12050, "currency": "GBP", "method": "upi", "vpa": "someone@ybl"}
+    assert engine.handle_webhook(webhook("payment.captured", pay)) == "settled"
+    done = store.get(USER, b["id"])
+    assert done["status"] == "confirmed" and done["payment_id"] == "pay_7" and len(fake.orders) == 1
+    assert engine.handle_webhook(webhook("payment.captured", pay)) == "already settled" and len(fake.orders) == 1  # redelivery
+
+
+def test_a_second_payment_for_the_same_booking_is_refunded(fake, rp):
+    b = engine.quote_flight(USER, "off_1", [TRAVELLER], CONTACT)
+    engine.confirm(USER, b["id"], accepted=True)
+    engine.pay(USER, b["id"], rp.last_order, "pay_1", sig(rp.last_order, "pay_1"))
+    dup = {"id": "pay_2", "order_id": rp.last_order, "amount": 12050, "currency": "GBP", "method": "card"}
+    assert engine.handle_webhook(webhook("payment.captured", dup)) == "refunded duplicate"
+    assert ("pay_2", None) in rp.refunds and len(fake.orders) == 1
+
+
+def test_webhook_records_failures_and_refunds(fake, rp):
+    b = engine.quote_flight(USER, "off_1", [TRAVELLER], CONTACT)
+    engine.confirm(USER, b["id"], accepted=True)
+    assert engine.handle_webhook(webhook("payment.failed", {"id": "pay_x", "order_id": rp.last_order, "method": "upi", "error_description": "UPI app declined"})) == "recorded failure"
+    assert engine.handle_webhook(webhook("refund.processed", {"id": "pay_1", "order_id": rp.last_order}, {"id": "rfnd_1", "amount": 10050, "currency": "GBP"})) == "recorded refund"
+    ev = [e["what"] for e in store.get(USER, b["id"])["events"]]
+    assert any("UPI app declined" in e for e in ev) and any("Refund rfnd_1 of 100.50 GBP processed" in e for e in ev)
+    assert store.get(USER, b["id"])["status"] == "awaiting_payment"
+    assert engine.handle_webhook(webhook("payment.captured", {"id": "p", "order_id": "order_unknown"})) == "ignored: unknown order"
+
+
+def test_webhook_signature(monkeypatch):
+    monkeypatch.setattr(settings, "razorpay_webhook_secret", "whsec")
+    body = b'{"event":"payment.captured"}'
+    good = hmac.new(b"whsec", body, hashlib.sha256).hexdigest()
+    assert razorpay.webhook_signature_ok(body, good)
+    assert not razorpay.webhook_signature_ok(body + b" ", good) and not razorpay.webhook_signature_ok(body, "")
+    monkeypatch.setattr(settings, "razorpay_webhook_secret", "")
+    assert not razorpay.webhook_signature_ok(body, good)  # no secret configured = refuse everything
+
+
+def test_webhook_endpoint_refuses_unsigned_calls(monkeypatch):
+    import asyncio
+    from fastapi import HTTPException
+    from app.routers import booking as router
+
+    class Req:
+        headers = {"x-razorpay-signature": "forged"}
+
+        async def body(self):
+            return b'{"event":"payment.captured"}'
+
+    monkeypatch.setattr(settings, "razorpay_webhook_secret", "whsec")
+    with pytest.raises(HTTPException) as e:
+        asyncio.run(router.razorpay_webhook(Req()))
+    assert e.value.status_code == 400
+
+
+def test_old_bookings_table_gets_the_new_column():
+    from sqlalchemy import inspect
+    store._ready = False
+    store._ensure()
+    assert "payment_info" in {c["name"] for c in inspect(store.engine).get_columns("bookings")}

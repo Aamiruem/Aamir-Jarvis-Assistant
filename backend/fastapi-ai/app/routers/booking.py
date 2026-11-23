@@ -12,15 +12,18 @@ POST /booking/{id}/confirm {accept}      -> explicit approval: re-checks price, 
 POST /booking/{id}/pay                   -> Razorpay Checkout result: verified, then the provider booking
 GET  /booking                            -> your bookings; GET /booking/{id}?refresh=1 re-reads the provider
 POST /booking/{id}/cancel/quote          -> refund quote; POST /booking/{id}/cancel {accept, cancellation_id}
+POST /booking/webhooks/razorpay          -> Razorpay events (signed): settles payments, refunds duplicates, records refunds
 
 Search endpoints are plain reads. Nothing reserves or charges without POST /confirm with accept=true.
 """
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field, field_validator
 
 from app.booking import duffel, engine, store, ticketmaster
@@ -118,6 +121,24 @@ class PayIn(BaseModel):
 class CancelIn(BaseModel):
     accept: bool = False
     cancellation_id: str | None = Field(None, max_length=80)
+
+
+@router.post("/webhooks/razorpay")
+async def razorpay_webhook(request: Request):
+    """Called by Razorpay through the API gateway (internal key). The signature over the raw body is
+    checked with RAZORPAY_WEBHOOK_SECRET; anything unsigned is refused."""
+    from app.booking import razorpay
+    raw = await request.body()
+    if not razorpay.webhook_signature_ok(raw, request.headers.get("x-razorpay-signature", "")):
+        log.warning("razorpay webhook with a bad or missing signature refused")
+        raise HTTPException(400, "Invalid webhook signature.")
+    try:
+        event = json.loads(raw)
+    except ValueError:
+        raise HTTPException(400, "Invalid JSON.") from None
+    result = await asyncio.to_thread(_wrap, engine.handle_webhook, event)
+    log.info("razorpay webhook %s (%s): %s", event.get("event"), request.headers.get("x-razorpay-event-id", "-"), result)
+    return {"ok": True, "result": result}
 
 
 @router.get("/providers")

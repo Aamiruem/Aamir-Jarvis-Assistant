@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api.js';
 import { Icon } from '../icons.jsx';
 import { toast } from '../ui.jsx';
+import { CLASSES, QUOTAS, findStations } from '../data/stations.js';
 import './Bookings.css';
 
 // Bookings: one place to search, compare and book real travel (backend app/booking).
@@ -14,7 +15,7 @@ const CATS = [
   { id: 'flights', label: 'Flights', sub: 'Search & book', icon: 'plane', hue: 245 },
   { id: 'hotels', label: 'Hotels', sub: 'Find stays', icon: 'bed', hue: 215 },
   { id: 'events', label: 'Events', sub: 'Concerts & shows', icon: 'ticket', hue: 330 },
-  { id: 'trains', label: 'Trains', sub: 'IRCTC', icon: 'train', hue: 200, partner: 'irctc' },
+  { id: 'trains', label: 'Trains', sub: 'Plan + IRCTC', icon: 'train', hue: 200 },
   { id: 'buses', label: 'Buses', sub: 'Operators', icon: 'bus', hue: 30, partner: 'buses' },
   { id: 'movies', label: 'Movies', sub: 'Cinemas', icon: 'film', hue: 0, partner: 'movies' },
 ];
@@ -342,6 +343,159 @@ function Events({ disabled }) {
   );
 }
 
+// ---------- payment methods & receipts ----------
+
+// Razorpay Checkout shows every enabled method; the choice here only opens it on that method first.
+export const PAY_METHODS = [
+  { id: 'upi', label: 'UPI', sub: 'Google Pay, PhonePe, Paytm, BHIM or any UPI ID / QR', icon: 'phone', instruments: [{ method: 'upi' }] },
+  { id: 'card', label: 'Card', sub: 'Credit & debit: Visa, Mastercard, RuPay, Amex', icon: 'card', instruments: [{ method: 'card' }] },
+  { id: 'netbanking', label: 'Netbanking', sub: 'All major Indian banks', icon: 'house', instruments: [{ method: 'netbanking' }] },
+  { id: 'wallet', label: 'Wallet', sub: 'Paytm, PhonePe, Amazon Pay, Mobikwik…', icon: 'briefcase', instruments: [{ method: 'wallet' }] },
+  { id: 'emi', label: 'EMI', sub: 'Card & cardless EMI (eligible amounts)', icon: 'calendar', instruments: [{ method: 'emi' }, { method: 'cardless_emi' }] },
+  { id: 'paylater', label: 'Pay Later', sub: 'Simpl, LazyPay, ICICI PayLater…', icon: 'clock', instruments: [{ method: 'paylater' }] },
+];
+
+export function checkoutConfig(methodId) {
+  const m = PAY_METHODS.find((x) => x.id === methodId);
+  if (!m) return {};
+  return { config: { display: { blocks: { pref: { name: `Pay with ${m.label}`, instruments: m.instruments } }, sequence: ['block.pref'], preferences: { show_default_blocks: true } } } };
+}
+
+const PAID_WITH = (pi = {}) => {
+  if (!pi.method) return null;
+  if (pi.method === 'card') return `${pi.card_network || 'Card'} ${pi.card_type || ''} •••• ${pi.card_last4 || ''}${pi.card_issuer ? ` (${pi.card_issuer})` : ''}`.replace(/\s+/g, ' ');
+  if (pi.method === 'upi') return `UPI ${pi.vpa || ''}`.trim();
+  if (pi.method === 'netbanking') return `Netbanking ${pi.bank || ''}`.trim();
+  if (pi.method === 'wallet') return `Wallet ${pi.wallet || ''}`.trim();
+  return pi.method;
+};
+
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+/** A printable receipt (Save as PDF from the print dialog). Only what the booking record holds. */
+export function receiptHtml(b) {
+  const pi = b.payment_info || {};
+  const rows = [
+    ['Booking', b.title], ['Status', (STATUS[b.status] || [b.status])[0]], [b.kind === 'flight' ? 'Airline reference (PNR)' : 'Hotel reference', b.booking_reference || '—'],
+    ['Travellers', (b.travellers || []).map((t) => `${t.given_name} ${t.family_name}`).join(', ')], ['Total paid', money(b.amount, b.currency)],
+    ['Paid with', PAID_WITH(pi) || (b.payment_method === 'test_balance' ? 'Test mode: no money charged' : b.payment_method || '—')],
+    ['Payment ID', b.payment_id || '—'], ['Order ID', b.payment_order_id || '—'], ['Mode', b.live_mode ? 'Live' : 'Test (sandbox: no real ticket, no real charge)'],
+    ['Booked on', new Date(b.created_at).toLocaleString()], ['Contact', `${b.contact?.email || ''} · ${b.contact?.phone || ''}`],
+  ];
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Receipt ${esc(b.booking_reference || b.id)}</title>
+<style>body{font:14px/1.5 system-ui,sans-serif;color:#111;margin:40px;max-width:720px}h1{font-size:22px;margin:0}p.m{color:#555;margin:4px 0 24px}
+table{border-collapse:collapse;width:100%}td{padding:8px 6px;border-bottom:1px solid #ddd;vertical-align:top}td:first-child{color:#555;width:200px}
+.t{font-size:18px;font-weight:700}ol{padding-left:18px;color:#333;font-size:12px}.ft{margin-top:24px;color:#777;font-size:12px}</style></head><body>
+<h1>Azarvis Bookings: receipt</h1><p class="m">Receipt for booking ${esc(b.id)}</p><table>
+${rows.map(([k, v]) => `<tr><td>${esc(k)}</td><td${k === 'Total paid' ? ' class="t"' : ''}>${esc(v)}</td></tr>`).join('')}</table>
+<h3>Timeline</h3><ol>${(b.events || []).map((e) => `<li>${esc(new Date(e.t * 1000).toLocaleString())}: ${esc(e.what)}</li>`).join('')}</ol>
+<p class="ft">Payments are processed by Razorpay; card and UPI details are never stored by Azarvis. The ticket or voucher itself is issued by the airline or hotel.</p></body></html>`;
+}
+
+export function printReceipt(b) {
+  const w = window.open('', '_blank');
+  if (!w) return toast('Allow pop-ups to print the receipt.', 'error');
+  w.document.write(receiptHtml(b));
+  w.document.close();
+  w.focus();
+  setTimeout(() => w.print(), 300);
+  return undefined;
+}
+
+// ---------- trains: planner + IRCTC hand-off ----------
+
+function StationInput({ label, value, onChange }) {
+  const [q, setQ] = useState(value ? `${value.name} (${value.code})` : '');
+  const [opts, setOpts] = useState([]);
+  const [active, setActive] = useState(0);
+  const pick = (st) => {
+    onChange(st);
+    setQ(`${st.name} (${st.code})`);
+    setOpts([]);
+  };
+  return (
+    <label className="bk-field bk-place">
+      <span>{label}</span>
+      <input value={q} placeholder="Station name or code" autoComplete="off" role="combobox" aria-expanded={opts.length > 0}
+        onChange={(e) => { setQ(e.target.value); onChange(null); setOpts(findStations(e.target.value)); setActive(0); }}
+        onBlur={() => setTimeout(() => setOpts([]), 150)}
+        onKeyDown={(e) => {
+          if (!opts.length) return;
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => (a + (e.key === 'ArrowDown' ? 1 : opts.length - 1)) % opts.length); }
+          if (e.key === 'Enter') { e.preventDefault(); pick(opts[active]); }
+        }} />
+      {opts.length > 0 && (
+        <ul className="bk-suggest" role="listbox">
+          {opts.map((st, i) => (
+            <li key={st.code} role="option" aria-selected={i === active} className={i === active ? 'act' : ''} onMouseDown={() => pick(st)}>
+              <Icon name="train" size="1em" /> <b>{st.code}</b> {st.name} <small>{st.city}</small>
+            </li>
+          ))}
+        </ul>
+      )}
+    </label>
+  );
+}
+
+export function TrainPlanner({ onAsk }) {
+  const [from, setFrom] = useState(null);
+  const [to, setTo] = useState(null);
+  const [date, setDate] = useState(plusDays(today(), 7));
+  const [cls, setCls] = useState('3A');
+  const [quota, setQuota] = useState('GN');
+  const [pax, setPax] = useState({ adults: 1, children: 0, seniors: 0 });
+  const [plan, setPlan] = useState(null);
+  const make = (e) => {
+    e.preventDefault();
+    if (!from || !to) return toast('Pick both stations from the suggestions (or type a station code).', 'error');
+    if (from.code === to.code) return toast('From and To are the same station.', 'error');
+    setPlan({ from, to, date, cls, quota, pax });
+    return undefined;
+  };
+  const days = Math.round((new Date(date) - new Date(today())) / 864e5);
+  const copyText = plan ? `${plan.from.code} → ${plan.to.code}, ${plan.date}, class ${plan.cls}, quota ${QUOTAS.find((q) => q[0] === plan.quota)[1]}, ${plan.pax.adults} adult(s)${plan.pax.children ? `, ${plan.pax.children} child(ren)` : ''}${plan.pax.seniors ? `, ${plan.pax.seniors} senior(s)` : ''}` : '';
+  return (
+    <>
+      <form className="bk-form" onSubmit={make}>
+        <StationInput label="From station" value={from} onChange={setFrom} />
+        <button type="button" className="bk-swap" onClick={() => { setFrom(to); setTo(from); }} aria-label="Swap stations"><Icon name="refresh" size="1em" /></button>
+        <StationInput label="To station" value={to} onChange={setTo} />
+        <label className="bk-field"><span>Journey date</span><input type="date" value={date} min={today()} max={plusDays(today(), 60)} onChange={(e) => setDate(e.target.value)} required /></label>
+        <label className="bk-field"><span>Class</span><select value={cls} onChange={(e) => setCls(e.target.value)}>{CLASSES.map(([c, n]) => <option key={c} value={c}>{c} · {n}</option>)}</select></label>
+        <label className="bk-field"><span>Quota</span><select value={quota} onChange={(e) => setQuota(e.target.value)}>{QUOTAS.map(([c, n]) => <option key={c} value={c}>{n}</option>)}</select></label>
+        <label className="bk-field sm"><span>Adults</span><input type="number" min="1" max="6" value={pax.adults} onChange={(e) => setPax({ ...pax, adults: Math.max(1, Math.min(6, Number(e.target.value) || 1)) })} /></label>
+        <label className="bk-field sm"><span>Children 5–11</span><input type="number" min="0" max="5" value={pax.children} onChange={(e) => setPax({ ...pax, children: Math.max(0, Math.min(5, Number(e.target.value) || 0)) })} /></label>
+        <label className="bk-field sm"><span>Seniors 60+</span><input type="number" min="0" max="6" value={pax.seniors} onChange={(e) => setPax({ ...pax, seniors: Math.max(0, Math.min(6, Number(e.target.value) || 0)) })} /></label>
+        <button className="bk-btn primary"><Icon name="train" size="1em" /> Plan journey</button>
+      </form>
+      <p className="bk-source">Train tickets are issued only by IRCTC and its authorised agents, so Azarvis plans the journey and hands it to IRCTC; it never charges for train tickets.
+        Reservations open 60 days ahead{quota === 'TQ' || quota === 'PT' ? '; Tatkal opens one day before the journey at 10:00 (AC) and 11:00 (non-AC)' : ''}.</p>
+      {plan && (
+        <section className="bk-panel bk-train-plan">
+          <h3><Icon name="train" size="1em" /> {plan.from.name} ({plan.from.code}) → {plan.to.name} ({plan.to.code})</h3>
+          <dl className="bk-train-kv">
+            <div><dt>Date</dt><dd>{new Date(plan.date).toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}{days >= 0 ? ` · in ${days} day${days === 1 ? '' : 's'}` : ''}</dd></div>
+            <div><dt>Class · Quota</dt><dd>{plan.cls} ({CLASSES.find((c) => c[0] === plan.cls)[1]}) · {QUOTAS.find((q) => q[0] === plan.quota)[1]}</dd></div>
+            <div><dt>Passengers</dt><dd>{plan.pax.adults} adult(s){plan.pax.children ? `, ${plan.pax.children} child(ren) 5–11` : ''}{plan.pax.seniors ? `, ${plan.pax.seniors} senior(s)` : ''}</dd></div>
+          </dl>
+          <ol className="bk-steps">
+            <li>Open IRCTC and sign in (IRCTC asks for its own captcha and OTP: Azarvis never bypasses them).</li>
+            <li>Enter <b>{plan.from.code}</b> → <b>{plan.to.code}</b> on <b>{plan.date}</b>, class <b>{plan.cls}</b>, quota <b>{QUOTAS.find((q) => q[0] === plan.quota)[1]}</b>.</li>
+            <li>Pick the train, add passengers, and pay on IRCTC. Then save the PNR here by asking Jarvis to remind you of the journey.</li>
+          </ol>
+          <div className="bk-actions">
+            <a className="bk-btn primary" href="https://www.irctc.co.in/nget/train-search" target="_blank" rel="noreferrer">Continue on IRCTC <Icon name="external" size="0.9em" /></a>
+            <button type="button" className="bk-btn" onClick={() => navigator.clipboard?.writeText(copyText).then(() => toast('Journey details copied.'), () => toast(copyText))}>Copy details</button>
+            <button type="button" className="bk-btn" onClick={() => onAsk?.(`Plan my train journey: ${copyText}. Suggest which trains usually run on this route and timing, and remind me about Tatkal if useful. Don't invent seat availability or fares.`)}>Ask Jarvis to plan</button>
+            <a className="bk-btn" href="https://www.indianrail.gov.in/enquiry/PNR/PnrEnquiry.html" target="_blank" rel="noreferrer">PNR status <Icon name="external" size="0.9em" /></a>
+            <a className="bk-btn" href="https://enquiry.indianrail.gov.in/mntes/" target="_blank" rel="noreferrer">Live train status <Icon name="external" size="0.9em" /></a>
+          </div>
+        </section>
+      )}
+    </>
+  );
+}
+
 // ---------- traveller details, review, payment ----------
 
 const emptyTraveller = { title: 'mr', gender: 'm', given_name: '', family_name: '', born_on: '' };
@@ -427,9 +581,12 @@ function loadRazorpay() {
   return razorpayLoading;
 }
 
-export function Review({ booking, onDone }) {
+export function Review({ booking, onDone, payments }) {
   const [b, setB] = useState(booking);
   const [ok, setOk] = useState(false);
+  const [method, setMethod] = useState('upi');
+  const viaRazorpay = Boolean(payments?.connected);
+  const realMoney = viaRazorpay && payments.mode === 'live' && b.live_mode;
   const [busy, setBusy] = useState(false);
   const flight = b.kind === 'flight';
   const s = b.summary || {};
@@ -438,6 +595,8 @@ export function Review({ booking, onDone }) {
     await new Promise((resolve) => {
       const rp = new window.Razorpay({
         ...checkout,
+        ...checkoutConfig(method),
+        prefill: { ...(checkout.prefill || {}), method },
         theme: { color: '#5b5bf7' },
         handler: async (resp) => {
           try {
@@ -474,8 +633,12 @@ export function Review({ booking, onDone }) {
         <p>{b.title}</p>
         {b.booking_reference && <p className="bk-ref">{flight ? 'Airline reference (PNR)' : 'Hotel reference'}: <b>{b.booking_reference}</b></p>}
         {b.status === 'confirmed' && <p className="muted small">Confirmed by the provider and re-verified{b.live_mode ? '' : ' in TEST MODE: no real ticket was issued and nothing was charged'}.</p>}
+        {PAID_WITH(b.payment_info) && <p className="small">Paid with {PAID_WITH(b.payment_info)}</p>}
         {b.error && <p className="t-warn">{b.error}</p>}
-        <button type="button" className="bk-btn primary" onClick={() => onDone(b)}>Done</button>
+        <div className="bk-actions">
+          <button type="button" className="bk-btn" onClick={() => printReceipt(b)}><Icon name="report" size="1em" /> Receipt</button>
+          <button type="button" className="bk-btn primary" onClick={() => onDone(b)}>Done</button>
+        </div>
       </section>
     );
   }
@@ -493,8 +656,21 @@ export function Review({ booking, onDone }) {
         {flight && <div><dt>Fare rules</dt><dd>{s.refund?.allowed ? `Refundable${s.refund.penalty ? ` (fee ${money(s.refund.penalty, s.refund.currency)})` : ''}` : 'Non-refundable'} · {s.change?.allowed ? 'changes allowed' : 'no changes'}</dd></div>}
         <div className="total"><dt>Total</dt><dd>{money(b.amount, b.currency)}</dd></div>
       </dl>
+      {viaRazorpay && (
+        <fieldset className="bk-methods">
+          <legend>Pay with</legend>
+          {PAY_METHODS.map((m) => (
+            <label key={m.id} className={method === m.id ? 'on' : ''}>
+              <input type="radio" name="bk-method" value={m.id} checked={method === m.id} onChange={() => setMethod(m.id)} />
+              <Icon name={m.icon} size="1.2em" /><span><b>{m.label}</b><small>{m.sub}</small></span>
+            </label>
+          ))}
+        </fieldset>
+      )}
+      {realMoney && <p className="bk-live-warn"><Icon name="alert" size="1em" /> LIVE: {money(b.amount, b.currency)} of real money will be charged, and a real ticket issued.</p>}
+      {viaRazorpay && payments.mode === 'test' && <p className="bk-source">Razorpay TEST keys: use Razorpay's test cards/UPI (success@razorpay); no real money moves.</p>}
       <label className="bk-check big"><input type="checkbox" checked={ok} onChange={(e) => setOk(e.target.checked)} />
-        I checked the names, dates and price, and agree to the {flight ? 'fare rules' : 'rate conditions'}. Book it and charge {money(b.amount, b.currency)}{b.live_mode ? '' : ' (test mode: no charge)'}.</label>
+        I checked the names, dates and price, and agree to the {flight ? 'fare rules' : 'rate conditions'}. Book it and charge {money(b.amount, b.currency)}{realMoney ? ' (real money)' : b.live_mode ? '' : ' (test mode: no real charge)'}.</label>
       <button type="button" className="bk-btn primary big" disabled={!ok || busy} onClick={confirm}>
         {busy ? <><span className="bk-spin" /> {b.status === 'awaiting_payment' ? 'Waiting for payment…' : 'Booking…'}</> : <><Icon name="card" size="1em" /> Confirm &amp; pay</>}
       </button>
@@ -527,9 +703,11 @@ function BookingDetail({ b: initial, onClose, onChange }) {
       <div className="bk-modal-card">
         <header><h3 id="bk-detail-title">{b.title}</h3><button type="button" className="bk-x" onClick={onClose} aria-label="Close"><Icon name="x" /></button></header>
         <p><Badge status={b.status} /> <ModeChip live={b.live_mode} /> {b.booking_reference && <>· Ref <b>{b.booking_reference}</b></>} · {money(b.amount, b.currency)}</p>
+        {PAID_WITH(b.payment_info) && <p className="small">Paid with {PAID_WITH(b.payment_info)} · {b.payment_id}</p>}
         {b.error && <p className="t-warn small">{b.error}</p>}
         <ol className="bk-timeline">{b.events.map((ev, i) => <li key={i}><small>{new Date(ev.t * 1000).toLocaleString()}</small>{ev.what}</li>)}</ol>
         <div className="bk-actions">
+          {['confirmed', 'cancelled', 'refunded', 'refund_failed', 'needs_review'].includes(b.status) && <button type="button" className="bk-btn" onClick={() => printReceipt(b)}><Icon name="report" size="1em" /> Receipt</button>}
           {b.provider_ref && <button type="button" className="bk-btn" onClick={refresh} disabled={!!busy}>{busy === 'refresh' ? <span className="bk-spin" /> : 'Check with provider'}</button>}
           {b.status === 'confirmed' && !cq && <button type="button" className="bk-btn danger" onClick={quote} disabled={!!busy}>{busy === 'quote' ? <span className="bk-spin" /> : 'Cancel booking…'}</button>}
         </div>
@@ -610,7 +788,9 @@ export default function Bookings({ onAsk }) {
 
       <div className="bk-main">
         <div className="bk-col">
-          {partner ? (
+          {cat === 'trains' ? (
+            <section className="bk-panel"><TrainPlanner onAsk={onAsk} /></section>
+          ) : partner ? (
             <section className="bk-panel bk-partner">
               <Icon name={CATS.find((c) => c.id === cat).icon} size="2em" />
               <h3>{prov[partner]?.name || cat}</h3>
@@ -636,7 +816,7 @@ export default function Bookings({ onAsk }) {
             </section>
           )}
 
-          {review ? <Review booking={review} onDone={(b) => { setReview(null); setPicked(null); loadBookings(); setDetail(b); }} />
+          {review ? <Review booking={review} payments={prov.razorpay} onDone={(b) => { setReview(null); setPicked(null); loadBookings(); setDetail(b); }} />
             : picked ? <TravellerForm item={picked} onBack={() => setPicked(null)} onQuoted={(b) => { setReview(b); loadBookings(); }} />
               : results && cat === 'flights' ? <FlightResults res={results} onPick={(o) => setPicked({ kind: 'flight', offer: o })} />
                 : results && cat === 'hotels' ? <HotelResults res={results} onPickRate={(stay, rate) => setPicked({ kind: 'stay', stay, rate })} /> : null}
