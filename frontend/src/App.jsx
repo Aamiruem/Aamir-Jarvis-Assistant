@@ -66,6 +66,7 @@ const CommandCenter = lazy(() => import('./components/CommandCenter.jsx'));
 const SecurityCenter = lazy(() => import('./components/SecurityCenter.jsx'));
 const OpsCenter = lazy(() => import('./components/OpsCenter.jsx'));
 const Bookings = lazy(() => import('./components/Bookings.jsx'));
+const ProjectHQ = lazy(() => import('./components/ProjectHQ.jsx'));
 const CameraLab = lazy(() => import('./components/CameraLab.jsx'));
 const RobotLab = lazy(() => import('./robotLab/RobotLab.jsx'));
 const AgentsPanel = lazy(() => import('./components/AgentsPanel.jsx'));
@@ -99,9 +100,11 @@ TABS.splice(1, 0, { id: 'command', label: 'Command Center', icon: 'target', hue:
 TABS.splice(2, 0, { id: 'ops', label: 'Cyber Ops', icon: 'radar', hue: 172, isNew: true });
 // Bookings (real flights/hotels/events with your approval); no Alt shortcut either.
 TABS.splice(3, 0, { id: 'bookings', label: 'Bookings', icon: 'plane', hue: 245, isNew: true });
+// Project HQ (health of all the user's live projects); no Alt shortcut.
+TABS.splice(4, 0, { id: 'hq', label: 'Project HQ', icon: 'chart', hue: 150, isNew: true });
 // The sidebar, in groups by what you do there (Account is in the menu at its bottom).
 const NAV_GROUPS = [
-  ['Overview', ['home', 'command', 'ops', 'bookings', 'chat']],
+  ['Overview', ['home', 'command', 'hq', 'ops', 'bookings', 'chat']],
   ['Work', ['tasks', 'notes', 'memory', 'files', 'contacts']],
   ['Create & automate', ['agents', 'automate', 'studio', 'mllab']],
   ['AI tools', ['robot', 'vision', 'camera', 'knowledge', 'games']],
@@ -111,10 +114,10 @@ const NAV_GROUPS = [
 const NAV_HUES = {
   home: 212, command: 190, chat: 172, tasks: 36, notes: 48, memory: 330, contacts: 282, automate: 300,
   studio: 88, mllab: 150, vision: 262, camera: 196, knowledge: 18, games: 318, device: 222, security: 142, admin: 0,
-  agents: 186, files: 40, account: 228, robot: 205, ops: 168, bookings: 245,
+  agents: 186, files: 40, account: 228, robot: 205, ops: 168, bookings: 245, hq: 150,
 };
 // Only the newest screens carry a "New" tag, so it still means something.
-const NEWEST = new Set(['bookings', 'ops', 'agents']);
+const NEWEST = new Set(['hq', 'bookings', 'ops']);
 // The sidebar's name for a screen when it differs from the tab's own label.
 const NAV_LABELS = { account: 'Settings' };
 // The sidebar is the one place to switch screens (Account is the avatar at its bottom).
@@ -636,6 +639,7 @@ export default function App() {
             {tab === 'security' && <SecurityCenter user={user} onOpenTab={setTab} />}
             {tab === 'ops' && <OpsCenter onAsk={(text) => ask(text, true)} />}
             {tab === 'bookings' && <Bookings onAsk={(text) => ask(text, true)} />}
+            {tab === 'hq' && <ProjectHQ />}
             {tab === 'camera' && <CameraLab />}
             {tab === 'robot' && <RobotLab signedIn />}
             {tab === 'agents' && <AgentsPanel />}

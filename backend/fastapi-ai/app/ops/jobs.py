@@ -118,11 +118,12 @@ class JobContext:
             log.warning("ops job %s step %r failed: %s", self.job.id, label, e)
             return None
 
-    def run(self, args: list[str], timeout: float = 60, input_text: str | None = None) -> subprocess.CompletedProcess:
-        """Run a child process that Cancel can kill. Text output, no console window."""
+    def run(self, args: list[str], timeout: float = 60, input_text: str | None = None, cwd: str | None = None,
+            env: dict | None = None) -> subprocess.CompletedProcess:
+        """Run a child process that Cancel can kill (with its children). Text output, no console window."""
         self.check()
         proc = subprocess.Popen(
-            args, stdin=subprocess.PIPE if input_text is not None else subprocess.DEVNULL,
+            args, stdin=subprocess.PIPE if input_text is not None else subprocess.DEVNULL, cwd=cwd, env=env,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", errors="replace",
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
@@ -130,7 +131,7 @@ class JobContext:
         try:
             out, err = proc.communicate(input=input_text, timeout=timeout)
         except subprocess.TimeoutExpired:
-            proc.kill()
+            kill_tree(proc)
             proc.communicate()
             raise TimeoutError(f"{args[0]} did not finish within {int(timeout)} s")
         finally:
@@ -163,8 +164,19 @@ def parse_json_tail(out: str):
     return json.loads(out[min(starts):]) if starts else None
 
 
+def kill_tree(p: subprocess.Popen) -> None:
+    """Kill a child and everything it started (npm -> node, pytest workers)."""
+    if os.name == "nt":
+        subprocess.run(["taskkill", "/PID", str(p.pid), "/T", "/F"], capture_output=True, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    try:
+        p.kill()
+    except OSError:
+        pass
+
+
 class JobRunner:
-    def __init__(self):
+    def __init__(self, history_file=None):
+        self.history_file = history_file or HISTORY_FILE
         self._jobs: dict[str, Job] = {}
         self._lock = threading.Lock()
         self._load()
@@ -172,7 +184,7 @@ class JobRunner:
     # ----- history -----
     def _load(self):
         try:
-            for d in json.loads(HISTORY_FILE.read_text(encoding="utf-8")):
+            for d in json.loads(self.history_file.read_text(encoding="utf-8")):
                 job = Job(id=d["id"], user_id=d["user_id"], action=d["action"], title=d["title"], params=d.get("params") or {})
                 for k in ("status", "steps", "created_at", "started_at", "finished_at", "result", "error"):
                     setattr(job, k, d.get(k))
@@ -195,9 +207,9 @@ class JobRunner:
                 else:
                     self._jobs.pop(j.id, None)
         try:
-            tmp = HISTORY_FILE.with_suffix(".tmp")
+            tmp = self.history_file.with_suffix(".tmp")
             tmp.write_text(json.dumps(keep, default=str), encoding="utf-8")
-            tmp.replace(HISTORY_FILE)
+            tmp.replace(self.history_file)
         except OSError as e:
             log.warning("could not save ops history: %s", e)
 
@@ -255,10 +267,7 @@ class JobRunner:
             return False
         job.cancel_flag.set()
         for p in list(job.procs):
-            try:
-                p.kill()
-            except OSError:
-                pass
+            kill_tree(p)
         return True
 
     def stop_all(self, user_id: str) -> int:

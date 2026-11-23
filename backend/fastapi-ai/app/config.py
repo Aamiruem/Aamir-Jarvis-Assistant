@@ -67,7 +67,10 @@ class Settings(BaseSettings):
     ticketmaster_api_key: str = ""  # event search (Discovery API, search only)
     razorpay_key_id: str = ""  # rzp_test_... = test mode
     razorpay_key_secret: str = ""
-    booking_pay_from_balance: bool = False  # live bookings without Razorpay: pay from your own Duffel balance
+    booking_pay_from_balance: bool = False
+    # Project HQ (app/projects): optional keys that lift the free limits of the public APIs it reads.
+    pagespeed_api_key: str = ""  # Google PageSpeed Insights (Lighthouse + Core Web Vitals); keyless quota is shared and often exhausted
+    github_token: str = ""  # read-only token: higher GitHub API limits, private repos  # live bookings without Razorpay: pay from your own Duffel balance
     openrouter_api_key: str = ""
 
     # Local bridge (app/routers/local_bridge.py): these websites may read this PC's read-only

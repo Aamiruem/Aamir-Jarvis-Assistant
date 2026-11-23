@@ -217,6 +217,16 @@ export const api = {
   opsCommand: (text) => request('/ai/ops/command', { method: 'POST', body: { text } }),
   opsFix: (fix) => request('/ai/ops/fix', { method: 'POST', body: { fix, approve: true } }),
   opsSetSafeMode: (on) => request('/ai/ops/safe-mode', { method: 'POST', body: { on } }),
+  // Project HQ (backend app/projects): the user's live sites, APIs and repos, checked for real.
+  projects: () => request('/ai/projects'),
+  projectAdd: (body) => request('/ai/projects', { method: 'POST', body }),
+  projectEdit: (id, body) => request(`/ai/projects/${encodeURIComponent(id)}`, { method: 'PUT', body }),
+  projectDelete: (id) => request(`/ai/projects/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  projectCheck: (id) => request(`/ai/projects/${encodeURIComponent(id)}/check`, { method: 'POST' }),
+  projectPagespeed: (id, strategy = 'mobile') => request(`/ai/projects/${encodeURIComponent(id)}/pagespeed?strategy=${strategy}`, { method: 'POST' }),
+  projectTests: (id) => request(`/ai/projects/${encodeURIComponent(id)}/tests`, { method: 'POST' }),
+  projectJob: (jobId) => request(`/ai/projects/jobs/${encodeURIComponent(jobId)}`),
+  projectJobCancel: (jobId) => request(`/ai/projects/jobs/${encodeURIComponent(jobId)}/cancel`, { method: 'POST' }),
   // Bookings (backend app/booking): real provider search, quotes, confirmation, Razorpay payment.
   bookingProviders: () => request('/ai/booking/providers'),
   bookingPlaces: (q) => request(`/ai/booking/places?q=${encodeURIComponent(q)}`),
